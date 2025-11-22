@@ -9,12 +9,12 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.safeArea}>
 
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
             <Image
-                source={require('../../assets/images/ArenaLogo.jpg')}
+                source={require('../../../assets/images/ArenaLogo.jpg')}
                 style={styles.profileImage}
                 />
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.header}>
 
             <Text style={styles.title}>Login</Text>
             <Text style={styles.paragraph}>Nome de usuário: </Text>
@@ -31,7 +31,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               style={{
-                backgroundColor: '#0a7ea4',
+                backgroundColor: '#2FA026',
                 paddingVertical: 12,
                 paddingHorizontal: 32,
                 borderRadius: 8,
@@ -41,15 +41,12 @@ export default function LoginScreen() {
                 // ação de login
               }}
             >
-              <Text style={{ color: '#149e2bff', fontSize: 16, fontWeight: 'bold' }}>Entrar</Text>
+              <Text style={{ color: '#ffffffff', fontSize: 16, fontWeight: 'bold' }}>Entrar</Text>
             </TouchableOpacity>
 
-            <Text style={styles.paragraph}>Esqueceu sua senha? Registrar</Text>
+            <Text style={styles.paragraphlink}>Esqueceu sua senha? Registrar</Text>
           </View>
         </ScrollView>
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>© 2025 Arena Lagoa Beach. Todos os direitos reservados.</Text>
-        </View>
       </View>
      </SafeAreaView>
   );
@@ -71,17 +68,17 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75, 
-    borderWidth: 3,
-    borderColor: '#38bdf8', 
-    marginBottom: 20,
+
+    width: "100%",
+    height: 242,
+    marginBottom: 15,
   },
   title: {
+    position: 'relative',
+    marginRight: 220,
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#e2e8f0',
+    color: '#000000ff',
     textAlign: 'center',
   },
   subtitle: {
@@ -107,8 +104,21 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   paragraph: {
+    justifyContent: 'flex-start',
+    width: '100%',
+    marginTop: 10,
     fontSize: 16,
-    color: '#cbd5e1', 
+    color: '#000000ff', 
+    lineHeight: 24, 
+  },
+    paragraphlink: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+    width: '100%',
+    marginTop: 10,
+    fontSize: 16,
+    color: '#000', 
     lineHeight: 24, 
   },
   socialsContainer: {
