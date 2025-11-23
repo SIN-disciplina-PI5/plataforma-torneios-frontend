@@ -1,0 +1,3 @@
+export const supaUrl = 'https://fpdpbinsrsgyxmrlforb.supabase.co';
+
+export const anonKey= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwZHBiaW5zcnNneXhtcmxmb3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTMxMTQsImV4cCI6MjA3OTQ4OTExNH0.HuM-UmSBpCSpBfZH1VDLRFg8DbfbGn2M_IUHHqRhzys';
