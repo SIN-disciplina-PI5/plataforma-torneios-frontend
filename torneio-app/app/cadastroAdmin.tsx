@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, ImageBackground, StyleSheet, Dimensions } from 'react-native'
+import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
@@ -12,6 +13,7 @@ export default function AdminSignUp() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <View style={styles.container}>
@@ -22,7 +24,14 @@ export default function AdminSignUp() {
         resizeMode="cover"
       >
 
-      </ImageBackground>
+        <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.push('/')}
+            >
+            <Ionicons name="chevron-back" size={28} color="#0A5A3A" />
+        </TouchableOpacity>
+
+        </ImageBackground>
 
       <View style={styles.form}>
         <Text style={styles.formTitle}>Cadastro</Text>
@@ -51,25 +60,40 @@ export default function AdminSignUp() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Sua senha:</Text>
-          <NativeInput
-            style={styles.nativeInput}
-            secureTextEntry
-            placeholder="••••••••"
-            placeholderTextColor="#B5B5B5"
-            value={password}
-            onChangeText={setPassword}
-            />
-        </View>
+            <Text style={styles.label}>Sua senha:</Text>
+
+            <View style={styles.passwordContainer}>
+                <NativeInput
+                style={styles.nativeInput}
+                secureTextEntry={!showPassword}
+                placeholder="••••••••"
+                placeholderTextColor="#B5B5B5"
+                value={password}
+                onChangeText={setPassword}
+                />
+
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <Image
+                    source={showPassword
+                    ? require('../assets/eye-open.png')
+                    : require('../assets/eye-closed.png')}
+                    style={styles.eyeIcon}
+                />
+                </TouchableOpacity>
+            </View>
+            </View>
+
+
 
         <Button
-          mode="contained"
-          buttonColor="#37A51E"
-          style={styles.button}
-          onPress={() => {}}
-        >
-          Cadastrar
+            mode="contained"
+            buttonColor="#37A51E"
+            style={styles.button}
+            onPress={() => router.push('/homeAdmin')}
+            >
+            Cadastrar
         </Button>
+
 
         <Text style={styles.footer}>
           Já tem uma conta?{' '}
@@ -98,10 +122,17 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20
-  },
+  position: 'absolute',
+  top: 15,
+  left: 16,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: 'rgba(255,255,255,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center'
+},
+
 
   title: {
     color: '#0A5A3A',
@@ -144,6 +175,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 15
   },
+
+  passwordContainer: {
+  position: 'relative'
+},
+
+eyeButton: {
+  position: 'absolute',
+  right: 12,
+  top: 12,
+  padding: 4
+},
+
+eyeIcon: {
+  width: 22,
+  height: 22,
+  tintColor: '#777'
+},
 
   button: {
     marginTop: 20,

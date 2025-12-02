@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
@@ -23,6 +24,13 @@ export default function AdminSignUp() {
         resizeMode="cover"
       >
 
+        <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.push('/')}
+            >
+            <Ionicons name="chevron-back" size={28} color="#0A5A3A" />
+        </TouchableOpacity>
+
       </ImageBackground>
 
       <View style={styles.form}>
@@ -32,46 +40,54 @@ export default function AdminSignUp() {
           <Text style={styles.label}>Nome de usuário:</Text>
           <NativeInput
             style={styles.nativeInput}
-            placeholder="TiaDeMel"
             placeholderTextColor="#B5B5B5"
             value={username}
             onChangeText={setUsername}
             />
         </View>
 
-        <View style={styles.passwordContainer}>
-            <NativeInput
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>Sua senha:</Text>
+
+            <View style={styles.passwordContainer}>
+                <NativeInput
                 style={styles.nativeInput}
                 secureTextEntry={!showPassword}
-                placeholder="••••••••"
                 placeholderTextColor="#B5B5B5"
                 value={password}
                 onChangeText={setPassword}
-            />
+                />
 
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
                 <Image
-                source={showPassword
+                    source={showPassword
                     ? require('../assets/eye-open.png')
                     : require('../assets/eye-closed.png')}
-                style={styles.eyeIcon}
+                    style={styles.eyeIcon}
                 />
-            </TouchableOpacity>
+                </TouchableOpacity>
             </View>
-
+            </View>
+            
+            <TouchableOpacity onPress={() => router.push('/esqueciSenha')}>
+                <Text style={styles.forgotPassword}>
+                    Esqueci a senha
+                </Text>
+            </TouchableOpacity>
 
         <Button
-          mode="contained"
-          buttonColor="#37A51E"
-          style={styles.button}
-          onPress={() => {}}
-        >
-          Cadastrar
+            mode="contained"
+            buttonColor="#37A51E"
+            style={styles.button}
+            onPress={() => router.push('/homeAdmin')}
+            >
+            Entrar
         </Button>
+
 
         <Text style={styles.footer}>
           Ainda não tem uma conta?{' '}
-          <Text style={styles.link} onPress={() => router.push('/loginAdmin')}>
+          <Text style={styles.link} onPress={() => router.push('/cadastroAdmin')}>
             Cadastrar
           </Text>
         </Text>
@@ -96,10 +112,16 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20
-  },
+  position: 'absolute',
+  top: 15,
+  left: 16,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: 'rgba(255,255,255,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center'
+},
 
   title: {
     color: '#0A5A3A',
@@ -159,6 +181,15 @@ eyeIcon: {
   height: 22,
   tintColor: '#777'
 },
+
+forgotPassword: {
+  alignSelf: 'flex-end',
+  marginTop: 6,
+  color: '#2E7D32',
+  textDecorationLine: 'underline',
+  fontSize: 14
+},
+
 
   button: {
     marginTop: 20,
