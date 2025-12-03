@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
+import { api } from '../services/api'
 
 const { width } = Dimensions.get('window')
 
@@ -14,6 +15,28 @@ export default function AdminSignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+
+  const handleRegister = async () => {
+  try {
+    const response = await api.post('/admin/register', {
+      nome: username,
+      email,
+      senha: password
+    })
+
+    alert(response.data.message)
+
+    router.push('/loginAdmin')
+
+  } catch (error: any) {
+  console.log('ERRO COMPLETO:', error)
+  console.log('DATA:', error.response?.data)
+  console.log('STATUS:', error.response?.status)
+  console.log('HEADERS:', error.response?.headers)
+  alert(JSON.stringify(error.response?.data || error.message))
+  }
+}
+
 
   return (
     <View style={styles.container}>
@@ -82,14 +105,12 @@ export default function AdminSignUp() {
                 </TouchableOpacity>
             </View>
             </View>
-
-
-
+            
         <Button
             mode="contained"
             buttonColor="#37A51E"
             style={styles.button}
-            onPress={() => router.push('/homeAdmin')}
+            onPress={handleRegister}
             >
             Cadastrar
         </Button>

@@ -4,17 +4,40 @@ import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
+import { api } from '../services/api'
 
 const { width } = Dimensions.get('window')
 
 export default function AdminSignUp() {
   const router = useRouter()
 
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
+  async function handleLogin() {
+    try {
+      if (!email || !password) {
+        alert('Preencha email e senha')
+        return
+      }
 
+      const response = await api.post('/admin/login', {
+        email: email,
+        senha: password
+      })
+
+      console.log(response.data)
+
+      alert('Login realizado com sucesso!')
+      router.push('/homeAdmin')
+
+    } catch (error: any) {
+      console.log(error.response?.data || error.message)
+      alert('Email ou senha inválidos')
+    }
+  }
+  
   return (
     <View style={styles.container}>
 
@@ -37,13 +60,13 @@ export default function AdminSignUp() {
         <Text style={styles.formTitle}>Login</Text>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome de usuário:</Text>
+          <Text style={styles.label}>Seu email:</Text>
           <NativeInput
             style={styles.nativeInput}
-            placeholderTextColor="#B5B5B5"
-            value={username}
-            onChangeText={setUsername}
-            />
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
         </View>
 
         <View style={styles.inputGroup}>
@@ -79,7 +102,7 @@ export default function AdminSignUp() {
             mode="contained"
             buttonColor="#37A51E"
             style={styles.button}
-            onPress={() => router.push('/homeAdmin')}
+            onPress={handleLogin}
             >
             Entrar
         </Button>
