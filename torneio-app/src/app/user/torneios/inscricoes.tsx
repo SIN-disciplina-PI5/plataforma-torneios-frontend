@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import BarraNavegacao from "../../../../components/BarraNavegação";
+import BarraNavegacao from "../../../../components/BarraNavegacao";
 
 const torneios = [
   {
@@ -16,7 +16,7 @@ const torneios = [
     nome: "Torneio de Verão",
     vagas: 28,
     status: "Ativo",
-    imagem: require("../assets/beach1.png"),
+    imagem: require("../../../../assets/images/beach1.png"),
   },
   {
     id: "2",
@@ -24,7 +24,7 @@ const torneios = [
     nome: "Torneio de Verão",
     vagas: 0,
     status: "Esgotado",
-    imagem: require("../assets/beach2.png"),
+    imagem: require("../../../../assets/images/beach2.png"),
   },
   {
     id: "3",
@@ -32,7 +32,7 @@ const torneios = [
     nome: "Torneio de Verão",
     vagas: 28,
     status: "Ativo",
-    imagem: require("../assets/beach1.png"),
+    imagem: require("../../../../assets/images/beach1.png"),
   },
   {
     id: "4",
@@ -40,7 +40,7 @@ const torneios = [
     nome: "Torneio de Verão",
     vagas: 28,
     status: "Ativo",
-    imagem: require("../assets/beach2.png"),
+    imagem: require("../../../../assets/images/beach2.png"),
   },
 ];
 
@@ -187,5 +187,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    backgroundColor: "#fff",
+    zIndex: 10,
+    elevation: 10,
   },
 });

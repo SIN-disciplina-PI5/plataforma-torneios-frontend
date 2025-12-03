@@ -69,7 +69,7 @@ export default function NavBar() {
       </Link>
 
       {/* ---------------- TORNEIOS ---------------- */}
-      <Link href="/listaTorneios" asChild>
+      <Link href="/user/torneios/inscricoes" asChild>
         <TouchableOpacity style={{ alignItems: "center" }}>
           <Image
             source={require("../assets/icons/torneios.png")}
