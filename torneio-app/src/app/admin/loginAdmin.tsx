@@ -110,7 +110,7 @@ export default function AdminSignUp() {
 
         <Text style={styles.footer}>
           Ainda não tem uma conta?{' '}
-          <Text style={styles.link} onPress={() => router.push('/cadastroAdmin')}>
+          <Text style={styles.link} onPress={() => router.push('/admin/cadastroAdmin')}>
             Cadastrar
           </Text>
         </Text>
