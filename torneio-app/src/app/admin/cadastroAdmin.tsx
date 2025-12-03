@@ -14,6 +14,7 @@ export default function AdminSignUp() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [secretKey, setSecretKey] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   const handleRegister = async () => {
@@ -21,7 +22,8 @@ export default function AdminSignUp() {
     const response = await api.post('/admin/register', {
       nome: username,
       email,
-      senha: password
+      senha: password,
+      secretKey: secretKey
     })
 
     alert(response.data.message)
@@ -105,6 +107,18 @@ export default function AdminSignUp() {
                 </TouchableOpacity>
             </View>
             </View>
+
+            <View style={styles.inputGroup}>
+          <Text style={styles.label}>Chave de Acesso:</Text>
+          <NativeInput
+            style={styles.nativeInput}
+            placeholder="Digite a chave mestra"
+            placeholderTextColor="#B5B5B5"
+            secureTextEntry={true} // Oculta o texto para segurança
+            value={secretKey}
+            onChangeText={setSecretKey}
+          />
+        </View>
             
         <Button
             mode="contained"
