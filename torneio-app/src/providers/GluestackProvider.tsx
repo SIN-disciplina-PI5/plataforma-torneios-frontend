@@ -1,11 +1,11 @@
-import { Stack } from "expo-router"
 import { GluestackUIProvider } from "@gluestack-ui/themed"
 import { config } from "@gluestack-ui/config"
+import { ReactNode } from "react"
 
-export default function Layout() {
+export function GluestackProvider({ children }: { children: ReactNode }) {
   return (
     <GluestackUIProvider config={config}>
-      <Stack screenOptions={{ headerShown: false }} />
+      {children}
     </GluestackUIProvider>
   )
 }
