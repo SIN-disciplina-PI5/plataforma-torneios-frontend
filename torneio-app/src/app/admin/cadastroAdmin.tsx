@@ -1,0 +1,232 @@
+import React, { useState } from 'react'
+import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { Button, Text } from 'react-native-paper'
+import { useRouter } from 'expo-router'
+import { TextInput as NativeInput } from 'react-native'
+import { api } from '../../services/api'
+
+const { width } = Dimensions.get('window')
+
+export default function AdminSignUp() {
+  const router = useRouter()
+
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleRegister = async () => {
+  try {
+    const response = await api.post('/admin/register', {
+      nome: username,
+      email,
+      senha: password
+    })
+
+    alert(response.data.message)
+
+    router.push('/admin/loginAdmin')
+
+  } catch (error: any) {
+  console.log('ERRO COMPLETO:', error)
+  console.log('DATA:', error.response?.data)
+  console.log('STATUS:', error.response?.status)
+  console.log('HEADERS:', error.response?.headers)
+  alert(JSON.stringify(error.response?.data || error.message))
+  }
+}
+
+
+  return (
+    <View style={styles.container}>
+
+      <ImageBackground
+        source={require("../../../assets/images/ArenaLogo.jpg")}
+        style={styles.header}
+        resizeMode="cover"
+      >
+
+        <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.push('/')}
+            >
+            <Ionicons name="chevron-back" size={28} color="#0A5A3A" />
+        </TouchableOpacity>
+
+        </ImageBackground>
+
+      <View style={styles.form}>
+        <Text style={styles.formTitle}>Cadastro (Admin)</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome de usuário:</Text>
+          <NativeInput
+            style={styles.nativeInput}
+            placeholder="TiaDeMel"
+            placeholderTextColor="#B5B5B5"
+            value={username}
+            onChangeText={setUsername}
+            />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Seu email:</Text>
+          <NativeInput
+            style={styles.nativeInput}
+            placeholder="exemplo@email.com"
+            placeholderTextColor="#B5B5B5"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            />
+        </View>
+
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>Sua senha:</Text>
+
+            <View style={styles.passwordContainer}>
+                <NativeInput
+                style={styles.nativeInput}
+                secureTextEntry={!showPassword}
+                placeholder="••••••••"
+                placeholderTextColor="#B5B5B5"
+                value={password}
+                onChangeText={setPassword}
+                />
+
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <Image
+                    source={showPassword
+                    ? require('../../../assets/images/eye-open.png')
+                    : require('../../../assets/images/eye-closed.png')}
+                    style={styles.eyeIcon}
+                />
+                </TouchableOpacity>
+            </View>
+            </View>
+            
+        <Button
+            mode="contained"
+            buttonColor="#37A51E"
+            style={styles.button}
+            onPress={handleRegister}
+            >
+            Cadastrar
+        </Button>
+
+
+        <Text style={styles.footer}>
+          Já tem uma conta?{' '}
+          <Text style={styles.link} onPress={() => router.push('/admin/loginAdmin')}>
+            Entrar
+          </Text>
+        </Text>
+
+      </View>
+
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+
+  header: {
+    width: width,
+    height: width * 0.55,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+
+  backButton: {
+  position: 'absolute',
+  top: 15,
+  left: 16,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: 'rgba(255,255,255,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center'
+},
+
+
+  title: {
+    color: '#0A5A3A',
+    fontSize: 36,
+    fontWeight: 'bold',
+    letterSpacing: 2
+  },
+
+  subtitle: {
+    color: '#000000ff',
+    fontSize: 14,
+    marginTop: 6
+  },
+
+  form: {
+    flex: 1,
+    padding: 20
+  },
+
+  formTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 12
+  },
+
+  inputGroup: {
+    marginBottom: 14
+  },
+
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+    marginTop: 15,
+  },
+
+  nativeInput: {
+    height: 48,
+    backgroundColor: '#EEEEEE',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 15
+  },
+
+  passwordContainer: {
+  position: 'relative'
+},
+
+eyeButton: {
+  position: 'absolute',
+  right: 12,
+  top: 12,
+  padding: 4
+},
+
+eyeIcon: {
+  width: 22,
+  height: 22,
+  tintColor: '#777'
+},
+
+  button: {
+    marginTop: 20,
+    borderRadius: 4,
+    paddingVertical: 6,
+  },
+
+  footer: {
+    marginTop: 20,
+    textAlign: 'center'
+  },
+
+  link: {
+    color: '#37A51E',
+    fontWeight: 'bold'
+  }
+})
