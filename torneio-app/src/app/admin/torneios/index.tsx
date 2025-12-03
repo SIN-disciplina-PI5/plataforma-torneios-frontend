@@ -5,7 +5,7 @@ import { View, Text } from "react-native";
 export default function AdminIndex() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>User Home Screen</Text>
+            <Text>Admin Home Screen</Text>
         </View>
     );
 }
