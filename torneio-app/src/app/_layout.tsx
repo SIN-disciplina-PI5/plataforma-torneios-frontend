@@ -1,11 +1,11 @@
-import { Stack } from "expo-router"
-import { GluestackUIProvider } from "@gluestack-ui/themed"
-import { config } from "@gluestack-ui/config"
+import { Slot } from 'expo-router'
+import { GluestackUIProvider } from '@gluestack-ui/themed'
+import { config } from '../../src/app/theme'
 
-export default function RootLayout() {
+export default function Layout() {
   return (
     <GluestackUIProvider config={config}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Slot />
     </GluestackUIProvider>
   )
 }
