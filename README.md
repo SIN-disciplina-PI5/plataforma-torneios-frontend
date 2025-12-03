@@ -1,3 +1,13 @@
+Alunos participantes: 
+
+Mel Lopes Ferreira – 853748 
+Kaiki Barros Bezerra – 853752 
+Gabriel Willian da Cunha Santos – 853757 
+Pedro Delmiro Galvão de Lucena – 853744 
+Beatriz Martins Vieira Belo - 853791 
+Wesley Oliveira Amorim Filho – 853788 
+Daniel Levi Santos Leite – 854027
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
