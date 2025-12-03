@@ -77,7 +77,7 @@ export default function NavBar() {
               width: 24,
               height: 24,
               resizeMode: "contain",
-              tintColor: pathname === "/listaTorneios" ? "#0A4438" : "#444",
+              tintColor: pathname.includes("/torneios") ? "#0A4438" : "#444",
             }}
           />
           <Text
