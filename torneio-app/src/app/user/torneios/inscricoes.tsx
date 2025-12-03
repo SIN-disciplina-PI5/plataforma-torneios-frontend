@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import BarraNavegacao from "../../../../components/BarraNavegacao";
+import InscricaoRealizada from "../../../../components/inscricaoRealizada"; // IMPORT DO POPUP
 
 const torneios = [
   {
@@ -45,6 +46,8 @@ const torneios = [
 ];
 
 export default function ListaTorneios() {
+  const [modalVisible, setModalVisible] = useState(false); // ESTADO DO POPUP
+
   const categoriaStyles: { [key: string]: any } = {
     Básico: styles.categoria_basica,
     Intermediário: styles.categoria_intermediaria,
@@ -70,7 +73,7 @@ export default function ListaTorneios() {
 
                 <Text style={styles.nome}>{item.nome}</Text>
 
-                {/* Status colorido 🔥 */}
+                {/* Status colorido */}
                 <Text
                   style={[
                     styles.info,
@@ -83,13 +86,14 @@ export default function ListaTorneios() {
                   {item.vagas} vagas • {item.status}
                 </Text>
 
-                {/* Botão Inscrever / Esgotado 🔥 */}
+                {/* Botão Inscrever / Esgotado */}
                 <TouchableOpacity
                   style={[
                     styles.botao,
                     { backgroundColor: isAtivo ? "#129E82" : "#C23434" },
                   ]}
                   disabled={!isAtivo}
+                  onPress={() => setModalVisible(true)} // ABRE O POPUP
                 >
                   <Text style={styles.textoBotao}>
                     {isAtivo ? "Inscrever-se" : "Esgotado"}
@@ -100,6 +104,12 @@ export default function ListaTorneios() {
           );
         })}
       </ScrollView>
+
+      {/* POPUP DE INSCRIÇÃO REALIZADA */}
+      <InscricaoRealizada
+        isVisible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
 
       <View style={styles.barraFixa}>
         <BarraNavegacao />
