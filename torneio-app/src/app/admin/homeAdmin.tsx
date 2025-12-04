@@ -187,7 +187,7 @@ export default function PartidasList() {
 
             <TouchableOpacity 
                 style={styles.novaPartidaButton}
-                onPress={() => router.push("/partidas/create")}
+                onPress={() => router.push("/admin/criarPartida")}
             >
                 <Ionicons name="add-circle-outline" size={20} color="#4CAF50" />
                 <Text style={styles.novaPartidaButtonText}>Nova Partida</Text>
