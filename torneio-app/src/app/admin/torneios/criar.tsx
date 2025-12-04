@@ -7,8 +7,10 @@ import { useRouter } from "expo-router"
 
 export default function CriarTorneio() {
   const [nome, setNome] = useState("")
-  const [categoria, setCategoria] = useState("Intermediário")
+  const [categoria, setCategoria] = useState("")
   const [vagas, setVagas] = useState("")
+  
+  const categorias = ["Iniciante", "Intermediário", "Avançado"]
 
   const router = useRouter()
 
@@ -35,8 +37,6 @@ export default function CriarTorneio() {
       alert("Erro ao criar torneio")
     }
   }
-
-  const categorias = ["Iniciante", "Intermediário", "Avançado"]
 
   return (
     <View style={styles.container}>
