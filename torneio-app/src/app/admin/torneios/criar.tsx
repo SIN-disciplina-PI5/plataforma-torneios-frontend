@@ -30,7 +30,7 @@ export default function CriarTorneio() {
       setCategoria("Intermediário")
       setVagas("")
 
-      router.replace("/admin/torneios")
+      router.replace("/admin/torneios/torneios")
 
     } catch (error: any) {
       console.log(error.response?.data || error.message)
