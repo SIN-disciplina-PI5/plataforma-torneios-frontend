@@ -1,14 +1,61 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin";
+import { api } from "../../../services/api"
+import { useLocalSearchParams, useRouter } from "expo-router"
 
 export default function EditarTorneio() {
+  const { id } = useLocalSearchParams()
   const [nome, setNome] = useState("")
-  const [categoria, setCategoria] = useState("Intermediário")
+  const [categoria, setCategoria] = useState("")
   const [vagas, setVagas] = useState("")
+  const router = useRouter()
 
   const categorias = ["Iniciante", "Intermediário", "Avançado"]
+
+  useEffect(() => {
+    buscarTorneio()
+  }, [])
+
+  async function buscarTorneio() {
+    try {
+      const response = await api.get(`/torneio/${id}`)
+      const torneio = response.data
+
+      setNome(torneio.nome)
+      setCategoria(torneio.categoria)
+      setVagas(String(torneio.vagas))
+    } catch (error) {
+      console.log(error)
+      alert("Erro ao carregar torneio")
+      router.back()
+    }
+  }
+
+  async function editarTorneio() {
+    if (!nome || !vagas || Number(vagas) <= 0) return
+
+    try {
+      await api.put(`/torneio/${id}`, {
+        nome,
+        categoria,
+        vagas
+      })
+
+      alert("Torneio atualizado com sucesso ✅")
+
+      setNome("")
+      setCategoria("")
+      setVagas("")
+
+      router.replace("/admin/torneios")
+
+    } catch (error: any) {
+      console.log(error.response?.data || error.message)
+      alert("Erro ao editar torneio")
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -72,21 +119,13 @@ export default function EditarTorneio() {
           (!nome || !vagas || Number(vagas) <= 0) && { opacity: 0.5 }
         ]}
         disabled={!nome || !vagas || Number(vagas) <= 0}
-        onPress={() => {
-          if (!nome || !vagas || Number(vagas) <= 0) return
-
-          console.log({
-            nome,
-            categoria,
-            vagas: Number(vagas)
-          })
-        }}
+        onPress={editarTorneio}
       >
-        <Text style={styles.buttonText}>Criar</Text>
+        <Text style={styles.buttonText}>Salvar</Text>
       </TouchableOpacity>
 
       <View style={styles.barraFixa}>
-              <BarraNavegacaoAdmin />
+        <BarraNavegacaoAdmin />
       </View>
 
     </View>
