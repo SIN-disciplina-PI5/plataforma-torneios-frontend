@@ -21,7 +21,7 @@ export default function OnBoarding() {
   };
 
   const handleRegister = () => {
-    router.push("/public/signup");
+    router.push("user/signup");
   };
 
   return (
