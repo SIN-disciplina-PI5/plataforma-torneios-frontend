@@ -1,70 +1,116 @@
-import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Pressable,
-  Linking,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { HeaderTitle } from "@react-navigation/elements";
-import { router } from "expo-router";
-import colors from "../../constants/colors";
+import React from 'react';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    Image,
+    StatusBar,
+    Platform 
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
-export default function HomeScreen() {
-  return (
-    // SafeAreaView garante que o conteúdo não fique debaixo da status bar ou do notch
+const playerImage = require('../../assets/images/Group291.svg');
 
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Bem-vindo ao Arena Lagoa Beach</Text>
-        <Text>
-          Participe de torneios, acompanhe seu ranking e desafie amigos na areia
-        </Text>
-      </View>
+export default function TelaDeAbertura() {
+    const router = useRouter();
+    
+    const handleStartCompetition = () => {
+        router.push('/onBoarding');
+    };
 
-      <Pressable
-        style={{
-          backgroundColor: colors.greenSuccess,
-          paddingVertical: 12,
-          paddingHorizontal: 32,
-          borderRadius: 8,
-          marginTop: 20,
-        }}
-        onPress={() => {
-          router.push("/public/login");
-        }}
-      >
-        <Text
-          style={{
-            color: "#ffffff",
-            fontSize: 16,
-            fontWeight: "bold",
-            textAlign: "center",
-          }}
-        >
-          Vamos Competir
-        </Text>
-      </Pressable>
-    </View>
-  );
+    return (
+        <View style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <View style={styles.container}>
+                <View style={styles.illustrationContainer}>
+                    <Image
+                        source={playerImage}
+                        style={styles.playerImage}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                <View style={styles.textContainer}>
+                    <Text style={styles.mainTitle}>
+                        Bem-vindo ao Arena Lagoa Beach
+                    </Text>
+                    <Text style={styles.subText}>
+                        Participe de torneios, acompanhe seu ranking e desafie amigos na areia
+                    </Text>
+                </View>
+
+                <TouchableOpacity 
+                    style={styles.button}
+                    onPress={handleStartCompetition}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.buttonText}>
+                        Vamos competir!
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    },
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        paddingHorizontal: 30,
+        paddingVertical: 20,
+        justifyContent: 'space-between',
+    },
+    illustrationContainer: {
+        flex: 1,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        marginTop: 0,
+    },
+    playerImage: {
+        width: '100%',
+        height: 300,
+        maxWidth: 300,
+    },
+    textContainer: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 50,
+    },
+    mainTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#37A51E',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    subText: {
+        fontSize: 14,
+        color: '#555555',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    button: {
+        width: '100%',
+        backgroundColor: '#37A51E',
+        paddingVertical: 15,
+        borderRadius: 8,
+        marginBottom: 20,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });
+
+
