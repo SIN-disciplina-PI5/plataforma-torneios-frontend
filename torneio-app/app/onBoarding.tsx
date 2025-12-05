@@ -17,7 +17,7 @@ export default function OnBoarding() {
   const router = useRouter();
 
   const handleLogin = () => {
-    router.push("/public/login");
+    router.push("user/login");
   };
 
   const handleRegister = () => {
