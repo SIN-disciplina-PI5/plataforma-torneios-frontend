@@ -32,11 +32,11 @@ export default function UserPerfil() {
                 <View style={styles.avatarSection}>
                     <View style={styles.avatarBorder}>
                         <Image
-                            source={require("../../../../assets/images/profile.png")}
+                           
                             style={styles.avatar}
                         />
                     </View>
-                    <Text style={styles.name}>Mácio Bueno</Text>
+                    <Text style={styles.name}>Márcio Bueno</Text>
                     <Text style={styles.handle}>@MarcinhopPvp</Text>
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>Patente Mestre</Text>
