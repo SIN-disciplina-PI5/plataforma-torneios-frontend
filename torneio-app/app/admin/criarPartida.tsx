@@ -92,7 +92,7 @@ function selecionarTorneio(id: any) {
       })
 
       Alert.alert("Sucesso", "Partida criada com sucesso ✅", [
-        { text: "OK", onPress: () => router.replace("/admin/partidas/partidas") }
+        { text: "OK", onPress: () => router.replace("/admin/homeAdmin") }
       ])
 
     } catch (error: any) {
