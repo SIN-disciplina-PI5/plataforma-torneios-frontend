@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal } from 'react-native'
+import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
@@ -70,31 +70,9 @@ export default function AdminSignUp() {
     setDialogoErroVisivel(true)
   }
 
-  function recarregarPagina() {
-    // Fechar o modal
+  function fecharErroDialog() {
     setDialogoErroVisivel(false)
     setErroDetalhes('')
-    
-    // Limpar os campos do formulário
-    setEmail('')
-    setPassword('')
-    setShowPassword(false)
-    
-    // Para "recarregar" a página, vamos navegar para a mesma rota novamente
-    // Isso vai resetar o estado do componente
-    setTimeout(() => {
-      // Usar replace para evitar histórico de navegação
-      router.replace('/admin/loginAdmin')
-    }, 100)
-  }
-
-  function voltarParaLogin() {
-    // Fechar o modal
-    setDialogoErroVisivel(false)
-    setErroDetalhes('')
-    
-    // Navegar para a tela de login
-    router.replace('/admin/loginAdmin')
   }
 
   return (
@@ -189,7 +167,7 @@ export default function AdminSignUp() {
         visible={dialogoErroVisivel}
         transparent={true}
         animationType="fade"
-        onRequestClose={recarregarPagina}
+        onRequestClose={fecharErroDialog}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -203,21 +181,12 @@ export default function AdminSignUp() {
               {erroDetalhes}
             </Text>
 
-            <View style={styles.modalButtonsContainer}>
+            <View style={styles.modalSingleButtonContainer}>
               <TouchableOpacity 
-                style={styles.modalButtonRecarregar}
-                onPress={recarregarPagina}
+                style={styles.modalButtonOk}
+                onPress={fecharErroDialog}
               >
-                <Ionicons name="refresh" size={20} color="#FFF" style={styles.modalButtonIcon} />
-                <Text style={styles.modalButtonRecarregarText}>Recarregar</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.modalButtonLogin}
-                onPress={voltarParaLogin}
-              >
-                <Ionicons name="log-in" size={20} color="#FFF" style={styles.modalButtonIcon} />
-                <Text style={styles.modalButtonLoginText}>Login Novamente</Text>
+                <Text style={styles.modalButtonOkText}>Tentar Novamente</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -369,46 +338,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     fontWeight: '500',
   },
-  modalButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  modalSingleButtonContainer: {
     width: '100%',
-    gap: 12,
     marginTop: 8,
   },
-  modalButtonRecarregar: {
-    flex: 1,
+  modalButtonOk: {
     paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#4A90E2',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  modalButtonRecarregarText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalButtonLogin: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderRadius: 10,
     backgroundColor: '#37A51E',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
   },
-  modalButtonLoginText: {
+  modalButtonOkText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-  },
-  modalButtonIcon: {
-    marginRight: 4,
   },
 })
