@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
-const rankingImage = require("../assets/images/Group291.png");
+const rankingImage = require("../assets/images/group293.png");
 
 export default function OnBoarding() {
   const router = useRouter();
