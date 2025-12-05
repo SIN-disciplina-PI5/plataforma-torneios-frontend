@@ -4,6 +4,8 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 export default function NavBar() {
   const pathname = usePathname();
 
+  const isActive = (route: string) => pathname === route;
+
   return (
     <View
       style={{
@@ -21,7 +23,7 @@ export default function NavBar() {
       }}
     >
       {/* ---------------- HOME ---------------- */}
-      <Link href="/" asChild>
+      <Link href="/admin/homeAdmin" asChild>
         <TouchableOpacity style={{ alignItems: "center" }}>
           <Image
             source={require("../assets/icons/home.png")}
@@ -29,13 +31,13 @@ export default function NavBar() {
               width: 24,
               height: 24,
               resizeMode: "contain",
-              tintColor: pathname === "/" ? "#E60000" : "#444",
+              tintColor: isActive("/") ? "#E60000" : "#444",
             }}
           />
           <Text
             style={{
               fontSize: 12,
-              color: pathname === "/" ? "#E60000" : "#444",
+              color: isActive("/") ? "#E60000" : "#444",
               marginTop: 3,
             }}
           >
@@ -45,7 +47,7 @@ export default function NavBar() {
       </Link>
 
       {/* ---------------- TORNEIOS ---------------- */}
-      <Link href="/listaTorneios" asChild>
+      <Link href="/admin/torneios/torneios" asChild>
         <TouchableOpacity style={{ alignItems: "center" }}>
           <Image
             source={require("../assets/icons/torneios.png")}
@@ -53,13 +55,13 @@ export default function NavBar() {
               width: 24,
               height: 24,
               resizeMode: "contain",
-              tintColor: pathname === "/listaTorneios" ? "#0A4438" : "#444",
+              tintColor: isActive("/listaTorneios") ? "#0A4438" : "#444",
             }}
           />
           <Text
             style={{
               fontSize: 12,
-              color: pathname === "/listaTorneios" ? "#0A4438" : "#444",
+              color: isActive("/listaTorneios") ? "#0A4438" : "#444",
               marginTop: 3,
             }}
           >
@@ -68,8 +70,8 @@ export default function NavBar() {
         </TouchableOpacity>
       </Link>
 
-      {/* ---------------- PERFIL ---------------- */}
-      <Link href="/" asChild>
+      {/* ---------------- PERFIL (Atualizado) ---------------- */}
+      <Link href="/admin/perfilAdmin/perfilAdmin" asChild>
         <TouchableOpacity style={{ alignItems: "center" }}>
           <Image
             source={require("../assets/icons/perfil.png")}
@@ -77,13 +79,14 @@ export default function NavBar() {
               width: 24,
               height: 24,
               resizeMode: "contain",
-              tintColor: pathname === "/perfil" ? "#0A4438" : "#444",
+              // Verifica se o usuário está em qualquer tela dentro da pasta perfilAdmin
+              tintColor: pathname.includes("perfilAdmin") ? "#0A4438" : "#444",
             }}
           />
           <Text
             style={{
               fontSize: 12,
-              color: pathname === "/perfil" ? "#0A4438" : "#444",
+              color: pathname.includes("perfilAdmin") ? "#0A4438" : "#444",
               marginTop: 3,
             }}
           >

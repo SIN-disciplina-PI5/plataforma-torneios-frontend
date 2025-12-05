@@ -9,6 +9,10 @@ import {
     StyleSheet,
     SafeAreaView,
     Modal,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from "react-native";
 import NavBar from "../../../../components/BarraNavegacaoAdmin";
 import colors from "../../../../constants/colors";
@@ -17,9 +21,14 @@ import { api } from "../../../services/api";
 import { useRouter } from "expo-router";
 
 export default function AdminPerfil() {
-    const [username, setUsername] = useState("");
+    const [id, setId] = useState<string | null>(null);
+    const [nome, setNome] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    
+    const [loading, setLoading] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    
     const router = useRouter();
 
     useEffect(() => {
@@ -28,117 +37,170 @@ export default function AdminPerfil() {
 
     async function carregarPerfil() {
         try {
+            setLoading(true);
             const token = await AsyncStorage.getItem("@token");
 
             if (!token) {
-                alert("Sessão expirada. Faça login novamente.");
-                router.replace("/login-admin");
+                Alert.alert("Acesso restrito", "Faça login para continuar.");
+                router.replace("/admin/loginAdmin");
                 return;
             }
 
             const response = await api.get("/admin/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            setUsername(response.data.username);
-            setPassword("");
+            const dados = response.data.admin || response.data;
+
+            setId(dados.id || dados._id || dados.id_usuario);
+            setNome(dados.nome); 
+            setEmail(dados.email);
+
         } catch (error: any) {
-            console.log(error.response?.data || error.message);
-            alert("Erro ao carregar perfil");
+            console.log("Erro ao carregar perfil:", error.response?.status);
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                Alert.alert("Sessão Expirada", "Por favor, faça login novamente.");
+                await logout();
+            } else {
+                Alert.alert("Erro", "Não foi possível carregar seus dados.");
+            }
+        } finally {
+            setLoading(false);
         }
     }
 
     async function atualizarPerfil() {
+        if (!id) {
+            Alert.alert("Erro", "Usuário não identificado.");
+            return;
+        }
+
         try {
             const token = await AsyncStorage.getItem("@token");
 
-            await api.put("/admin", {
-                username,
-                password,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            await api.patch(
+                `/admin/edit/${id}`, 
+                {
+                    nome,
+                    email,
+                    senha: password || undefined,
                 },
-            });
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
 
-            alert("Perfil atualizado ✅");
-            setPassword("");
+            Alert.alert("Sucesso", "Perfil atualizado! ✅");
+            setPassword(""); 
+
         } catch (error: any) {
-            console.log(error.response?.data || error.message);
-            alert("Erro ao atualizar perfil");
+            console.log(error);
+            Alert.alert("Erro", "Não foi possível atualizar o perfil.");
         }
     }
 
     async function deletarConta() {
+        if (!id) return;
+
         try {
             const token = await AsyncStorage.getItem("@token");
 
-            await api.delete("/admin", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            await api.delete(`/admin/delete/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            await AsyncStorage.removeItem("@token");
-
-            alert("Conta deletada com sucesso 💣");
-            router.replace("/login-admin");
+            await logout(); 
+            Alert.alert("Conta Deletada", "Sua conta foi excluída com sucesso.");
 
         } catch (error: any) {
-            console.log(error.response?.data || error.message);
-            alert("Erro ao deletar conta");
+            console.log(error);
+            Alert.alert("Erro", "Não foi possível deletar a conta.");
+            setShowDeleteModal(false);
         }
     }
 
     async function logout() {
         await AsyncStorage.removeItem("@token");
-        router.replace("/login-admin");
+        router.replace("/admin/loginAdmin");
+    }
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.greenBrand || "#2f6b3b"} />
+            </View>
+        );
     }
 
     return (
         <SafeAreaView style={styles.safe}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>ADMIN</Text>
-                </View>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>ADMIN</Text>
+                    </View>
 
-                <View style={styles.avatarSection}>
-                    <View style={styles.avatarBorder}>
-                        <Image
-                            source={require("../../../../assets/images/fotoAdmin.jpg")}
-                            style={styles.avatar}
+                    <View style={styles.avatarSection}>
+                        <View style={styles.avatarBorder}>
+                            <Image
+                                source={require("../../../../assets/images/fotoAdmin.jpg")}
+                                style={styles.avatar}
+                                resizeMode="cover"
+                            />
+                        </View>
+                        <Text style={styles.name}>{nome || "Admin"}</Text>
+                        <Text style={styles.handle}>{email}</Text>
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>Admin</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.form}>
+                        <Text style={styles.label}>Nome de Usuário</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={nome}
+                            onChangeText={setNome}
                         />
+
+                        <Text style={styles.label}>Email</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+
+                        <Text style={styles.label}>Nova Senha (opcional)</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            placeholder="Digite apenas para alterar"
+                        />
+
+                        <TouchableOpacity style={styles.editButton} onPress={atualizarPerfil}>
+                            <Text style={styles.editButtonText}>Salvar Alterações</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.deleteButton} onPress={() => setShowDeleteModal(true)}>
+                            <Text style={styles.deleteButtonText}>DELETAR CONTA</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                            <Text style={styles.logoutButtonText}>SAIR</Text>
+                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.name}>{username || "Carregando..."}</Text>
-                    <Text style={styles.handle}>@{username}</Text>
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>Admin</Text>
-                    </View>
-                </View>
-
-                <View style={styles.form}>
-
-                    <Text style={styles.label}>Username</Text>
-                    <TextInput style={styles.input} value={username} onChangeText={setUsername} />
-
-                    <Text style={styles.label}>Senha</Text>
-                    <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry />
-
-                    <TouchableOpacity style={styles.editButton} onPress={atualizarPerfil}>
-                        <Text style={styles.editButtonText}>Editar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.deleteButton} onPress={() => setShowDeleteModal(true)}>
-                        <Text style={styles.deleteButtonText}>DELETAR CONTA</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                        <Text style={styles.logoutButtonText}>SAIR</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             <Modal
                 visible={showDeleteModal}
@@ -148,17 +210,14 @@ export default function AdminPerfil() {
             >
                 <View style={styles.modalBackdrop}>
                     <View style={styles.modalCard}>
-                        <View style={styles.modalIconCircle}>
-                            <Text style={styles.modalIcon}>?</Text>
-                        </View>
-                        <Text style={styles.modalTitle}>Deletar?</Text>
+                        <Text style={styles.modalTitle}>Tem certeza?</Text>
                         <Text style={styles.modalMessage}>
-                            Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita.
+                            Essa ação excluirá permanentemente sua conta.
                         </Text>
 
                         <View style={styles.modalActions}>
                             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowDeleteModal(false)}>
-                                <Text style={styles.modalCancelText}>Não, Cancelar</Text>
+                                <Text style={styles.modalCancelText}>Cancelar</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.modalConfirm} onPress={deletarConta}>
@@ -176,7 +235,13 @@ export default function AdminPerfil() {
 
 const styles = StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.white },
-    container: { paddingBottom: 90 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.white },
+    
+    scrollContainer: { 
+        paddingBottom: 100,
+        flexGrow: 1 
+    },
+
     header: {
         height: 120,
         backgroundColor: colors.greenBrand || "#2f6b3b",
@@ -192,12 +257,13 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         alignItems: "center",
         justifyContent: "center",
-        elevation: 3,
+        elevation: 5,
         shadowColor: "#000",
-        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
         shadowRadius: 4,
     },
-    avatar: { width: 100, height: 100, borderRadius: 50, resizeMode: "cover" },
+    avatar: { width: 100, height: 100, borderRadius: 50 },
     name: { fontSize: 20, fontWeight: "700", marginTop: 8 },
     handle: { color: colors.textLabel || "#808280", marginTop: 4 },
     badge: {
@@ -219,7 +285,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.cardBackground || "#f3f3f3",
     },
     editButton: {
-        marginTop: 18,
+        marginTop: 24,
         backgroundColor: colors.greenSuccess || "#2fa026",
         paddingVertical: 14,
         borderRadius: 8,
@@ -243,40 +309,43 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     logoutButtonText: { color: colors.advanced || "#dc6969", fontWeight: "700" },
+    
+    // Modal Styles
     modalBackdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.35)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
     },
     modalCard: {
         width: '100%',
-        maxWidth: 420,
+        maxWidth: 350,
         backgroundColor: colors.white,
-        borderRadius: 10,
-        padding: 20,
+        borderRadius: 12,
+        padding: 24,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        elevation: 6,
+        elevation: 10,
     },
-    modalIconCircle: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: colors.basic || '#fdb66a',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 12,
-    },
-    modalIcon: { fontSize: 20, color: colors.white, fontWeight: '700' },
-    modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-    modalMessage: { textAlign: 'center', color: colors.textLabel || '#808280', marginBottom: 16 },
+    modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12, color: '#333' },
+    modalMessage: { textAlign: 'center', color: '#666', marginBottom: 24, fontSize: 16 },
     modalActions: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
-    modalCancel: { flex: 1, marginRight: 8, backgroundColor: '#0a66d1', paddingVertical: 10, borderRadius: 6, alignItems: 'center' },
-    modalCancelText: { color: colors.white, fontWeight: '700' },
-    modalConfirm: { flex: 1, marginLeft: 8, borderWidth: 1, borderColor: colors.error || '#e9473b', paddingVertical: 10, borderRadius: 6, alignItems: 'center', backgroundColor: colors.white },
-    modalConfirmText: { color: colors.error || '#e9473b', fontWeight: '700' },
+    modalCancel: { 
+        flex: 1, 
+        marginRight: 8, 
+        backgroundColor: '#CCC', 
+        paddingVertical: 12, 
+        borderRadius: 8, 
+        alignItems: 'center' 
+    },
+    modalCancelText: { color: '#333', fontWeight: '700' },
+    modalConfirm: { 
+        flex: 1, 
+        marginLeft: 8, 
+        backgroundColor: colors.error || '#e9473b', 
+        paddingVertical: 12, 
+        borderRadius: 8, 
+        alignItems: 'center' 
+    },
+    modalConfirmText: { color: colors.white, fontWeight: '700' },
 });

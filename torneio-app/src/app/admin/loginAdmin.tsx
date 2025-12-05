@@ -30,7 +30,7 @@ export default function AdminSignUp() {
       console.log(response.data)
 
       alert('Login realizado com sucesso!')
-      router.push('/homeAdmin')
+      router.push('/admin/homeAdmin')
 
     } catch (error: any) {
       console.log(error.response?.data || error.message)
