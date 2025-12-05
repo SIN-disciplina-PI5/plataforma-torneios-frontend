@@ -1,10 +1,18 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView, Pressable, Linking } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { HeaderTitle } from '@react-navigation/elements';
-import { router } from 'expo-router';
-import colors from '../../constants/colors';
-
+import React from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Pressable,
+  Linking,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { HeaderTitle } from "@react-navigation/elements";
+import { router } from "expo-router";
+import colors from "../../constants/colors";
 
 export default function HomeScreen() {
   return (
@@ -13,7 +21,9 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Bem-vindo ao Arena Lagoa Beach</Text>
-        <Text>Participe de torneios, acompanhe seu ranking e desafie amigos na areia</Text>
+        <Text>
+          Participe de torneios, acompanhe seu ranking e desafie amigos na areia
+        </Text>
       </View>
 
       <Pressable
@@ -25,7 +35,7 @@ export default function HomeScreen() {
           marginTop: 20,
         }}
         onPress={() => {
-          router.push("/public/login"); 
+          router.push("/public/login");
         }}
       >
         <Text
@@ -46,16 +56,15 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
-
 });
