@@ -1,10 +1,18 @@
-import React, { useState } from 'react'
-import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { Button, Text } from 'react-native-paper'
-import { useRouter } from 'expo-router'
-import { TextInput as NativeInput } from 'react-native'
-import { api } from '../../services/api'
+import React, { useState } from 'react';
+import { 
+  View, 
+  Image, 
+  ImageBackground, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Dimensions,
+  TextInput as NativeInput
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, Text } from 'react-native-paper';
+import { useRouter } from 'expo-router';
+
+import { api } from '@/src/services/api';
 
 const { width } = Dimensions.get('window')
 
@@ -42,7 +50,7 @@ export default function AdminSignUp() {
     <View style={styles.container}>
 
       <ImageBackground
-        source={require("../../../assets/images/ArenaLogo.jpg")}
+        source={require('@/assets/images/ArenaLogo.jpg')}
         style={styles.header}
         resizeMode="cover"
       >
@@ -84,8 +92,9 @@ export default function AdminSignUp() {
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
                 <Image
                     source={showPassword
-                    ? require('../../../assets/images/eye-open.png')
-                    : require('../../../assets/images/eye-closed.png')}
+                      
+                    ? require('@/assets/images/eye-open.png')
+                    : require('@/assets/images/eye-closed.png')}
                     style={styles.eyeIcon}
                 />
                 </TouchableOpacity>

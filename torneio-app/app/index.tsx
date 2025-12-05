@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, SafeAreaView, ScrollView, Pressable, Lin
 import { Ionicons } from '@expo/vector-icons';
 import { HeaderTitle } from '@react-navigation/elements';
 import { router } from 'expo-router';
-import colors from '../../constants/colors';
+import colors from '../constants/colors';
 
 
 export default function HomeScreen() {
@@ -25,7 +25,7 @@ export default function HomeScreen() {
           marginTop: 20,
         }}
         onPress={() => {
-          router.push("/public/login"); 
+          router.push("/user/login"); 
         }}
       >
         <Text

@@ -1,66 +1,47 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useEffect, useState } from "react"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin";
-import { api } from "../../../services/api"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useState } from "react"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin"
+import { api } from "../../../src/services/api"
+import { useRouter } from "expo-router"
 
-export default function EditarTorneio() {
-  const { id } = useLocalSearchParams()
+export default function CriarTorneio() {
   const [nome, setNome] = useState("")
   const [categoria, setCategoria] = useState("")
   const [vagas, setVagas] = useState("")
-  const router = useRouter()
-
+  
   const categorias = ["Iniciante", "Intermediário", "Avançado"]
 
-  useEffect(() => {
-    buscarTorneio()
-  }, [])
+  const router = useRouter()
 
-  async function buscarTorneio() {
-    try {
-      const response = await api.get(`/torneio/${id}`)
-      const torneio = response.data
-
-      setNome(torneio.nome)
-      setCategoria(torneio.categoria)
-      setVagas(String(torneio.vagas))
-    } catch (error) {
-      console.log(error)
-      alert("Erro ao carregar torneio")
-      router.back()
-    }
-  }
-
-  async function editarTorneio() {
+  async function criarTorneio() {
     if (!nome || !vagas || Number(vagas) <= 0) return
 
     try {
-      await api.put(`/torneio/${id}`, {
+      await api.post("/torneio", {
         nome,
         categoria,
-        vagas
+        vagas: Number(vagas)
       })
 
-      alert("Torneio atualizado com sucesso ✅")
+      alert("Torneio criado com sucesso ✅")
 
       setNome("")
-      setCategoria("")
+      setCategoria("Intermediário")
       setVagas("")
 
-      router.replace("/admin/torneios")
+      router.replace("/admin/torneios/torneios")
 
     } catch (error: any) {
       console.log(error.response?.data || error.message)
-      alert("Erro ao editar torneio")
+      alert("Erro ao criar torneio")
     }
   }
 
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>Editar Torneio</Text>
+      <Text style={styles.title}>Criar Torneio</Text>
 
       <View style={styles.field}>
         <Text style={styles.label}>Nome</Text>
@@ -119,9 +100,9 @@ export default function EditarTorneio() {
           (!nome || !vagas || Number(vagas) <= 0) && { opacity: 0.5 }
         ]}
         disabled={!nome || !vagas || Number(vagas) <= 0}
-        onPress={editarTorneio}
+        onPress={criarTorneio}
       >
-        <Text style={styles.buttonText}>Salvar</Text>
+        <Text style={styles.buttonText}>Criar</Text>
       </TouchableOpacity>
 
       <View style={styles.barraFixa}>
@@ -139,24 +120,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50
   },
-
   title: {
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 20
   },
-
   field: {
     marginBottom: 20
   },
-
   label: {
     fontSize: 12,
     color: "#111",
     marginBottom: 6,
-    fontWeight: "700",
+    fontWeight: "700"
   },
-
   input: {
     height: 44,
     borderWidth: 1,
@@ -166,7 +143,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     backgroundColor: "#FFF"
   },
-
   option: {
     height: 44,
     borderWidth: 1,
@@ -178,22 +154,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center"
   },
-
   optionActive: {
     borderColor: "#2FA11D",
     backgroundColor: "#F3FDF1"
   },
-
   optionText: {
     fontSize: 15,
     color: "#444"
   },
-
   optionTextActive: {
     fontWeight: "600",
     color: "#2FA11D"
   },
-
   button: {
     marginTop: 30,
     height: 48,
@@ -202,17 +174,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center"
   },
-
   buttonText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "600"
   },
-
   barraFixa: {
     position: "absolute",
     bottom: 0,
     left: 0,
-    right: 0,
+    right: 0
   }
 })

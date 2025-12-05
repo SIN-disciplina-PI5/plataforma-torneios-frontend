@@ -12,14 +12,55 @@ import {
   Platform,
 } from "react-native";
 import { Link } from "expo-router";
+import { api } from "@/src/services/api";
+import { Alert } from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import colors from "@/constants/colors";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [senha, setsenha] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
 
-  function handleSignIn() {
-    console.log({ email, password });
+
+  async function handleLogin() {
+    setLoading(true);
+
+    try {
+      const response = await api.post("/users/login", {
+        email,
+        senha
+      });
+
+      setLoading(false);
+
+      // Axios só chega no "try" quando a requisição é bem-sucedida (status 2xx)
+      const data = response.data;
+
+      if (!data?.token) {
+        Alert.alert("Erro", "Token não encontrado na resposta");
+        return;
+      }
+
+      await AsyncStorage.setItem("token", data.token);
+
+      router.replace("/user/home");
+    } catch (error: any) {
+      setLoading(false);
+
+      const mensagem =
+        error?.response?.data?.message ||
+        "Email ou senha inválidos ou erro na requisição";
+
+      console.log("Enviando:", { name, email, senha });
+
+      Alert.alert("Erro", mensagem);
+
+    }
   }
+  const admin = () => router.replace("../../admin/loginAdmin");
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -28,7 +69,7 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <Image
-          source={require("../../../assets/images/ArenaLogo.jpg")}
+          source={require("@/assets/images/ArenaLogo.jpg")}
           style={styles.profileImage}
           resizeMode="cover"
         />
@@ -52,20 +93,33 @@ export default function LoginScreen() {
             <TextInput
               placeholder="Digite sua senha"
               style={styles.input}
-              value={password}
-              onChangeText={setPassword}
+              value={senha}
+              onChangeText={setsenha}
               secureTextEntry
             />
 
-            <Pressable style={styles.button} onPress={handleSignIn}>
+            <Pressable style={styles.button} onPress={handleLogin}>
               <Text style={styles.buttonText}>Entrar</Text>
             </Pressable>
 
-            <Link href="/public/signup">
+
+            <Link href="/user/signup">
+              <Text style={{
+                textAlign: "center",
+                justifyContent: "center",
+                fontSize: 15,
+                fontWeight: "500",
+              }}>  Não possui uma conta? </Text>
               <Text style={styles.link}>
-                Não possui uma conta? Cadastre-se
+                Cadastre-se
               </Text>
             </Link>
+
+          
+              <Pressable style={styles.buttonAdmin} onPress={admin}>
+               <Text style={styles.buttonText}>Admin</Text>
+             </Pressable>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -87,7 +141,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: "100%",
     height: 220,
-    
+
     marginBottom: 25,
   },
 
@@ -128,6 +182,17 @@ const styles = StyleSheet.create({
     marginTop: 25,
     marginBottom: 15,
   },
+   buttonAdmin: {
+    backgroundColor: colors.greenSuccess,
+    alignItems: "center",
+    width: "20%",
+    display: "flex",
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 200,
+    marginBottom: 15,
+  
+  },
 
   buttonText: {
     color: "#fff",
@@ -138,8 +203,8 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 18,
     textAlign: "center",
-    color: "#2563eb",
     fontSize: 15,
     fontWeight: "500",
+    color: colors.greenSuccess,
   },
 });

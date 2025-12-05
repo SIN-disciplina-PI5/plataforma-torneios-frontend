@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BarraNavegacao from "../../../../components/BarraNavegacao";
-import SuccessModalPaper from "../../../../components/inscricaoRealizada";
+import BarraNavegacao from "../../../components/BarraNavegacao";
+import SuccessModalPaper from "../../../components/inscricaoRealizada";
 
 interface Torneio {
   id_torneio: string;
@@ -122,7 +122,7 @@ export default function ListaTorneios() {
                 source={
                   typeof item.imagem === "string"
                     ? { uri: item.imagem }
-                    : require("../../../../assets/images/beach1.png")
+                    : require("@/assets/images/beach1.png")
                 }
                 style={styles.imagem}
               />

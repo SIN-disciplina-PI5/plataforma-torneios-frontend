@@ -1,47 +1,66 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useState } from "react"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin"
-import { api } from "../../../services/api"
-import { useRouter } from "expo-router"
+import { useEffect, useState } from "react"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin";
+import { api } from "../../../src/services/api"
+import { useLocalSearchParams, useRouter } from "expo-router"
 
-export default function CriarTorneio() {
+export default function EditarTorneio() {
+  const { id } = useLocalSearchParams()
   const [nome, setNome] = useState("")
   const [categoria, setCategoria] = useState("")
   const [vagas, setVagas] = useState("")
-  
-  const categorias = ["Iniciante", "Intermediário", "Avançado"]
-
   const router = useRouter()
 
-  async function criarTorneio() {
+  const categorias = ["Iniciante", "Intermediário", "Avançado"]
+
+  useEffect(() => {
+    buscarTorneio()
+  }, [])
+
+  async function buscarTorneio() {
+    try {
+      const response = await api.get(`/torneio/${id}`)
+      const torneio = response.data
+
+      setNome(torneio.nome)
+      setCategoria(torneio.categoria)
+      setVagas(String(torneio.vagas))
+    } catch (error) {
+      console.log(error)
+      alert("Erro ao carregar torneio")
+      router.back()
+    }
+  }
+
+  async function editarTorneio() {
     if (!nome || !vagas || Number(vagas) <= 0) return
 
     try {
-      await api.post("/torneio", {
+      await api.put(`/torneio/${id}`, {
         nome,
         categoria,
-        vagas: Number(vagas)
+        vagas
       })
 
-      alert("Torneio criado com sucesso ✅")
+      alert("Torneio atualizado com sucesso ✅")
 
       setNome("")
-      setCategoria("Intermediário")
+      setCategoria("")
       setVagas("")
 
-      router.replace("/admin/torneios/torneios")
+      router.replace("/admin/torneios")
 
     } catch (error: any) {
       console.log(error.response?.data || error.message)
-      alert("Erro ao criar torneio")
+      alert("Erro ao editar torneio")
     }
   }
 
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>Criar Torneio</Text>
+      <Text style={styles.title}>Editar Torneio</Text>
 
       <View style={styles.field}>
         <Text style={styles.label}>Nome</Text>
@@ -100,9 +119,9 @@ export default function CriarTorneio() {
           (!nome || !vagas || Number(vagas) <= 0) && { opacity: 0.5 }
         ]}
         disabled={!nome || !vagas || Number(vagas) <= 0}
-        onPress={criarTorneio}
+        onPress={editarTorneio}
       >
-        <Text style={styles.buttonText}>Criar</Text>
+        <Text style={styles.buttonText}>Salvar</Text>
       </TouchableOpacity>
 
       <View style={styles.barraFixa}>
@@ -120,20 +139,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50
   },
+
   title: {
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 20
   },
+
   field: {
     marginBottom: 20
   },
+
   label: {
     fontSize: 12,
     color: "#111",
     marginBottom: 6,
-    fontWeight: "700"
+    fontWeight: "700",
   },
+
   input: {
     height: 44,
     borderWidth: 1,
@@ -143,6 +166,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     backgroundColor: "#FFF"
   },
+
   option: {
     height: 44,
     borderWidth: 1,
@@ -154,18 +178,22 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center"
   },
+
   optionActive: {
     borderColor: "#2FA11D",
     backgroundColor: "#F3FDF1"
   },
+
   optionText: {
     fontSize: 15,
     color: "#444"
   },
+
   optionTextActive: {
     fontWeight: "600",
     color: "#2FA11D"
   },
+
   button: {
     marginTop: 30,
     height: 48,
@@ -174,15 +202,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center"
   },
+
   buttonText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "600"
   },
+
   barraFixa: {
     position: "absolute",
     bottom: 0,
     left: 0,
-    right: 0
+    right: 0,
   }
 })

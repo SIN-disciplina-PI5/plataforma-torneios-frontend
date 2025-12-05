@@ -1,6 +1,6 @@
 import { Slot } from "expo-router";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
-import { config } from "../../src/app/theme";
+import { config } from "./theme";
 import { PaperProvider } from "react-native-paper";
 
 export default function Layout() {

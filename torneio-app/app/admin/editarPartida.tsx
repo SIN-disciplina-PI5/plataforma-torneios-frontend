@@ -2,8 +2,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, 
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 import DateTimePicker from "@react-native-community/datetimepicker"
-import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin" 
-import { api } from '../../services/api'
+import BarraNavegacaoAdmin from "../../components/BarraNavegacaoAdmin" 
+import { api } from '../../src/services/api'
 import { useLocalSearchParams, useRouter } from "expo-router"
 
 export default function EditarPartida() {
