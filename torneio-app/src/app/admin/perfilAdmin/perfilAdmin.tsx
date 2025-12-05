@@ -12,7 +12,8 @@ import {
     ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Keyboard
 } from "react-native";
 import NavBar from "../../../../components/BarraNavegacaoAdmin";
 import colors from "../../../../constants/colors";
@@ -27,6 +28,7 @@ export default function AdminPerfil() {
     const [password, setPassword] = useState("");
     
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     
     const router = useRouter();
@@ -46,20 +48,33 @@ export default function AdminPerfil() {
                 return;
             }
 
+            console.log("🔍 Buscando dados...");
             const response = await api.get("/admin/me", {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            const dados = response.data.admin || response.data;
+            console.log("📦 Resposta da API:", response.data);
 
-            setId(dados.id || dados._id || dados.id_usuario);
-            setNome(dados.nome); 
-            setEmail(dados.email);
+            const dados = response.data.data || response.data.admin || response.data;
+
+            console.log("👤 Dados do Usuário:", dados);
+
+            const idEncontrado = dados.id || dados._id || dados.id_usuario || dados.userId;
+
+            if (idEncontrado) {
+                setId(idEncontrado);
+                console.log("✅ ID Identificado:", idEncontrado);
+            } else {
+                console.error("❌ ERRO: ID não encontrado no objeto de dados.");
+                Alert.alert("Erro Técnico", "Não foi possível identificar seu usuário.");
+            }
+
+            setNome(dados.nome || dados.username || ""); 
+            setEmail(dados.email || "");
 
         } catch (error: any) {
-            console.log("Erro ao carregar perfil:", error.response?.status);
+            console.log("Erro perfil:", error.response?.status);
             if (error.response?.status === 401 || error.response?.status === 403) {
-                Alert.alert("Sessão Expirada", "Por favor, faça login novamente.");
                 await logout();
             } else {
                 Alert.alert("Erro", "Não foi possível carregar seus dados.");
@@ -70,32 +85,52 @@ export default function AdminPerfil() {
     }
 
     async function atualizarPerfil() {
-        if (!id) {
-            Alert.alert("Erro", "Usuário não identificado.");
+        console.log("🟢 1. Botão 'Salvar' foi pressionado!");
+        console.log("📝 Dados atuais no estado:", { nome, email, id });
+
+        if (!nome || !email) {
+            console.log("🔴 Erro: Nome ou Email vazios");
+            Alert.alert("Atenção", "Nome e Email são obrigatórios.");
             return;
         }
 
+        if (!id) {
+            console.log("🔴 Erro: ID nulo");
+            Alert.alert("Erro", "Usuário não identificado. Relogue no app.");
+            return;
+        }
+
+        Keyboard.dismiss();
+
         try {
+            console.log("🟡 2. Iniciando requisição para o Back-end...");
+            setSaving(true);
             const token = await AsyncStorage.getItem("@token");
 
-            await api.patch(
+            const payload: any = { nome, email };
+            if (password) payload.senha = password;
+
+            console.log("📦 Payload enviado:", payload);
+            console.log("🔗 URL:", `/admin/edit/${id}`);
+
+            const response = await api.patch(
                 `/admin/edit/${id}`, 
-                {
-                    nome,
-                    email,
-                    senha: password || undefined,
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+                payload,
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            console.log("✅ 3. Sucesso! Resposta:", response.data);
             Alert.alert("Sucesso", "Perfil atualizado! ✅");
             setPassword(""); 
-
+            
         } catch (error: any) {
-            console.log(error);
-            Alert.alert("Erro", "Não foi possível atualizar o perfil.");
+            console.log("❌ 4. Erro no Catch:", error);
+            console.log("Detalhe do erro:", error.response?.data);
+            
+            const msg = error.response?.data?.message || "Não foi possível atualizar.";
+            Alert.alert("Erro ao Salvar", msg);
+        } finally {
+            setSaving(false);
         }
     }
 
@@ -110,7 +145,7 @@ export default function AdminPerfil() {
             });
 
             await logout(); 
-            Alert.alert("Conta Deletada", "Sua conta foi excluída com sucesso.");
+            Alert.alert("Conta Deletada", "Sua conta foi excluída. Até logo!");
 
         } catch (error: any) {
             console.log(error);
@@ -120,14 +155,19 @@ export default function AdminPerfil() {
     }
 
     async function logout() {
-        await AsyncStorage.removeItem("@token");
-        router.replace("/admin/loginAdmin");
+        try {
+            await AsyncStorage.removeItem("@token");
+            router.replace("/admin/loginAdmin");
+        } catch (e) {
+            console.log("Erro logout", e);
+        }
     }
 
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.greenBrand || "#2f6b3b"} />
+                <Text style={{marginTop: 10, color: '#666'}}>Carregando perfil...</Text>
             </View>
         );
     }
@@ -141,6 +181,7 @@ export default function AdminPerfil() {
                 <ScrollView 
                     contentContainerStyle={styles.scrollContainer}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="always"
                 >
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>ADMIN</Text>
@@ -167,6 +208,7 @@ export default function AdminPerfil() {
                             style={styles.input}
                             value={nome}
                             onChangeText={setNome}
+                            placeholder="Seu nome"
                         />
 
                         <Text style={styles.label}>Email</Text>
@@ -176,6 +218,7 @@ export default function AdminPerfil() {
                             onChangeText={setEmail}
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            placeholder="seu@email.com"
                         />
 
                         <Text style={styles.label}>Nova Senha (opcional)</Text>
@@ -187,8 +230,16 @@ export default function AdminPerfil() {
                             placeholder="Digite apenas para alterar"
                         />
 
-                        <TouchableOpacity style={styles.editButton} onPress={atualizarPerfil}>
-                            <Text style={styles.editButtonText}>Salvar Alterações</Text>
+                        <TouchableOpacity 
+                            style={[styles.editButton, saving && { opacity: 0.7 }]} 
+                            onPress={atualizarPerfil}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <ActivityIndicator color="#FFF" size="small" />
+                            ) : (
+                                <Text style={styles.editButtonText}>Salvar Alterações</Text>
+                            )}
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.deleteButton} onPress={() => setShowDeleteModal(true)}>
@@ -202,6 +253,7 @@ export default function AdminPerfil() {
                 </ScrollView>
             </KeyboardAvoidingView>
 
+            {/* Modal de Confirmação de Deleção */}
             <Modal
                 visible={showDeleteModal}
                 transparent
@@ -212,7 +264,7 @@ export default function AdminPerfil() {
                     <View style={styles.modalCard}>
                         <Text style={styles.modalTitle}>Tem certeza?</Text>
                         <Text style={styles.modalMessage}>
-                            Essa ação excluirá permanentemente sua conta.
+                            Essa ação excluirá permanentemente sua conta de administrador.
                         </Text>
 
                         <View style={styles.modalActions}>
@@ -290,8 +342,10 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: "center",
+        justifyContent: "center",
+        height: 50,
     },
-    editButtonText: { color: colors.white, fontWeight: "700" },
+    editButtonText: { color: colors.white, fontWeight: "700", fontSize: 16 },
     deleteButton: {
         marginTop: 12,
         backgroundColor: colors.error || "#e9473b",

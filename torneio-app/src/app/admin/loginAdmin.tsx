@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native'
+import { View, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
 import { api } from '../../services/api'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const { width } = Dimensions.get('window')
 
@@ -20,50 +21,29 @@ export default function AdminSignUp() {
 
   async function handleLogin() {
     try {
-      if (!email || !password) {
-        mostrarErroDialog('Preencha email e senha')
-        return
-      }
+        const response = await api.post("/admin/login", { 
+            email: email, 
+            senha: password
+        });
 
-      // Validação básica de email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(email)) {
-        mostrarErroDialog('Por favor, insira um email válido')
-        return
-      }
+        console.log("Resposta do Login:", response.data); 
 
-      setCarregando(true)
-      
-      const response = await api.post('/admin/login', {
-        email: email,
-        senha: password
-      })
+        const token = response.data.token || response.data.data?.token;
 
-      console.log('Login bem-sucedido:', response.data)
+        if (!token) {
+            alert("Erro: O backend não retornou um token!");
+            return;
+        }
 
-      // Redirecionar para homeAdmin após login bem-sucedido
-      router.replace('./homeAdmin')
+        await AsyncStorage.setItem("@token", token);
+        
+        router.replace("/admin/homeAdmin");
 
-    } catch (error: any) {
-      console.log('Erro no login:', error.response?.data || error.message)
-      
-      let mensagemErro = 'Email ou senha inválidos'
-      
-      if (error.response?.status === 401) {
-        mensagemErro = 'Credenciais inválidas'
-      } else if (error.response?.status === 404) {
-        mensagemErro = 'Usuário não encontrado'
-      } else if (error.response?.data?.error) {
-        mensagemErro = error.response.data.error
-      } else if (!error.response) {
-        mensagemErro = 'Erro de conexão. Verifique sua internet.'
-      }
-      
-      mostrarErroDialog(mensagemErro)
-    } finally {
-      setCarregando(false)
+    } catch (error) {
+        console.log(error);
+        alert("Erro ao fazer login");
     }
-  }
+}
 
   function mostrarErroDialog(erro: string) {
     setErroDetalhes(erro)
