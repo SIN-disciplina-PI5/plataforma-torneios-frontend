@@ -168,7 +168,10 @@ export default function PartidasList() {
                             <View style={styles.acoesContainer}>
                                 <TouchableOpacity
                                     style={styles.acaoButton}
-                                    onPress={() => router.push(`/partidas/edit/${p.id_partida}`)}
+                                    onPress={() => router.push({
+                                        pathname: "/admin//editarPartida",
+                                        params: { id: p.id_partida } // ID vai como parametro[, não na URL]
+                                    })}
                                 >
                                     <Ionicons name="pencil-outline" size={16} color="#666666" />
                                 </TouchableOpacity>
