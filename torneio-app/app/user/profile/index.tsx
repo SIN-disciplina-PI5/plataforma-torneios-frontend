@@ -442,7 +442,7 @@ export default function UserPerfil() {
                 
                 {/* Group332 abaixo do texto */}
                 <Image
-                    source={require("../../../assets/images/Group 332.png")}
+                    source={require("../../../assets/images/group332.png")}
                     style={styles.group332}
                     resizeMode="contain"
                 />
