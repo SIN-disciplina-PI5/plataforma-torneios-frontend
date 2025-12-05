@@ -6,8 +6,8 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 import { useRouter } from "expo-router"
-import { api } from "../../../services/api"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin"
+import { api } from "../../../src/services/api"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin"
 
 // Importações do React Native Paper
 import {

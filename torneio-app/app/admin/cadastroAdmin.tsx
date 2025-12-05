@@ -3,8 +3,8 @@ import { View, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal,
 import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
-import { TextInput } from 'react-native-paper'
-import { api } from '../../services/api'
+import { TextInput as NativeInput } from 'react-native'
+import { api } from '@/src/services/api'
 
 const { width } = Dimensions.get('window')
 
@@ -127,11 +127,11 @@ export default function AdminSignUp() {
     <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
       <View style={styles.container}>
 
-        <ImageBackground
-          source={require("../../../assets/images/ArenaLogo.jpg")}
-          style={styles.header}
-          resizeMode="cover"
-        >
+      <ImageBackground
+        source={require('@/assets/images/ArenaLogo.jpg')}
+        style={styles.header}
+        resizeMode="cover"
+      >
 
           <TouchableOpacity 
             style={styles.backButton}
@@ -340,10 +340,10 @@ const styles = StyleSheet.create({
     minHeight: '100%',
   },
   header: {
-    width: width,
+    width: "100%",
     height: width * 0.55,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   backButton: {
     position: 'absolute',

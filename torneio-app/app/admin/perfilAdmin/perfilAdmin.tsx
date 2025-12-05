@@ -15,10 +15,10 @@ import {
     Platform,
     Keyboard
 } from "react-native";
-import NavBar from "../../../../components/BarraNavegacaoAdmin";
-import colors from "../../../../constants/colors";
+import NavBar from "../../../components/BarraNavegacaoAdmin";
+import colors from "../../../constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api } from "../../../services/api";
+import { api } from "@/src/services/api";
 import { useRouter } from "expo-router";
 
 export default function AdminPerfil() {

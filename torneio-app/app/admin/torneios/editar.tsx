@@ -4,12 +4,13 @@ import {
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useEffect, useState } from "react"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin"
-import { api } from "../../../services/api"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin"
+import { api } from "@/src/services/api"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { TextInput, Button, Chip, Divider, Snackbar, ActivityIndicator } from "react-native-paper"
 
 export default function EditarTorneio() {
+
   const { id } = useLocalSearchParams()
   const [nome, setNome] = useState("")
   const [categoria, setCategoria] = useState("")

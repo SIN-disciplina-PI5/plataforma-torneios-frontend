@@ -13,33 +13,53 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import colors from "../../../constants/colors";
+import { api } from "../../src/services/api";
+import { Alert } from "react-native";
+import colors from "../../constants/colors";
+
+
 // import { supabase } from "../../lib/supabase";
 
 export default function Signup() {
-  const [name, setName] = useState("");
+  const [nome, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [senha, setsenha] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSignUp() {
-    setLoading(true);
+  setLoading(true);
 
-    // Exemplo com Supabase
-    // const { error } = await supabase.auth.signUp({
-    //   email,
-    //   password,
-    // });
+  try {
+    //
+  const response = await api.post("/users/signup", {
+  nome,
+  email,
+  senha,
+}); 
 
-    // if (error) {
-    //   Alert.alert("Erro", error.message);
-    //   setLoading(false);
-    //   return;
-    // }
 
     setLoading(false);
-    router.replace("/public/login");
+
+    Alert.alert(
+      "Sucesso",
+      "Conta criada com sucesso!"
+    );
+
+    router.replace("/user/login");
+  } catch (error: any) {
+    setLoading(false);
+
+    const mensagem =
+      error?.response?.data?.message ||
+      "Não foi possível criar a conta";
+
+      console.log("Enviando:", { nome, email, senha });
+
+    Alert.alert("Erro", mensagem);
   }
+}
+
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -48,7 +68,7 @@ export default function Signup() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
           <Image
-            source={require("../../../assets/images/ArenaLogo.jpg")}
+            source={require("@/assets/images/ArenaLogo.jpg")}
             style={styles.profileImage}
             resizeMode="cover"
           />
@@ -70,7 +90,7 @@ export default function Signup() {
               <TextInput
                 style={styles.input}
                 placeholder="Digite seu nome"
-                value={name}
+                value={nome}
                 onChangeText={setName}
               />
 
@@ -86,8 +106,8 @@ export default function Signup() {
               <TextInput
                 placeholder="Digite sua senha"
                 style={styles.input}
-                value={password}
-                onChangeText={setPassword}
+                value={senha}
+                onChangeText={setsenha}
                 secureTextEntry
               />
 
@@ -97,10 +117,16 @@ export default function Signup() {
                 </Text>
               </Pressable>
 
-              <Link href="/public/login">
-                <Text style={styles.link}>
-                  Já possui uma conta? Clique aqui para logar
-                </Text>
+              <Link href="/user/login">
+               <Text style={{
+                              textAlign: "center",
+                              justifyContent: "center",
+                              fontSize: 15,
+                              fontWeight: "500",
+                            }}>  Já possui uma conta? </Text>
+                            <Text style={styles.link}>
+                              Entrar
+                            </Text>
               </Link>
             </View>
           </View>
@@ -128,7 +154,7 @@ const styles = StyleSheet.create({
   backButton: {
     backgroundColor: "rgba(0,0,0,0.15)",
     alignSelf: "flex-start",
-    padding: 8,
+    padding: 10,
     borderRadius: 8,
     marginBottom: 15,
   },
@@ -184,9 +210,9 @@ const styles = StyleSheet.create({
   },
 
   link: {
-    marginTop: 18,
+    marginTop: 15,
     textAlign: "center",
-    color: "#1e40af",
+    color: colors.greenSuccess,
     fontSize: 15,
     fontWeight: "500",
 

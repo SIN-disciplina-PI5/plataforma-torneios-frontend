@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
-import { api } from "../../services/api";
-import NavBar from "../../../components/BarraNavegacaoAdmin";
+import { api } from "../../src/services/api";
+import NavBar from "../../components/BarraNavegacaoAdmin";
 
 export default function PartidasList() {
     const router = useRouter();

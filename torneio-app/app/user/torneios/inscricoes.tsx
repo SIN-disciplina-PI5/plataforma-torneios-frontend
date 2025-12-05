@@ -12,9 +12,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api } from "../../../services/api";
-import InscricaoRealizada from "../../../../components/inscricaoRealizada";
-import BarraNavegacao from "../../../../components/BarraNavegacao";
+import { api } from "@/src/services/api";
+import InscricaoRealizada from "../../../components/inscricaoRealizada";
+import BarraNavegacao from "../../../components/BarraNavegacao";
 
 interface Torneio {
   id_torneio: string;

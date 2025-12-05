@@ -50,3 +50,9 @@ trash/
 .idea/
 
 lib/
+
+# Expo Router bundler outputs
+dist/
+**/dist/
+build/
+**/build/

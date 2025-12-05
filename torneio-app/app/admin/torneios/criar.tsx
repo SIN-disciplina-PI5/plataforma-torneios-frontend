@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useState } from "react"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin"
-import { api } from "../../../services/api"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin"
+import { api } from "../../../src/services/api"
 import { useRouter } from "expo-router"
 import { TextInput, Button, Chip, Divider, Snackbar } from "react-native-paper"
 
