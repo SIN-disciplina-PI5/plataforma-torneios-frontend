@@ -257,13 +257,6 @@ export default function ListaTorneiosScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Torneios Disponíveis</Text>
-        <Text style={styles.headerSubtitle}>
-          {equipeUsuario
-            ? `Equipe: ${equipeUsuario.nome}${
-                equipeUsuario.tag ? ` [${equipeUsuario.tag}]` : ""
-              }`
-            : "Crie uma equipe para participar"}
-        </Text>
       </View>
 
       {/* Lista de Torneios */}
