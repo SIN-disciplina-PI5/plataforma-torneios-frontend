@@ -42,7 +42,7 @@ export default function AdminSignUp() {
       console.log('Login bem-sucedido:', response.data)
 
       // Redirecionar para homeAdmin após login bem-sucedido
-      router.replace('./homeAdmin')
+      router.replace('./admin/homeAdmin')
 
     } catch (error: any) {
       console.log('Erro no login:', error.response?.data || error.message)
