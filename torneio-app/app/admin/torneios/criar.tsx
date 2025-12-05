@@ -1,50 +1,26 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useEffect, useState } from "react"
-import BarraNavegacaoAdmin from "../../../../components/BarraNavegacaoAdmin"
-import { api } from "../../../services/api"
-import { useLocalSearchParams, useRouter } from "expo-router"
+import { useState } from "react"
+import BarraNavegacaoAdmin from "../../../components/BarraNavegacaoAdmin"
+import { api } from "../../../src/services/api"
+import { useRouter } from "expo-router"
 import { TextInput, Button, Chip, Divider, Snackbar } from "react-native-paper"
 
-export default function EditarTorneio() {
-  const { id } = useLocalSearchParams()
+export default function CriarTorneio() {
   const [nome, setNome] = useState("")
   const [categoria, setCategoria] = useState("")
   const [vagas, setVagas] = useState("")
   const [carregando, setCarregando] = useState(false)
-  const [carregandoDados, setCarregandoDados] = useState(true)
   const [snackbarVisivel, setSnackbarVisivel] = useState(false)
   const [mensagemSnackbar, setMensagemSnackbar] = useState("")
   const [dialogoErroVisivel, setDialogoErroVisivel] = useState(false)
   const [erroDetalhes, setErroDetalhes] = useState("")
   
   const categorias = ["Iniciante", "Intermediário", "Avançado"]
+
   const router = useRouter()
 
-  useEffect(() => {
-    buscarTorneio()
-  }, [id])
-
-  async function buscarTorneio() {
-    try {
-      setCarregandoDados(true)
-      const response = await api.get(`/torneio/${id}`)
-      const torneio = response.data
-
-      setNome(torneio.nome)
-      setCategoria(torneio.categoria)
-      setVagas(String(torneio.vagas))
-    } catch (error: any) {
-      console.log(error)
-      const erroMsg = error.response?.data?.error || error.response?.data?.message || "Erro ao carregar torneio"
-      mostrarErroDialog(erroMsg)
-      setTimeout(() => router.back(), 2000)
-    } finally {
-      setCarregandoDados(false)
-    }
-  }
-
-  async function editarTorneio() {
+  async function criarTorneio() {
     if (!nome || !vagas || Number(vagas) <= 0) {
       mostrarErroDialog("Preencha todos os campos corretamente")
       return
@@ -52,19 +28,23 @@ export default function EditarTorneio() {
 
     try {
       setCarregando(true)
-      await api.put(`/torneio/${id}`, {
+      await api.post("/torneio", {
         nome,
         categoria,
         vagas: Number(vagas)
       })
 
-      mostrarSnackbar("Torneio atualizado com sucesso ✅")
+      mostrarSnackbar("Torneio criado com sucesso ✅")
 
-      router.replace("/admin/torneios")
+      setNome("")
+      setCategoria("")
+      setVagas("")
+
+      router.replace("/admin/torneios/torneios")
 
     } catch (error: any) {
       console.log(error.response?.data || error.message)
-      const erroMsg = error.response?.data?.error || error.response?.data?.message || "Erro ao editar torneio"
+      const erroMsg = error.response?.data?.error || error.response?.data?.message || "Erro ao criar torneio"
       mostrarErroDialog(erroMsg)
     } finally {
       setCarregando(false)
@@ -86,25 +66,12 @@ export default function EditarTorneio() {
     setErroDetalhes("")
   }
 
-  if (carregandoDados) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centerContainer}>
-          <Text style={styles.carregandoTexto}>Carregando torneio...</Text>
-        </View>
-        <View style={styles.barraFixa}>
-          <BarraNavegacaoAdmin />
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
         <View style={styles.container}>
 
-          <Text style={styles.title}>Editar Torneio</Text>
+          <Text style={styles.title}>Criar Torneio</Text>
 
           <View style={styles.field}>
             <Text style={styles.label}>Nome</Text>
@@ -166,7 +133,7 @@ export default function EditarTorneio() {
 
           <Button
             mode="contained"
-            onPress={editarTorneio}
+            onPress={criarTorneio}
             disabled={!nome || !vagas || Number(vagas) <= 0 || carregando}
             loading={carregando}
             style={[
@@ -175,9 +142,9 @@ export default function EditarTorneio() {
             ]}
             buttonColor="#2FA11D"
             textColor="#FFF"
-            icon="content-save"
+            icon="check"
           >
-            Salvar Alterações
+            Criar Torneio
           </Button>
 
           <Divider style={styles.divider} />
@@ -210,7 +177,7 @@ export default function EditarTorneio() {
               <Ionicons name="warning" size={50} color="#FF3B30" />
             </View>
             
-            <Text style={styles.modalErrorTitle}>Erro ao salvar alterações</Text>
+            <Text style={styles.modalErrorTitle}>Erro ao criar torneio</Text>
             
             <Text style={styles.modalErrorMessage}>
               {erroDetalhes}
@@ -263,15 +230,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     paddingHorizontal: 20,
     paddingTop: 20
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  carregandoTexto: {
-    fontSize: 16,
-    color: "#666",
   },
   title: {
     fontSize: 24,

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Button, Text } from 'react-native-paper'
 import { useRouter } from 'expo-router'
 import { TextInput as NativeInput } from 'react-native'
-import { api } from '../../services/api'
+import { api } from '@/src/services/api'
 
 const { width } = Dimensions.get('window')
 
@@ -44,7 +44,7 @@ export default function AdminSignUp() {
     <View style={styles.container}>
 
       <ImageBackground
-        source={require("../../../assets/images/ArenaLogo.jpg")}
+        source={require('@/assets/images/ArenaLogo.jpg')}
         style={styles.header}
         resizeMode="cover"
       >
@@ -100,8 +100,8 @@ export default function AdminSignUp() {
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
                 <Image
                     source={showPassword
-                    ? require('../../../assets/images/eye-open.png')
-                    : require('../../../assets/images/eye-closed.png')}
+                    ? require('@/assets/images/eye-open.png')
+                    : require('@/assets/images/eye-closed.png')}
                     style={styles.eyeIcon}
                 />
                 </TouchableOpacity>
@@ -142,105 +142,99 @@ export default function AdminSignUp() {
     </View>
   )
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: "#FFFFFF",
   },
 
   header: {
-    width: width,
+    width: "100%",
     height: width * 0.55,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   backButton: {
-  position: 'absolute',
-  top: 15,
-  left: 16,
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: 'rgba(255,255,255,0.5)',
-  justifyContent: 'center',
-  alignItems: 'center'
-},
-
-
-  title: {
-    color: '#0A5A3A',
-    fontSize: 36,
-    fontWeight: 'bold',
-    letterSpacing: 2
-  },
-
-  subtitle: {
-    color: '#000000ff',
-    fontSize: 14,
-    marginTop: 6
+    position: "absolute",
+    top: 20,
+    left: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   form: {
     flex: 1,
-    padding: 20
+    paddingHorizontal: 22,
+    paddingTop: 25,
   },
 
   formTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 20,
+    color: "#0A5A3A",
   },
 
   inputGroup: {
-    marginBottom: 14
+    marginBottom: 20,
   },
 
   label: {
-    fontSize: 14,
-    marginBottom: 4,
-    marginTop: 15,
+    fontSize: 15,
+    fontWeight: "500",
+    marginBottom: 6,
+    color: "#333",
   },
 
   nativeInput: {
-    height: 48,
-    backgroundColor: '#EEEEEE',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 15
+    height: 50,
+    backgroundColor: "#F1F1F1",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#DDD",
   },
 
   passwordContainer: {
-  position: 'relative'
-},
+    position: "relative",
+    justifyContent: "center",
+  },
 
-eyeButton: {
-  position: 'absolute',
-  right: 12,
-  top: 12,
-  padding: 4
-},
+  eyeButton: {
+    position: "absolute",
+    right: 14,
+    top: 12,
+    padding: 4,
+  },
 
-eyeIcon: {
-  width: 22,
-  height: 22,
-  tintColor: '#777'
-},
+  eyeIcon: {
+    width: 24,
+    height: 24,
+    tintColor: "#555",
+  },
 
   button: {
-    marginTop: 20,
-    borderRadius: 4,
-    paddingVertical: 6,
+    marginTop: 10,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: "center",
   },
 
   footer: {
-    marginTop: 20,
-    textAlign: 'center'
+    marginTop: 25,
+    textAlign: "center",
+    fontSize: 14,
+    color: "#555",
   },
 
   link: {
-    color: '#37A51E',
-    fontWeight: 'bold'
-  }
-})
+    color: "#37A51E",
+    fontWeight: "bold",
+  },
+});

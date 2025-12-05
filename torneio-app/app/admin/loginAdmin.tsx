@@ -1,10 +1,18 @@
-import React, { useState } from 'react'
-import { View, Image, ImageBackground, StyleSheet, TouchableOpacity, Dimensions, Modal, Alert } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { Button, Text } from 'react-native-paper'
-import { useRouter } from 'expo-router'
-import { TextInput as NativeInput } from 'react-native'
-import { api } from '../../services/api'
+import React, { useState } from 'react';
+import { 
+  View, 
+  Image, 
+  ImageBackground, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Dimensions,
+  TextInput as NativeInput
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, Text } from 'react-native-paper';
+import { useRouter } from 'expo-router';
+
+import { api } from '@/src/services/api';
 
 const { width } = Dimensions.get('window')
 
@@ -79,7 +87,7 @@ export default function AdminSignUp() {
     <View style={styles.container}>
 
       <ImageBackground
-        source={require("../../../assets/images/ArenaLogo.jpg")}
+        source={require('@/assets/images/ArenaLogo.jpg')}
         style={styles.header}
         resizeMode="cover"
       >
@@ -163,7 +171,7 @@ export default function AdminSignUp() {
       </View>
 
       {/* Modal de Erro - CENTRALIZADO */}
-      <Modal
+      <Modal 
         visible={dialogoErroVisivel}
         transparent={true}
         animationType="fade"
