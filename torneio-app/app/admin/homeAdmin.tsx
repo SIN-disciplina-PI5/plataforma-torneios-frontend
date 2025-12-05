@@ -5,17 +5,22 @@ import {
     StyleSheet, 
     ScrollView, 
     TouchableOpacity, 
-    Alert,
     Dimensions 
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import { api } from "../../src/services/api";
 import NavBar from "../../components/BarraNavegacaoAdmin";
+import { Portal, Modal, Button, Snackbar } from "react-native-paper";
 
 export default function PartidasList() {
     const router = useRouter();
     const [partidas, setPartidas] = useState<any>([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedPartida, setSelectedPartida] = useState<any>(null);
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
 
     async function loadPartidas() {
         try {
@@ -33,55 +38,56 @@ export default function PartidasList() {
             
             setPartidas(partidasOrdenadas);
         } catch (err: any) {
-            Alert.alert("Erro", "Erro ao carregar partidas");
+            showSnackbar("Erro ao carregar partidas", "error");
         }
     }
 
+    function showSnackbar(message: string, type: "success" | "error") {
+        setSnackbarMessage(message);
+        setSnackbarType(type);
+        setSnackbarVisible(true);
+    }
+
     async function handleDeletePartida(id: string): Promise<void> {
-        Alert.alert(
-            "Confirmar Deleção",
-            "Tem certeza que deseja deletar esta partida? Esta ação é irreversível.",
-            [
-                {
-                    text: "Cancelar",
-                    style: "cancel"
-                },
-                {
-                    text: "Deletar",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await api.delete(`/partidas/delete/${id}`);
-                            
-                            Alert.alert("Sucesso", "Partida deletada com sucesso!");
-                            loadPartidas(); 
-                        } catch (err: any) {
-                            let errorMessage = "Ocorreu um erro desconhecido ao deletar a partida.";
+        const partidaToDelete = partidas.find((p: any) => p.id_partida === id);
+        setSelectedPartida(partidaToDelete);
+        setModalVisible(true);
+    }
 
-                            if (err.response) {
-                                const status = err.response.status;
+    async function confirmDelete() {
+        if (!selectedPartida) return;
 
-                                if (status === 405) {
-                                    errorMessage = "Falha: 405 Method Not Allowed. Verifique o vercel.json.";
-                                } else if (status === 401) {
-                                    errorMessage = "Falha: 401 Unauthorized. Seu token JWT expirou.";
-                                } else if (status === 404) {
-                                    errorMessage = `Rota não encontrada.`;
-                                } else {
-                                    errorMessage = `Falha na API: Status ${status}.`;
-                                }
-                            } else if (err.request) {
-                                errorMessage = "Não foi possível conectar ao servidor.";
-                            } else {
-                                errorMessage = "Falha interna ao preparar a requisição.";
-                            }
+        try {
+            await api.delete(`/partidas/delete/${selectedPartida.id_partida}`);
+            
+            showSnackbar("Partida deletada com sucesso!", "success");
+            loadPartidas();
+        } catch (err: any) {
+            let errorMessage = "Ocorreu um erro desconhecido ao deletar a partida.";
 
-                            Alert.alert("Erro de Deleção", errorMessage);
-                        }
-                    }
+            if (err.response) {
+                const status = err.response.status;
+
+                if (status === 405) {
+                    errorMessage = "Falha: 405 Method Not Allowed. Verifique o vercel.json.";
+                } else if (status === 401) {
+                    errorMessage = "Falha: 401 Unauthorized. Seu token JWT expirou.";
+                } else if (status === 404) {
+                    errorMessage = "Rota não encontrada.";
+                } else {
+                    errorMessage = `Falha na API: Status ${status}.`;
                 }
-            ]
-        );
+            } else if (err.request) {
+                errorMessage = "Não foi possível conectar ao servidor.";
+            } else {
+                errorMessage = "Falha interna ao preparar a requisição.";
+            }
+
+            showSnackbar(errorMessage, "error");
+        } finally {
+            setModalVisible(false);
+            setSelectedPartida(null);
+        }
     }
 
     useEffect(() => {
@@ -169,8 +175,8 @@ export default function PartidasList() {
                                 <TouchableOpacity
                                     style={styles.acaoButton}
                                     onPress={() => router.push({
-                                        pathname: "/admin//editarPartida",
-                                        params: { id: p.id_partida } // ID vai como parametro[, não na URL]
+                                        pathname: "/admin/editarPartida",
+                                        params: { id: p.id_partida }
                                     })}
                                 >
                                     <Ionicons name="pencil-outline" size={16} color="#666666" />
@@ -195,6 +201,72 @@ export default function PartidasList() {
                 <Ionicons name="add-circle-outline" size={20} color="#4CAF50" />
                 <Text style={styles.novaPartidaButtonText}>Nova Partida</Text>
             </TouchableOpacity>
+
+            <Portal>
+                <Modal
+                    visible={modalVisible}
+                    onDismiss={() => {
+                        setModalVisible(false);
+                        setSelectedPartida(null);
+                    }}
+                    contentContainerStyle={styles.modalContainer}
+                >
+                    <View style={styles.modalContent}>
+                        <Ionicons name="warning-outline" size={50} color="#F44336" style={styles.modalIcon} />
+                        
+                        <Text style={styles.modalTitle}>
+                            Confirmar Deleção
+                        </Text>
+                        
+                        <Text style={styles.modalText}>
+                            Tem certeza que deseja deletar esta partida do torneio "{selectedPartida?.Torneio?.nome || "Sem torneio"}"?
+                            {"\n\n"}
+                            Esta ação é irreversível.
+                        </Text>
+                        
+                        <View style={styles.modalButtonsContainer}>
+                            <Button 
+                                mode="outlined" 
+                                onPress={() => {
+                                    setModalVisible(false);
+                                    setSelectedPartida(null);
+                                }}
+                                style={styles.modalButtonCancel}
+                                labelStyle={styles.modalButtonCancelText}
+                            >
+                                Cancelar
+                            </Button>
+                            
+                            <Button 
+                                mode="contained" 
+                                onPress={confirmDelete}
+                                style={styles.modalButtonDelete}
+                                labelStyle={styles.modalButtonDeleteText}
+                                buttonColor="#F44336"
+                            >
+                                Deletar
+                            </Button>
+                        </View>
+                    </View>
+                </Modal>
+            </Portal>
+
+            <Snackbar
+                visible={snackbarVisible}
+                onDismiss={() => setSnackbarVisible(false)}
+                duration={3000}
+                style={[
+                    styles.snackbar,
+                    snackbarType === "error" ? styles.snackbarError : styles.snackbarSuccess
+                ]}
+                action={{
+                    label: 'OK',
+                    labelStyle: { color: '#FFFFFF', fontWeight: 'bold' },
+                    onPress: () => setSnackbarVisible(false),
+                }}
+            >
+                <Text style={styles.snackbarText}>{snackbarMessage}</Text>
+            </Snackbar>
 
             <NavBar />
         </View>
@@ -336,5 +408,79 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
         marginLeft: 8
+    },
+    modalContainer: {
+        backgroundColor: 'white',
+        margin: 20,
+        borderRadius: 12,
+        padding: 0,
+        overflow: 'hidden',
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    modalContent: {
+        padding: 24,
+        alignItems: 'center',
+    },
+    modalIcon: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#212121',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    modalText: {
+        fontSize: 16,
+        color: '#424242',
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 24,
+    },
+    modalButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        gap: 12,
+    },
+    modalButtonCancel: {
+        flex: 1,
+        borderColor: '#E0E0E0',
+        borderWidth: 1,
+        borderRadius: 6,
+    },
+    modalButtonCancelText: {
+        color: '#424242',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    modalButtonDelete: {
+        flex: 1,
+        borderRadius: 6,
+    },
+    modalButtonDeleteText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    snackbar: {
+        marginBottom: 80,
+        borderRadius: 8,
+    },
+    snackbarSuccess: {
+        backgroundColor: '#4CAF50',
+    },
+    snackbarError: {
+        backgroundColor: '#F44336',
+    },
+    snackbarText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '500',
     },
 });
