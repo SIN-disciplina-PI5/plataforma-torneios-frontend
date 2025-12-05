@@ -291,7 +291,7 @@ export default function ListaTorneiosScreen() {
                   source={
                     torneio.imagem
                       ? { uri: torneio.imagem }
-                      : require("../../../../assets/images/beach1.png")
+                      : require("../../../assets/images/beach1.png")
                   }
                   style={styles.imagem}
                 />
