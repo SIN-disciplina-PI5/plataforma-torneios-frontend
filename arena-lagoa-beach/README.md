@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🏆 Plataforma de Torneios - Fullstack Web
 
-## Getting Started
+Bem-vindo ao repositório da Plataforma de Torneios. Recentemente, o projeto passou por uma transição arquitetural significativa para melhor atender aos requisitos de escalabilidade, SEO e performance.
 
-First, run the development server:
+🚀 O Pivot Tecnológico: Expo ➔ Next.js
 
-```bash
+Originalmente concebido como uma aplicação móvel utilizando Expo (React Native), o projeto foi migrado para uma solução Fullstack Web utilizando Next.js 15 e React.
+
+Esta mudança permite:
+
+Renderização no Lado do Servidor (SSR): Melhor indexação e performance.
+
+Ecossistema Web: Integração nativa com ferramentas de análise e dashboards.
+
+Unificação de Stack: Melhor sincronia com o nosso backend em Node.js e PostgreSQL.
+
+📂 Estrutura de Branches (Importante)
+
+Para manter a integridade do trabalho já realizado, o repositório foi organizado da seguinte forma:
+
+main (Padrão): Contém o novo projeto Next.js. Todo o desenvolvimento atual e futuro será realizado aqui.
+
+producao-mobile: Contém o código legado da aplicação móvel desenvolvida em Expo/React Native. Esta branch serve como documentação e backup da versão mobile estável.
+
+Como aceder à versão anterior (Mobile)?
+
+Se precisar de consultar ou executar o código mobile, utilize:
+
+git checkout producao-mobile
+
+
+🛠️ Tecnologias Utilizadas (Versão Web)
+
+Frontend: React 19, Next.js 15, Tailwind CSS.
+
+Backend (API): Node.js, Express, Sequelize.
+
+Base de Dados: PostgreSQL (Hosted via Neon/Render).
+
+Segurança: Autenticação via JWT, Middlewares de propriedade de recurso.
+
+Infraestrutura: Docker, Vercel (Frontend), Render (Backend).
+
+⚙️ Como Executar o Projeto
+
+Pré-requisitos
+
+Node.js v20+
+
+PostgreSQL configurado (ou acesso ao NeonDB)
+
+Instalação (Branch Main)
+
+Clone o repositório:
+
+git clone [https://github.com/kaikibarros/plataforma-torneios-frontend.git](https://github.com/kaikibarros/plataforma-torneios-frontend.git)
+
+
+Instale as dependências:
+
+npm install
+
+Inicie o servidor de desenvolvimento:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+👥 Equipa e Contribuição
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Certifique-se de criar a sua branch a partir da main atualizada
+Metodologiad: Ágil (Scrum)
 
-## Learn More
+📝 Licença
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este projeto é para fins educativos e de portfólio.
