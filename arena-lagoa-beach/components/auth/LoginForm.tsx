@@ -32,25 +32,31 @@ focus:outline-none focus:border-[#C2E96A]"
             placeholder="Digite sua senha"
           />
         </div>
-        <div className="flex flex-row items-center mb-4">
-          <input
-            type="checkbox"
-            id="remember"
-            className="mr-2 h-4 w-4 text-[#C2E96A] border-gray-300 rounded focus:ring-[#C2E96A]"
-          />
-          <label htmlFor="remember" className="text-sm text-gray-700 mr-27">
-            Lembre-se de mim
-          </label>
-          <a>
-            <span className="text-sm text-red-500 hover:text-red-700 ml-auto cursor-pointer">
-              Esqueci minha senha
-            </span>
-          </a>
+        <div className="flex items-center justify-between mb-4">
+          {/* ESQUERDA */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="remember"
+              className="className=h-4 w-4 accent-[#C2E96A] cursor-pointer"
+            />
+            <label htmlFor="remember" className="text-sm text-gray-700">
+              Lembre-se de mim
+            </label>
+          </div>
+
+          {/* DIREITA */}
+          <span className="text-sm text-red-500 hover:text-red-700 cursor-pointer">
+            Esqueci minha senha
+          </span>
         </div>
         <div className="flex items-center justify-center">
           <button
             type="submit"
-            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-96"
+            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 cursor-pointer
+transition-all duration-300 ease-in-out
+hover:scale-105 hover:shadow-lg
+active:scale-95 active:bg-[#1f6b19]"
           >
             Login
           </button>
