@@ -1,16 +1,14 @@
 import Link from 'next/link'
- import Navbar from '../components/navigation'
+import Navbar from '../components/ui'
+import Navigation from '@/components/ui/Navigation'
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html>
       <body>
         <nav>
-          {/* Prefetched when the link is hovered or enters the viewport */}
-          <Link href="/blog">Blog</Link>
-          {/* No prefetching */}
-          <a href="/contact">Contact</a>
+           <Navigation />
         </nav>
-        <Navbar />
         {children}
       </body>
     </html>
