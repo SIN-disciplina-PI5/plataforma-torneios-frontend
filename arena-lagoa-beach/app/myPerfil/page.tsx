@@ -2,7 +2,9 @@ import React from "react";
 
 const MyPerfil = () => {
     return (
-        <div> My Perfil</div>
+        <div> Meu Perfil
+            (GET Meu Perfil USER)
+        </div>
     )
 }
 

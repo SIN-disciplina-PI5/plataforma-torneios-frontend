@@ -1,14 +1,9 @@
-export default function Home() {
+export default function HomePage() {
   return (
-    <>
-    <div className="container mx-auto px-4">
-      <h1>Home</h1>
-      <p> This is a content to make our page longer</p>
-       <div className="w-full h-screen bg-green-300"></div>
-        <p>
-          Lorem Ipsum is simply dummy text ...
-        </p>
-    </div>
-    </>
-  )
+    <div>
+      <h1 className="text-4xl font-bold mb-4">Dashboard
+        (Home  GET  partidas USER)
+      </h1>
+      </div>
+  );
 }
