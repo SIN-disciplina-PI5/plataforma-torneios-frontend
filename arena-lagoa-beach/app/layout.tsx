@@ -17,11 +17,10 @@ export default function RootLayout({
       <body>
         <div style={{ display: 'flex', minHeight: '100vh' }}>
           <Sidebar />
-
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Navbar />
 
-            <main style={{ flex: 1, padding: '24px' }}>
+            <main  style={{ flex: 1, padding: '24px', backgroundColor: 'var(--color-background)',  }}>
               {children}
             </main>
           </div>
