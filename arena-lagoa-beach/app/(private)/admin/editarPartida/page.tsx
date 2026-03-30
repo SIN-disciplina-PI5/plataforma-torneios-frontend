@@ -156,7 +156,7 @@ export default function EditarPartidaPage() {
               </div>
 
               {/* COLUNA DIREITA */}
-              <div>
+              <div className="margin-top-6 xl:margin-top-0">
                 <p className="text-[15px] font-semibold text-[#3a3a3a] mb-4">
                   Dupla Vencedora
                 </p>
