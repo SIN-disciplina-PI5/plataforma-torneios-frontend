@@ -1,5 +1,6 @@
 import Sidebar from "../../components/sidebar";
 import Navbar from "../../components/navbar/navbar";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function PrivateLayout({
   children,
@@ -7,12 +8,15 @@ export default function PrivateLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="flex min-h-screen">
       <Sidebar />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div className="flex-1 flex flex-col">
         <Navbar />
-        <main style={{ flex: 1, padding: "24px" }}>{children}</main>
+        <main className="flex-1 p-6">
+          {children}
+          <Toaster position="bottom-right" richColors />
+        </main>
       </div>
     </div>
   );
