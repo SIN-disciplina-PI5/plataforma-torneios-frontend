@@ -18,6 +18,7 @@ const navItems = [
   { label: 'Torneios', href: '/torneios', icon: Volleyball },
   { label: 'Notificações', href: '/notificacoes', icon: Bell },
   { label: 'Meu Perfil', href: '/myPerfil', icon: User },
+  { label: 'Admin', href: '/admin/editarPartida', icon: User  }
 ];
 
 export default function Sidebar() {
