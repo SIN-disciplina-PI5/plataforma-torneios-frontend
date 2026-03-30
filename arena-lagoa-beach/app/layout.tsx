@@ -1,10 +1,8 @@
-import './globals.css';
-import Sidebar from '../components/sidebar/index';
-import Navbar from '../components/navbar/navbar';
+import "./globals.css";
 
 export const metadata = {
-  title: 'Arena Lagoa Beach',
-  description: 'Dashboard de análises e classificação dos torneios de vôlei de praia da Lagoa Beach',
+  title: "Arena Lagoa Beach",
+  description: "Dashboard...",
 };
 
 export default function RootLayout({
@@ -14,18 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-          <Sidebar />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Navbar />
-
-            <main  style={{ flex: 1, padding: '24px', backgroundColor: 'var(--color-background)',  }}>
-              {children}
-            </main>
-          </div>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
