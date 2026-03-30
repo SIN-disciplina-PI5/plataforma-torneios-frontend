@@ -2,13 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Search,
-  Bell,
-  Sun,
-  Home,
-  Trophy,
-  Volleyball,
-  User,
   ShieldCheck,
   CircleDot,
 } from 'lucide-react';
