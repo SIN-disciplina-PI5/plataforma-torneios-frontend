@@ -33,13 +33,13 @@ export default function EsqueceuSenha() {
       </div>
 
       {/* IMAGEM */}
-      <div className="flex flex-col items-center w-full max-w-[616px] mt-[104px]">
+      <div className="flex flex-col items-center w-full max-w-[700px] mt-[104px]">
         <Image
           src="/RecuperarSenhaImage.png"
           alt="Imagem da tela de login"
-          className="w-[616px] max-h-[calc(100vh-250px)] object-cover rounded-[30px]"
-          width={616}
-          height={816}
+          className="w-full max-h-[calc(100vh-200px)] object-contain rounded-[30px]"
+          width={700}
+          height={900}
           priority
         />
       </div>

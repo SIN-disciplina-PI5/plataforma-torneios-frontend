@@ -1,41 +1,44 @@
 import Link from 'next/link';
-
 import Image from "next/image";
 import { RecuperarSenhaForm } from "@/components/auth/RecuperarSenhaForm";
 
 export default function RecuperarSenha() {
-  return (
+    return (
+        <div className="flex flex-col lg:flex-row items-start justify-center bg-white h-screen overflow-hidden gap-10 px-4">
 
-  
-    <div className="flex flex-col lg:flex-row items-center justify-center bg-white min-h-screen gap-10 px-4 py-10 lg:py-0">
-      
-      {/* FORM */}
-      <div className="flex flex-col justify-center w-full max-w-md">
-        <p className="text-black-500 mb-6 text-sm lg:text-base">
-          <Link href="/login"> ↤ Voltar para o Login</Link>
-    </p>
-        <h1 className="text-3xl lg:text-4xl font-bold text-black mb-4">
-          Recuperação de senha
-        </h1>
+            {/* FORM */}
+            <div className="font-inter flex flex-col w-full max-w-md mt-[204px]">
+                <p className="text-[#313131] mb-6">
+                    <Link href="/esqueceu-senha" className="hover:underline">
+                        <span className="mr-2 text-current">❮</span>
+                        Voltar
+                    </Link>
+                </p>
 
-        <p className="text-gray-500 mb-6 text-sm lg:text-base">
-          Insira seu email abaixo para recuperar a sua senha
-        </p>
+                <h1 className="text-3xl lg:text-4xl text-[#313131] font-bold mb-4">
+                    Verifique o código
+                </h1>
 
-        <RecuperarSenhaForm />
-      </div>
+                <p className="text-[#666666] mb-10 text-[11px] lg:text-[14.3px] font-poppins whitespace-nowrap">
+                    Um código de autenticaçõo foi enviado para o seu email
+                </p>
 
-      {/* IMAGEM */}
-      <div className="flex flex-col items-center justify-center  w-full max-w-md p-6 lg:p-12  rounded-lg mb-10 lg:mb-0">
-        <Image
-          src="/RecuperarSenhaImage.png"
-          alt="Imagem da tela de login"
-          className="mb-6 lg:mb-12 w-64 lg:w-96 h-auto"
-          width={400}
-          height={400}
-        />
+                <RecuperarSenhaForm />
 
-      </div>
-    </div>
-  );
+    
+            </div>
+
+            {/* IMAGEM */}
+            <div className="flex flex-col items-center w-full max-w-[700px] mt-[104px]">
+                <Image
+                    src="/RecuperacaoSenhaImage.png"
+                    alt="Imagem da tela de login"
+                    className="w-full max-h-[calc(100vh-200px)] object-contain rounded-[30px]"
+                    width={700}
+                    height={900}
+                    priority
+                />
+            </div>
+        </div>
+    );
 }
