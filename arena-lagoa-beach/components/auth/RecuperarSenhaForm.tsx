@@ -7,7 +7,7 @@ export function RecuperarSenhaForm() {
             htmlFor="codigo"
             className="absolute -top-2 left-3 bg-white px-1 text-gray-700 text-sm font-poppins"
           >
-            Insira o código
+            Código
           </label>
 
           <input
@@ -15,6 +15,7 @@ export function RecuperarSenhaForm() {
             id="codigo"
             className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 font-poppins
 focus:outline-none focus:border-[#C2E96A]"
+          placeholder="Insira o código"
           />
         </div>
         
