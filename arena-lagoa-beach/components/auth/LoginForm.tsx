@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function LoginForm() {
   return (
     <div>
@@ -61,6 +63,15 @@ active:scale-95 active:bg-[#1f6b19]"
             Login
           </button>
         </div>
+        <span className="text-sm text-gray-700 block text-center mt-4">
+          Não tem uma conta?{" "}
+          <Link
+            href="/cadastro"
+            className="text-red-500 hover:text-red-700 cursor-pointer"
+          >
+            Registre-se
+          </Link>
+        </span>
       </form>
     </div>
   );

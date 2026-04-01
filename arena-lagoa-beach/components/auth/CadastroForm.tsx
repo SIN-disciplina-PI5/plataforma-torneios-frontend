@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function CadastroForm() {
   return (
     <div>
@@ -95,9 +97,12 @@ focus:outline-none focus:border-[#C2E96A]"
         </div>
         <span className="text-sm text-gray-700 block text-center mt-4">
           Já tem uma conta?{" "}
-          <span className="text-red-500 hover:text-red-700 cursor-pointer">
-            Login
-          </span>
+          <Link
+            href="/login"
+            className="text-red-500 hover:text-red-700 cursor-pointer"
+          >
+            Faça login
+          </Link>
         </span>
       </form>
     </div>
