@@ -18,7 +18,7 @@ export default function Login() {
       </div>
 
       {/* IMAGEM */}
-      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0">
+      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0 min-h-[600px]">
         <Image
           src="/LoginImage.png"
           alt="Imagem da tela de login"
