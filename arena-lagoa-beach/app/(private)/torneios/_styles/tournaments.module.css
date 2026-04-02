@@ -1,0 +1,25 @@
+.tabIndicator {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: #2FA026;
+
+  transition: left 300ms ease, width 300ms ease;
+}
+
+.banner {
+  background: linear-gradient(120deg, #91D8FF 0%, #FFF200 100%);
+
+}
+
+.card {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  border-width: 0.1rem;
+  border-color: rgb(223, 222, 222);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
