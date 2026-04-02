@@ -1,6 +1,21 @@
-import axios from "axios";
+import { api } from "./api";
 
-export const login = async (data: { email: string; senha: string }) => {
-  const response = await axios.post("http://localhost:3000/login", data);
+export interface LoginRequest {
+  email: string;
+  senha: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  usuario: {
+    id: number;
+    nome: string;
+    email: string;
+  };
+}
+
+export const login = async (data: LoginRequest): Promise<LoginResponse> => {
+  const response = await api.post<LoginResponse>("/users/login", data);
+
   return response.data;
 };
