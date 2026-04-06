@@ -1,35 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signup } from "@/app/services/authCadastro";
+import PopupModelo from "@/components/ui/PopupModelo"; // ajusta o caminho se necessário
 
 export function CadastroForm() {
   const router = useRouter();
 
-  const [nome, setNome] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [senha, setSenha] = useState<string>("");
-  const [confirmarSenha, setConfirmarSenha] = useState<string>("");
-  const [termosAceitos, setTermosAceitos] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [termosAceitos, setTermosAceitos] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // 🔥 estados do modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState<"success" | "error">("success");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!nome || !email || !senha || !confirmarSenha) {
-      alert("Preencha todos os campos");
+      setModalMessage("Preencha todos os campos");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
     if (senha !== confirmarSenha) {
-      alert("As senhas não coincidem");
+      setModalMessage("As senhas não coincidem");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
     if (!termosAceitos) {
-      alert("Você precisa aceitar os termos");
+      setModalMessage("Você precisa aceitar os termos");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
@@ -42,7 +54,9 @@ export function CadastroForm() {
         senha,
       });
 
-      alert(res.message);
+      setModalMessage(res.message || "Cadastro realizado com sucesso!");
+      setModalType("success");
+      setModalOpen(true);
 
       // limpa formulário
       setNome("");
@@ -50,15 +64,26 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
-
-      // redireciona
-      router.push("/login");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Erro ao cadastrar");
+      setModalMessage(err.response?.data?.error || "Erro ao cadastrar");
+      setModalType("error");
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
   };
+
+  // 🔥 auto redirect após sucesso
+  useEffect(() => {
+    if (modalOpen && modalType === "success") {
+      const timer = setTimeout(() => {
+        setModalOpen(false);
+        router.push("/login");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [modalOpen, modalType, router]);
 
   return (
     <div>
@@ -147,6 +172,36 @@ export function CadastroForm() {
           </Link>
         </span>
       </form>
+
+      {/* 🔥 POPUP */}
+      <PopupModelo
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalType === "success" ? "Sucesso 🎉" : "Erro ❌"}
+        footer={
+          <div className="w-full flex justify-center">
+            <button
+              onClick={() => {
+                setModalOpen(false);
+                if (modalType === "success") {
+                  router.push("/login");
+                }
+              }}
+              className={`w-3/4 py-2 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 ${
+                modalType === "success"
+                  ? "bg-green-500 hover:bg-green-600"
+                  : "bg-red-500 hover:bg-red-600"
+              }`}
+            >
+              OK
+            </button>
+          </div>
+        }
+      >
+        <p className="text-center text-lg">
+          {modalType === "success" ? "✅" : "❌"} {modalMessage}
+        </p>
+      </PopupModelo>
     </div>
   );
 }
