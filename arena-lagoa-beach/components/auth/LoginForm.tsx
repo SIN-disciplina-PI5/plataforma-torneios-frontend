@@ -4,20 +4,26 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/services/authLogin";
+import PopupModelo from "@/components/ui/PopupModelo"; // ajusta o caminho
 
 export function LoginForm() {
   const router = useRouter();
 
-  const [email, setEmail] = useState<string>("");
-  const [senha, setSenha] = useState<string>("");
-  const [lembrar, setLembrar] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [lembrar, setLembrar] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // 🔥 estados do popup
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email || !senha) {
-      alert("Preencha todos os campos");
+      setModalMessage("Preencha todos os campos");
+      setModalOpen(true);
       return;
     }
 
@@ -26,15 +32,14 @@ export function LoginForm() {
 
       const res = await login({ email, senha });
 
-      // salvar token
+      // salva token
       localStorage.setItem("token", res.token);
 
-      alert("Login realizado com sucesso!");
-
-      // redireciona
+      // ✅ sucesso → NÃO mostra popup
       router.push("/home");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao fazer login");
+      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
@@ -102,6 +107,25 @@ export function LoginForm() {
           </Link>
         </span>
       </form>
+
+      {/* 🔥 POPUP DE ERRO */}
+      <PopupModelo
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Erro ❌"
+        footer={
+          <div className="w-full flex justify-center">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="w-3/4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        }
+      >
+        <p className="text-center text-lg">❌ {modalMessage}</p>
+      </PopupModelo>
     </div>
   );
 }
