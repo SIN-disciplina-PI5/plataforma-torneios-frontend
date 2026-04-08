@@ -47,15 +47,18 @@ export default function Home() {
             {partidas.length > 0 ? (
               partidas.map((p) => (
                 <CardPartida
-                  key={p.id}
-                  player1={p.equipe1.nome}
-                  flag1={p.equipe1.bandeira}
-                  score={p.placar}
-                  player2={p.equipe2.nome}
-                  flag2={p.equipe2.bandeira}
-                  time={p.horario}
+                  key={p.id_partida}
+                  player1="Equipe A" // O back não mandou o nome ainda
+                  flag1="🇧🇷"
+                  score={p.placar || "VS"}
+                  player2="Equipe B" // O back não mandou o nome ainda
+                  flag2="🇧🇷"
+                  time={new Date(p.horario).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                   fase={p.fase}
-                  isFavorite={p.isFavorito}
+                  isFavorite={false}
                 />
               ))
             ) : (

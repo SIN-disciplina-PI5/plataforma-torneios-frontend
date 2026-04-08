@@ -4,12 +4,11 @@ export interface Equipe {
 }
 
 export interface Partida {
-  id: string | number;
+  id_partida: string;
   fase: string;
-  data: string;
   horario: string;
-  placar: string;
-  equipe1: Equipe;
-  equipe2: Equipe;
-  isFavorito: boolean;
+  placar: string | null;
+  Torneio: {
+    nome: string;
+  };
 }

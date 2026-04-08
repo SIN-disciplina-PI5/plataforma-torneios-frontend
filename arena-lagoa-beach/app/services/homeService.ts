@@ -3,14 +3,19 @@ import { Partida } from "@/app/types/partida";
 
 export const getPartidasHome = async (): Promise<Partida[]> => {
   const token = localStorage.getItem("token");
-  console.log("Meu token atual:", token); // Se aparecer null aqui, o erro é esse.
 
-  // Ajuste a rota "/partidas/me" para a rota real do seu Swagger/Back-end
-  const response = await api.get<Partida[]>("/partidas/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  if (!token) return [];
 
-  return response.data;
+  try {
+    const response = await api.get<Partida[]>("/partidas", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Erro na API:", error.response?.data || error.message);
+    return [];
+  }
 };
