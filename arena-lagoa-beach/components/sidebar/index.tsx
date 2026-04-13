@@ -7,7 +7,7 @@ import { Home, Trophy, Volleyball, Bell, User } from "lucide-react";
 
 // Definição dos itens de navegação
 const navItems = [
-  { label: "Home", href: "/", icon: Home },
+  { label: "Home", href: "/home", icon: Home },
   { label: "Ranking", href: "/ranking", icon: Trophy },
   { label: "Torneios", href: "/torneios", icon: Volleyball },
   { label: "Notificações", href: "/notificacoes", icon: Bell },
