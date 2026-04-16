@@ -15,10 +15,10 @@ export function LoginForm() {
   const [lembrar, setLembrar] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 🔐 captcha
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  //  captcha
+  const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // 🔥 popup
+  //  popup
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -31,8 +31,8 @@ export function LoginForm() {
       return;
     }
 
-    // ✅ valida captcha
-    if (!captchaToken) {
+    // valida captcha
+    if (!recaptchaToken) {
       setModalMessage("Confirme que você não é um robô 🤖");
       setModalOpen(true);
       return;
@@ -41,14 +41,16 @@ export function LoginForm() {
     try {
       setLoading(true);
 
-      const res = await login({ email, senha, captchaToken });
+      const res = await login({ email, senha, recaptchaToken: recaptchaToken });
 
-      // salva token
-      localStorage.setItem("token", res.token);
 
       router.push("/home");
-    } catch (err: any) {
-      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setModalMessage(err.message);
+      } else {
+        setModalMessage("Erro ao fazer login");
+      }
       setModalOpen(true);
     } finally {
       setLoading(false);
@@ -92,9 +94,7 @@ export function LoginForm() {
               onChange={(e) => setLembrar(e.target.checked)}
               className="h-4 w-4 accent-[#C2E96A]"
             />
-            <label className="text-sm text-gray-700">
-              Lembre-se de mim
-            </label>
+            <label className="text-sm text-gray-700">Lembre-se de mim</label>
           </div>
 
           <span className="text-sm text-red-500 hover:text-red-700 cursor-pointer">
