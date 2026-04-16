@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function Login() {
   return (
+    
     <div className="flex flex-col lg:flex-row items-center justify-center bg-white min-h-screen gap-10 px-4 py-10 lg:py-0">
       {/* FORM */}
       <div className="flex flex-col justify-center w-full max-w-md">
@@ -38,4 +39,5 @@ export default function Login() {
       </div>
     </div>
   );
+  
 }

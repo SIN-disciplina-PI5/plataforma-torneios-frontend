@@ -86,7 +86,7 @@ export default function EditarPartidaPage() {
                   >
                     {fase}
                     {ativa && (
-                      <span className="absolute left-0 bottom-[-1px] h-[3px] w-full rounded-full bg-[#2faa2f]" />
+                      <span className="absolute left-0 bottom-1px h-3px w-full rounded-full bg-[#2faa2f]" />
                     )}
                   </button>
                 );
@@ -95,7 +95,7 @@ export default function EditarPartidaPage() {
           </section>
 
           {/* FORM */}
-          <section className="max-w-[920px]">
+          <section className="max-w-920px">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {/* COLUNA ESQUERDA */}
               <div className="space-y-6">

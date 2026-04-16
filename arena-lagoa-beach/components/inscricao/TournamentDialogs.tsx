@@ -28,7 +28,7 @@ export function TournamentDialogs({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[380px] rounded-2xl">
+      <DialogContent className="sm:max-w-380px rounded-2xl">
 
         {/* ── CONFIRM ─────────────────────────────────────────────── */}
         {state === "confirm" && (
