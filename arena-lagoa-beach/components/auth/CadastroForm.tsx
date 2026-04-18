@@ -49,7 +49,7 @@ export function CadastroForm() {
       return;
     }
 
-    // 🔐 valida captcha
+    //  valida captcha
     if (!recaptchaToken) {
       setModalMessage("Confirme que você não é um robô 🤖");
       setModalType("error");
@@ -90,7 +90,7 @@ export function CadastroForm() {
     }
   };
 
-  // 🔥 redirect após sucesso
+  // redirect após sucesso
   useEffect(() => {
     if (modalOpen && modalType === "success") {
       const timer = setTimeout(() => {
