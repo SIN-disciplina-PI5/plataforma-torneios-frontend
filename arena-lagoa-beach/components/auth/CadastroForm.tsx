@@ -17,10 +17,10 @@ export function CadastroForm() {
   const [termosAceitos, setTermosAceitos] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 🔐 captcha
+  //  captcha
   const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // 🔥 modal
+  //  modal
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState<"success" | "error">("success");
@@ -64,7 +64,7 @@ export function CadastroForm() {
         nome,
         email,
         senha,
-        recaptchaToken, // 🔥 ENVIA PRO BACK
+        recaptchaToken, // ENVIA PRO BACK
       });
 
       setModalMessage(res.message || "Cadastro realizado com sucesso!");
@@ -77,13 +77,14 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
-      setCaptchaToken(null); // 🔥 reseta captcha
-    } catch (err: any) {
-      setModalMessage(err.response?.data?.error || "Erro ao cadastrar");
+      setCaptchaToken(null); // eseta captcha
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setModalMessage(error.response?.data?.error || "Erro ao cadastrar");
       setModalType("error");
       setModalOpen(true);
 
-      setCaptchaToken(null); // 🔥 reseta captcha em erro
+      setCaptchaToken(null); // reseta captcha em erro
     } finally {
       setLoading(false);
     }
@@ -171,7 +172,7 @@ export function CadastroForm() {
           </span>
         </div>
 
-        {/* 🔐 RECAPTCHA */}
+        {/*  RECAPTCHA */}
         <div className="flex justify-center mb-4">
           <Recaptcha onChange={setCaptchaToken} />
         </div>
