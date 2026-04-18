@@ -3,6 +3,7 @@ import { api } from "./api";
 export interface LoginRequest {
   email: string;
   senha: string;
+  recaptchaToken: string ;
 }
 
 export interface LoginResponse {

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signup } from "@/app/services/authCadastro";
-import PopupModelo from "@/components/ui/PopupModelo"; // ajusta o caminho se necessário
+import PopupModelo from "@/components/ui/PopupModelo";
+import Recaptcha from "@/components/recaptcha/recaptcha";
 
 export function CadastroForm() {
   const router = useRouter();
@@ -16,7 +17,10 @@ export function CadastroForm() {
   const [termosAceitos, setTermosAceitos] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 estados do modal
+  // 🔐 captcha
+  const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // 🔥 modal
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState<"success" | "error">("success");
@@ -45,6 +49,14 @@ export function CadastroForm() {
       return;
     }
 
+    // 🔐 valida captcha
+    if (!recaptchaToken) {
+      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalType("error");
+      setModalOpen(true);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -52,6 +64,7 @@ export function CadastroForm() {
         nome,
         email,
         senha,
+        recaptchaToken, // 🔥 ENVIA PRO BACK
       });
 
       setModalMessage(res.message || "Cadastro realizado com sucesso!");
@@ -64,16 +77,19 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
+      setCaptchaToken(null); // 🔥 reseta captcha
     } catch (err: any) {
       setModalMessage(err.response?.data?.error || "Erro ao cadastrar");
       setModalType("error");
       setModalOpen(true);
+
+      setCaptchaToken(null); // 🔥 reseta captcha em erro
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 auto redirect após sucesso
+  // 🔥 redirect após sucesso
   useEffect(() => {
     if (modalOpen && modalType === "success") {
       const timer = setTimeout(() => {
@@ -96,7 +112,7 @@ export function CadastroForm() {
             type="text"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Digite seu nome"
           />
         </div>
@@ -109,7 +125,7 @@ export function CadastroForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Digite seu email"
           />
         </div>
@@ -122,7 +138,7 @@ export function CadastroForm() {
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Digite sua senha"
           />
         </div>
@@ -135,7 +151,7 @@ export function CadastroForm() {
             type="password"
             value={confirmarSenha}
             onChange={(e) => setConfirmarSenha(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Confirme sua senha"
           />
         </div>
@@ -155,11 +171,16 @@ export function CadastroForm() {
           </span>
         </div>
 
+        {/* 🔐 RECAPTCHA */}
+        <div className="flex justify-center mb-4">
+          <Recaptcha onChange={setCaptchaToken} />
+        </div>
+
         <div className="flex justify-center">
           <button
             type="submit"
-            disabled={loading}
-            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50"
+            disabled={loading || !recaptchaToken}
+            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 disabled:opacity-50"
           >
             {loading ? "Cadastrando..." : "Cadastrar"}
           </button>
@@ -173,30 +194,10 @@ export function CadastroForm() {
         </span>
       </form>
 
-      {/* 🔥 POPUP */}
       <PopupModelo
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={modalType === "success" ? "Sucesso 🎉" : "Erro ❌"}
-        footer={
-          <div className="w-full flex justify-center">
-            <button
-              onClick={() => {
-                setModalOpen(false);
-                if (modalType === "success") {
-                  router.push("/login");
-                }
-              }}
-              className={`w-3/4 py-2 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 ${
-                modalType === "success"
-                  ? "bg-green-500 hover:bg-green-600"
-                  : "bg-red-500 hover:bg-red-600"
-              }`}
-            >
-              OK
-            </button>
-          </div>
-        }
       >
         <p className="text-center text-lg">
           {modalType === "success" ? "✅" : "❌"} {modalMessage}

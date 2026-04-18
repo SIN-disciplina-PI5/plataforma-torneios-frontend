@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/services/authLogin";
-import PopupModelo from "@/components/ui/PopupModelo"; // ajusta o caminho
+import PopupModelo from "@/components/ui/PopupModelo";
+import Recaptcha from "@/components/recaptcha/recaptcha";
 
 export function LoginForm() {
   const router = useRouter();
@@ -14,7 +15,10 @@ export function LoginForm() {
   const [lembrar, setLembrar] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 estados do popup
+  //  captcha
+  const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  //  popup
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -27,18 +31,26 @@ export function LoginForm() {
       return;
     }
 
+    // valida captcha
+    if (!recaptchaToken) {
+      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalOpen(true);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const res = await login({ email, senha });
+      const res = await login({ email, senha, recaptchaToken: recaptchaToken });
 
-      // salva token
-      localStorage.setItem("token", res.token);
 
-      // ✅ sucesso → NÃO mostra popup
       router.push("/home");
-    } catch (err: any) {
-      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setModalMessage(err.message);
+      } else {
+        setModalMessage("Erro ao fazer login");
+      }
       setModalOpen(true);
     } finally {
       setLoading(false);
@@ -90,6 +102,11 @@ export function LoginForm() {
           </span>
         </div>
 
+        {/* RECAPTCHA */}
+        <div className="flex justify-center mb-4">
+          <Recaptcha onChange={setCaptchaToken} />
+        </div>
+
         <div className="flex justify-center">
           <button
             type="submit"
@@ -108,7 +125,7 @@ export function LoginForm() {
         </span>
       </form>
 
-      {/* 🔥 POPUP DE ERRO */}
+      {/* 🔥 POPUP */}
       <PopupModelo
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

@@ -7,7 +7,7 @@ export default function RecuperarSenha() {
         <div className="flex flex-col lg:flex-row items-start justify-center bg-white h-screen overflow-hidden gap-10 px-4">
 
             {/* FORM */}
-            <div className="font-inter flex flex-col w-full max-w-md mt-[204px]">
+            <div className="font-inter flex flex-col w-full max-w-md mt-204px">
                 <p className="text-[#313131] mb-6">
                     <Link href="/esqueceu-senha" className="hover:underline">
                         <span className="mr-2 text-current">❮</span>
@@ -29,7 +29,7 @@ export default function RecuperarSenha() {
             </div>
 
             {/* IMAGEM */}
-            <div className="flex flex-col items-center w-full max-w-[700px] mt-[104px]">
+            <div className="flex flex-col items-center w-full max-w-700px mt-104px">
                 <Image
                     src="/RecuperacaoSenhaImage.png"
                     alt="Imagem da tela de login"
