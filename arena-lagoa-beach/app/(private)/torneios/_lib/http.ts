@@ -1,9 +1,6 @@
-export const BASE_URL = "https://plataforma-torneios-backend.vercel.app";
 
-/**
- * Lê o token JWT salvo no localStorage após o login.
- * Ajuste para cookies ou contexto de auth se necessário.
- */
+export const BASE_URL = "https://plataforma-torneios-backend.vercel.app/api";
+
 export function getAuthHeaders(): HeadersInit {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -13,10 +10,7 @@ export function getAuthHeaders(): HeadersInit {
   };
 }
 
-/**
- * Wrapper de fetch com tratamento de erro padronizado.
- * O backend retorna { error: "mensagem" } em todos os erros.
- */
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
