@@ -1,0 +1,41 @@
+.tabIndicator {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: #2FA026;
+  transition: left 300ms ease, width 300ms ease;
+}
+
+.banner {
+  background: linear-gradient(120deg, #91D8FF 0%, #FFF200 100%);
+}
+
+.fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #2FA026;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(47, 160, 38, 0.4);
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
+  z-index: 50;
+}
+
+.fab:hover {
+  background: #268a1e;
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(47, 160, 38, 0.5);
+}
+
+.fab:active {
+  transform: scale(0.96);
+}

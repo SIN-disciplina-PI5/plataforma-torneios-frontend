@@ -1,16 +1,8 @@
-import type { CreateInscricaoResponse } from "../_types";
+import type { CreateInscricaoResponse, Tournament } from "../_types";
 import { apiFetch } from "./http";
 
-/**
- * POST /inscricoes
- * Cria uma inscrição para uma equipe em um torneio.
- * Requer autenticação (Bearer token no localStorage).
- *
- * @param id_torneio - ID do torneio selecionado
- * @param id_equipe  - ID da equipe do usuário logado
- */
 export async function registerForTournament(
-  id_torneio: number,
+  id_torneio: string,
   id_equipe: number
 ): Promise<CreateInscricaoResponse> {
   return apiFetch<CreateInscricaoResponse>("/inscricoes", {
@@ -19,7 +11,22 @@ export async function registerForTournament(
   });
 }
 
-// TODO: descomente quando o endpoint de torneios estiver disponível
-// export async function fetchTournaments() {
-//   return apiFetch("/torneios");
-// }
+export async function fetchTournaments(): Promise<Tournament[]> {
+  // Tipagem baseada no JSON real que você enviou
+  const data = await apiFetch<{ 
+    id_torneio: string; 
+    nome: string; 
+    categoria: string; 
+    vagas: number; 
+    status: boolean; // Backend envia true/false
+  }[]>("/torneio");
+
+  return data.map((t) => ({
+    id: t.id_torneio,
+    title: t.nome,
+    level: t.categoria,
+    spots: t.vagas,
+    status: t.status, // Simplificado para boolean
+    favorite: false,
+  }));
+}
