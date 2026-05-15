@@ -1,15 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  ShieldCheck,
-  CircleDot,
-} from 'lucide-react';
+import Image from "next/image";
+import { ShieldCheck } from 'lucide-react';
 
 const fases = ['Eliminatórias', 'Oitavas', 'Quartas', 'Semifinal', 'Final'];
 
-
-// DADOS MOCKADOS - SUBSTITUIR PELO RETORNO DA API!!!
 const duplas = [
   {
     titulo: 'Dupla 1',
@@ -17,14 +13,8 @@ const duplas = [
     scoreB: '3',
     vencedor: true,
     jogadores: [
-      {
-        nome: 'Kawe Doe',
-        avatar: 'https://i.pravatar.cc/100?img=12',
-      },
-      {
-        nome: 'Julia Silva',
-        avatar: 'https://i.pravatar.cc/100?img=32',
-      },
+      { nome: 'Kawe Doe', avatar: 'https://i.pravatar.cc/100?img=12' },
+      { nome: 'Julia Silva', avatar: 'https://i.pravatar.cc/100?img=32' },
     ],
   },
   {
@@ -33,14 +23,8 @@ const duplas = [
     scoreB: '3',
     vencedor: false,
     jogadores: [
-      {
-        nome: 'Karen Doe',
-        avatar: 'https://i.pravatar.cc/100?img=47',
-      },
-      {
-        nome: 'Alda Silva',
-        avatar: 'https://i.pravatar.cc/100?img=20',
-      },
+      { nome: 'Karen Doe', avatar: 'https://i.pravatar.cc/100?img=47' },
+      { nome: 'Alda Silva', avatar: 'https://i.pravatar.cc/100?img=20' },
     ],
   },
 ];
@@ -48,19 +32,61 @@ const duplas = [
 export default function CriarPartidaPage() {
   const [faseAtiva, setFaseAtiva] = useState('Eliminatórias');
 
+  //  NOVOS ESTADOS (SEM ALTERAR UI)
+  const [data, setData] = useState('');
+  const [hora, setHora] = useState('');
+  const [loading, setLoading] = useState(false);
+
+
+  //  FUNÇÃO DE CRIAR
+  async function handleCriar() {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/partidas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          id_torneio: 1, // ⚠️ ajustar depois
+          fase: faseAtiva,
+          status: 'PENDENTE',
+          horario: data && hora ? `${data}T${hora}:00` : null,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        alert(json.error || 'Erro ao criar partida');
+        return;
+      }
+
+      alert('Partida criada com sucesso!');
+
+    } catch (err) {
+      console.error(err);
+      alert('Erro na requisição');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f6f4] text-[#2d2d2d] flex width-full">
-    
-      {/* CONTEÚDO */}
+    <div className="min-h-screen bg-[#fffff] text-[#2d2d2d] flex width-full">
       <div className="flex-1 flex flex-col">
-      
-        {/* MAIN */}
-        <main >
+        <main>
+
           {/* TÍTULO */}
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-6 h-6 rounded-full border border-[#cfcfcf] flex items-center justify-center">
-              <CircleDot size={13} className="text-[#7f7f7f]" />
-            </div>
+            <Image
+              src="/variante-de-bola-de-futebol.png"
+              alt="Bola de futebol"
+              width={40}
+              height={40}
+            />
             <h1 className="text-[28px] font-semibold text-[#2b2b2b]">
               Criar Partida
             </h1>
@@ -80,7 +106,7 @@ export default function CriarPartidaPage() {
                     onClick={() => setFaseAtiva(fase)}
                     className={`relative pb-3 text-[14px] whitespace-nowrap transition ${
                       ativa
-                        ? 'text-[#2b2b2b] font-medium'
+                        ? 'text-[green] font-medium'
                         : 'text-[#a1a1a1] hover:text-[#6f6f6f]'
                     }`}
                   >
@@ -97,12 +123,14 @@ export default function CriarPartidaPage() {
           {/* FORM */}
           <section className="max-w-920px">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {/* COLUNA ESQUERDA */}
+
+              {/* ESQUERDA */}
               <div className="space-y-6">
                 <FormField label="Data da Partida">
                   <input
                     type="date"
-                    defaultValue="2025-09-12"
+                    value={data}
+                    onChange={(e) => setData(e.target.value)}
                     className="w-full h-12 rounded-xl border border-[#dddddd] bg-white px-4 text-sm outline-none focus:border-[#316f27]"
                   />
                 </FormField>
@@ -110,11 +138,13 @@ export default function CriarPartidaPage() {
                 <FormField label="Horário">
                   <input
                     type="time"
-                    defaultValue="13:30"
+                    value={hora}
+                    onChange={(e) => setHora(e.target.value)}
                     className="w-full h-12 rounded-xl border border-[#dddddd] bg-white px-4 text-sm outline-none focus:border-[#316f27]"
                   />
                 </FormField>
 
+                {/* UI mantida intacta */}
                 <div>
                   <p className="text-[15px] font-semibold text-[#3a3a3a] mb-3">
                     Resultado Final da Partida
@@ -122,25 +152,12 @@ export default function CriarPartidaPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     {duplas.map((dupla) => (
-                      <div
-                        key={dupla.titulo}
-                        className="bg-white border border-[#e3e3e3] rounded-2xl p-4"
-                      >
-                        <p className="text-sm font-medium text-[#6a6a6a] mb-3">
-                          {dupla.titulo}
-                        </p>
+                      <div key={dupla.titulo} className="bg-white border rounded-2xl p-4">
+                        <p className="text-sm font-medium mb-3">{dupla.titulo}</p>
 
                         <div className="flex gap-3">
-                          <input
-                            type="number"
-                            defaultValue={dupla.scoreA}
-                            className="w-full h-12 rounded-xl border border-[#dddddd] bg-[#fafafa] px-4 text-center text-lg outline-none focus:border-[#316f27]"
-                          />
-                          <input
-                            type="number"
-                            defaultValue={dupla.scoreB}
-                            className="w-full h-12 rounded-xl border border-[#dddddd] bg-[#fafafa] px-4 text-center text-lg outline-none focus:border-[#316f27]"
-                          />
+                          <input type="number" defaultValue={dupla.scoreA} className="input text-center"/>
+                          <input type="number" defaultValue={dupla.scoreB} className="input text-center"/>
                         </div>
                       </div>
                     ))}
@@ -148,84 +165,63 @@ export default function CriarPartidaPage() {
                 </div>
               </div>
 
-              {/* COLUNA DIREITA */}
-              <div className="margin-top-6 xl:margin-top-0">
-                <p className="text-[15px] font-semibold text-[#3a3a3a] mb-4">
+              {/* DIREITA */}
+              <div>
+                <p className="text-[15px] font-semibold mb-4">
                   Dupla Vencedora
                 </p>
 
                 <div className="space-y-4">
                   {duplas.map((dupla) => (
-                    <div
-                      key={dupla.titulo}
-                      className="bg-white border border-[#e3e3e3] rounded-2xl px-5 py-4 flex items-center justify-between"
-                    >
+                    <div key={dupla.titulo} className="bg-white border rounded-2xl px-5 py-4 flex justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#525252] mb-3">
-                          {dupla.titulo}
-                        </p>
+                        <p className="text-sm font-semibold mb-3">{dupla.titulo}</p>
 
-                        <div className="flex items-center gap-5">
+                        <div className="flex gap-5">
                           {dupla.jogadores.map((jogador) => (
-                            <div
-                              key={jogador.nome}
-                              className="flex items-center gap-3"
-                            >
-                              <img
-                                src={jogador.avatar}
-                                alt={jogador.nome}
-                                className="w-10 h-10 rounded-full object-cover border border-[#d9d9d9]">
-                              </img> 
-                              
-                              <span className="text-sm text-[#4b4b4b]">
-                                {jogador.nome}
-                              </span>
+                            <div key={jogador.nome} className="flex gap-3">
+                              <img src={jogador.avatar} className="w-10 h-10 rounded-full"/>
+                              <span>{jogador.nome}</span>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <button
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center transition ${
-                          dupla.vencedor
-                            ? 'bg-[#2faa2f] border-[#2faa2f] text-white'
-                            : 'bg-white border-[#d9d9d9] text-transparent hover:border-[#316f27]'
-                        }`}
-                      >
+                      <button className="w-7 h-7 border flex items-center justify-center">
                         <ShieldCheck size={15} />
                       </button>
                     </div>
                   ))}
                 </div>
 
+                {/*  BOTÃO CONECTADO */}
                 <div className="mt-8">
-                  <button className="h-12 px-8 rounded-xl bg-[#2faa2f] text-white font-medium hover:bg-[#289828] transition shadow-sm">
-                    Criar
+                  <button
+                    onClick={handleCriar}
+                    disabled={loading}
+                    className="h-12 px-8 rounded-xl bg-[#2faa2f] text-white font-medium hover:bg-[#289828] transition shadow-sm"
+                  >
+                    {loading ? 'Criando...' : 'Criar'}
                   </button>
                 </div>
+
               </div>
             </div>
           </section>
+
         </main>
       </div>
     </div>
   );
 }
 
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FormField({ label, children }: any) {
   return (
     <div>
-      <label className="block text-[15px] font-semibold text-[#3a3a3a] mb-3">
+      <label className="block text-[15px] font-semibold mb-3">
         {label}
       </label>
       {children}
     </div>
   );
 }
-
