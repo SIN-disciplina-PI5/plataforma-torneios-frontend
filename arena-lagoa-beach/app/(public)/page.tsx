@@ -32,7 +32,7 @@ export default function Home() {
       <main className="flex flex-1 items-center justify-center gap-16 px-24 py-12">
 
         <div className="flex flex-col gap-5 max-w-2xl">
-          <p className="text-[#555] text-2xl">Jogue com o pé na Areia</p>
+          <p className="text-[#555] text-2xl">Jogue com o pé na Areia!</p>
           <h1 className="text-7xl font-extrabold text-[#2D2D2D] leading-tight">
             Arena Lagoa Beach
           </h1>
@@ -52,18 +52,6 @@ export default function Home() {
           />
         </div>
       </main>
-
-
-      <div className="relative h-44 overflow-hidden">
-        <div className="absolute bottom-0 left-0 w-80 h-44">
-          <Image
-            src="/elemento.png"
-            alt=""
-            fill
-            className="object-contain object-bottom-left"
-          />
-        </div>
-      </div>
 
     </div>
   );
