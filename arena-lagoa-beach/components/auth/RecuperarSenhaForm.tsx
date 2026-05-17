@@ -4,6 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/app/services/password";
 
+type ApiError = {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as ApiError;
+  return apiError.response?.data?.error || fallback;
+}
+
 export function RecuperarSenhaForm() {
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -39,8 +52,8 @@ export function RecuperarSenhaForm() {
     try {
       await forgotPassword(email);
       setResendMessage("Novo código enviado! Verifique seu e-mail.");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao reenviar código.");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Erro ao reenviar código."));
     } finally {
       setResendLoading(false);
     }

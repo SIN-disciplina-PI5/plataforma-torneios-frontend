@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ProtecaoRota({ children }: any) {
+export default function ProtecaoRota({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -12,7 +13,7 @@ export default function ProtecaoRota({ children }: any) {
     if (!token) {
       router.push("/login");
     }
-  }, []);
+  }, [router]);
 
   return children;
 }

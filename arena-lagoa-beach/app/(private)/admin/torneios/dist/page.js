@@ -4,14 +4,12 @@
 // import Image from "next/image";
 // import { Trophy, Plus } from "lucide-react";
 // import { clsx } from "clsx";
-
 // import type { AdminDialogState, AdminTab, Tournament } from "./_types";
 // import { ADMIN_TABS } from "./_lib/constants";
 // import { fetchTournaments, deleteTournament } from "./_lib/api";
 // import { AdminTournamentCard } from "../../../../components/admin/AdminTournamentCard";
 // import { AdminTournamentDialogs } from "../../../../components/admin/AdminTournamentDialogs";
 // import styles from "./_styles/admin-tournaments.module.css";
-
 // export default function AdminTorneiosPage() {
 //   const [activeTab, setActiveTab] = useState<AdminTab>("Todos");
 //   const [search, setSearch] = useState("");
@@ -19,17 +17,14 @@
 //   const [loading, setLoading] = useState(true);
 //   const [dialogState, setDialogState] = useState<AdminDialogState>("idle");
 //   const [selected, setSelected] = useState<Tournament | null>(null);
-
 //   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 //   const [indicatorStyle, setIndicatorStyle] = useState({});
-
 //   useEffect(() => {
 //     fetchTournaments()
 //       .then(setTournaments)
 //       .catch((err) => console.error("Erro ao carregar torneios:", err))
 //       .finally(() => setLoading(false));
 //   }, []);
-
 //   useEffect(() => {
 //     const updateIndicator = () => {
 //       const index = ADMIN_TABS.indexOf(activeTab);
@@ -38,54 +33,42 @@
 //         setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
 //       }
 //     };
-
 //     updateIndicator();
 //     window.addEventListener("resize", updateIndicator);
 //     return () => window.removeEventListener("resize", updateIndicator);
 //   }, [activeTab]);
-
 //   function handleDeleteClick(tournament: Tournament) {
 //     setSelected(tournament);
 //     setDialogState("confirmDelete");
 //   }
-
 //   function handleEditClick(tournament: Tournament) {
 //     setSelected(tournament);
 //     setDialogState("edit");
 //   }
-
 //   function handleViewRegistrations(tournament: Tournament) {
 //     setSelected(tournament);
 //     setDialogState("registrations");
 //   }
-
 //   async function handleConfirmDelete() {
 //     if (!selected) return;
-
 //     setDialogState("loadingDelete");
-
 //     try {
 //       await deleteTournament(selected.id);
-
 //       setTournaments((prev) =>
 //         prev.filter((t) => t.id !== selected.id)
 //       );
-
 //       setDialogState("successDelete");
 //     } catch {
 //       setDialogState("errorDelete");
 //     }
 //   }
-
 //   const filtered = tournaments.filter((t) =>
 //     t.title?.toLowerCase().includes(search.toLowerCase()) ||
 //     t.level?.toLowerCase().includes(search.toLowerCase())
 //   );
-
 //   return (
 //     <>
 //       <main className="min-h-screen px-8 py-6 relative">
-
 //         {/* Header */}
 //         <div className="flex items-center gap-3 mb-8">
 //           <div className="w-9 h-9 rounded-full flex items-center justify-center select-none">
@@ -96,14 +79,11 @@
 //               height={40}
 //             />
 //           </div>
-
 //           <h1 className="text-4xl font-semibold">Torneios</h1>
-
 //           <span className="ml-2 text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
 //             Admin
 //           </span>
 //         </div>
-
 //         {/* Tabs */}
 //         <div className="relative">
 //           <div
@@ -127,14 +107,12 @@
 //                 {tab}
 //               </button>
 //             ))}
-
 //             <span
 //               className={styles.tabIndicator}
 //               style={indicatorStyle}
 //             />
 //           </div>
 //         </div>
-
 //         {/* Banner */}
 //         <div
 //           className={clsx(
@@ -149,7 +127,6 @@
 //               width={70}
 //               height={70}
 //             />
-
 //             <p className="text-white text-3xl font-bold text-center">
 //               {loading
 //                 ? "..."
@@ -158,7 +135,6 @@
 //             </p>
 //           </div>
 //         </div>
-
 //         {/* Grid */}
 //         {loading ? (
 //           <div className="flex justify-center py-24 text-gray-400">
@@ -184,7 +160,6 @@
 //             </p>
 //           </div>
 //         )}
-
 //         {/* FAB */}
 //         <button
 //           onClick={() => setDialogState("create")}
@@ -193,9 +168,7 @@
 //         >
 //           <Plus size={28} />
 //         </button>
-
 //       </main>
-
 //       <AdminTournamentDialogs
 //         state={dialogState}
 //         tournament={selected}

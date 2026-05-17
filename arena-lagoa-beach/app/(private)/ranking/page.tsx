@@ -86,7 +86,7 @@ export default function RankingPage() {
       {/* Rankings List */}
       {rankings.length > 0 && (
         <div className="space-y-3">
-          {rankings.map((ranking, index) => (
+          {rankings.map((ranking) => (
             <RankingCard
               key={ranking.id_ranking}
               ranking={ranking}

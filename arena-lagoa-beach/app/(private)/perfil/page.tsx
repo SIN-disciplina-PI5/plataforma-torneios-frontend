@@ -9,6 +9,7 @@ import {
   updateMeuPerfil,
   deleteMinhaConta,
 } from "@/app/services/perfilService";
+import type { UpdatePerfilRequest } from "@/app/types/perfil";
 
 import {
   AlertDialog,
@@ -21,6 +22,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const avatarUrl =
+  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export default function MeuPerfil() {
   const router = useRouter();
@@ -79,7 +91,7 @@ export default function MeuPerfil() {
       }
 
       try {
-        const payload: any = {
+        const payload: UpdatePerfilRequest = {
           nome: formData.nome,
           email: formData.email,
           username: formData.username,
@@ -94,10 +106,11 @@ export default function MeuPerfil() {
 
         setFormData((prev) => ({ ...prev, senha: "", confirmarSenha: "" }));
         setIsEditing(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
         console.error(error);
         toast.error(
-          error.response?.data?.message || "Erro ao atualizar perfil.",
+          apiError.response?.data?.message || "Erro ao atualizar perfil.",
         );
       }
     } else {
@@ -152,10 +165,11 @@ export default function MeuPerfil() {
         <div className="px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div className="flex items-center gap-5">
             <div className="relative -mt-10">
-              <img
-                src="https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg"
-                alt="Foto de perfil"
-                className="w-24 h-24 rounded-full border-4 border-white object-cover bg-white shadow-sm"
+              <div
+                role="img"
+                aria-label="Foto de perfil"
+                style={{ backgroundImage: `url(${avatarUrl})` }}
+                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm"
               />
               {isEditing && (
                 <button className="absolute bottom-1 -right-1 bg-[#316f27] text-white border-2 border-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">

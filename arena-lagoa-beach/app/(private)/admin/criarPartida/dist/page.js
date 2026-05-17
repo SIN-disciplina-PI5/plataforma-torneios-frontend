@@ -65,7 +65,7 @@ var duplas = [
 ];
 function CriarPartidaPage() {
     var _a = react_1.useState('Eliminatórias'), faseAtiva = _a[0], setFaseAtiva = _a[1];
-    //  NOVOS ESTADOS (SEM ALTERAR UI)
+    //  NOVOS ESTADOS (
     var _b = react_1.useState(''), data = _b[0], setData = _b[1];
     var _c = react_1.useState(''), hora = _c[0], setHora = _c[1];
     var _d = react_1.useState(false), loading = _d[0], setLoading = _d[1];
