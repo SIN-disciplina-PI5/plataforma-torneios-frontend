@@ -4,6 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { resetPassword } from "@/app/services/password";
 
+type ApiError = {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as ApiError;
+  return apiError.response?.data?.error || fallback;
+}
+
 export function NovaSenhaForm() {
   const router = useRouter();
   const [novaSenha, setNovaSenha] = useState("");
@@ -37,8 +50,8 @@ export function NovaSenhaForm() {
       sessionStorage.removeItem("resetToken");
       sessionStorage.removeItem("resetEmail");
       router.push("/login?reset=success");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao redefinir senha. Tente novamente.");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Erro ao redefinir senha. Tente novamente."));
     } finally {
       setLoading(false);
     }

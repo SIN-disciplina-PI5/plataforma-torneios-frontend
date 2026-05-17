@@ -1,6 +1,17 @@
 import { api } from "./api";
 import { Partida } from "@/app/types/partida";
 
+type ApiError = {
+  response?: {
+    data?: unknown;
+  };
+  message?: string;
+};
+
+function getApiError(error: unknown): ApiError {
+  return error instanceof Error ? error : {};
+}
+
 export const getPartidasHome = async (): Promise<Partida[]> => {
   const token = localStorage.getItem("token");
 
@@ -14,8 +25,9 @@ export const getPartidasHome = async (): Promise<Partida[]> => {
     });
 
     return response.data;
-  } catch (error: any) {
-    console.error("Erro na API:", error.response?.data || error.message);
+  } catch (error: unknown) {
+    const apiError = getApiError(error);
+    console.error("Erro na API:", apiError.response?.data || apiError.message);
     return [];
   }
 };

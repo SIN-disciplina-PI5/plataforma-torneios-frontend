@@ -4,6 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/app/services/password";
 
+type ApiError = {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as ApiError;
+  return apiError.response?.data?.error || fallback;
+}
+
 export function EsqueceuSenhaForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -19,8 +32,8 @@ export function EsqueceuSenhaForm() {
       await forgotPassword(email);
       sessionStorage.setItem("resetEmail", email);
       router.push("/recuperar-senha");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao enviar código. Tente novamente.");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Erro ao enviar código. Tente novamente."));
     } finally {
       setLoading(false);
     }

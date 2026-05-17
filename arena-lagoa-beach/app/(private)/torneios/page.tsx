@@ -14,7 +14,7 @@ import styles from "./_styles/tournaments.module.css";
 
 export default function TorneiosPage() {
   const [activeTab, setActiveTab] = useState<Tab>("Essa semana");
-  const [search, setSearch] = useState("");
+  const [search] = useState("");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogState, setDialogState] = useState<DialogState>("idle");
