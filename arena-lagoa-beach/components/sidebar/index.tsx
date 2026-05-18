@@ -9,15 +9,10 @@ import { Home, Trophy, Volleyball, Bell, User } from "lucide-react";
 const navItems = [
   { label: "Home", href: "/torneios", icon: Home },
   { label: "Ranking", href: "/ranking", icon: Trophy },
-<<<<<<< Updated upstream
-  { label: "Torneios", href: "/torneios", icon: Volleyball },
-=======
   { label: "Partidas", href: "/home", icon: Volleyball },
   { label: "Notificações", href: "/notificacoes", icon: Bell },
->>>>>>> Stashed changes
   { label: "Meu Perfil", href: "/perfil", icon: User },
   { label: "Admin", href: "/admin/partidas", icon: User },
-  
 ];
 
 export default function Sidebar() {
