@@ -1,6 +1,7 @@
 export interface Equipe {
   nome: string;
   bandeira: string;
+  id_usuario: string;
 }
 
 export interface Partida {
@@ -11,4 +12,12 @@ export interface Partida {
   Torneio: {
     nome: string;
   };
+  equipe1: Equipe;
+  equipe2: Equipe;
+  favorita?: boolean;
+}
+
+export interface GrupoDePartidas {
+  dataLabel: string;
+  partidas: Partida[];
 }
