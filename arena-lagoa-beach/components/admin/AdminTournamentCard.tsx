@@ -2,8 +2,7 @@ import Image from "next/image";
 import { Pencil, Trash2, Users } from "lucide-react";
 import { clsx } from "clsx";
 
-import type { Tournament } from "../../app/(private)/admin/torneios/_types";
-import { LEVEL_COLORS } from "../../app/(private)/admin/torneios/_lib/constants";
+import type { Tournament } from "@/app/types/torneios";
 import styles from "./AdminTournamentCard.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
@@ -12,6 +11,13 @@ const LEVEL_IMAGES: Record<string, string> = {
   Básico: "/basico.png",
   Iniciante: "/basico.png",
   default: "/cup.png",
+};
+
+const LEVEL_COLORS: Record<string, string> = {
+  Avançado: "text-orange-400",
+  Intermediário: "text-green-400",
+  Iniciante: "text-sky-400",
+  Básico: "text-sky-400",
 };
 
 interface AdminTournamentCardProps {
@@ -27,15 +33,15 @@ export function AdminTournamentCard({
   onDelete,
   onViewRegistrations,
 }: AdminTournamentCardProps) {
-  const isEsgotado = !tournament.status || tournament.spots <= 0;
+  const isEsgotado = !tournament.status || tournament.vagas <= 0;
 
   return (
     <article className={clsx("bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col", styles.card)}>
       {/* Imagem */}
       <div className="relative h-36 overflow-hidden bg-neutral-200">
         <Image
-          src={LEVEL_IMAGES[tournament.level] || LEVEL_IMAGES.default}
-          alt={`Torneio ${tournament.level}`}
+          src={LEVEL_IMAGES[tournament.categoria] || LEVEL_IMAGES.default}
+          alt={`Torneio ${tournament.categoria}`}
           fill
           className="object-contain"
         />
@@ -44,12 +50,11 @@ export function AdminTournamentCard({
       <div className="px-4 pt-3 pb-4 flex flex-col gap-2 flex-1">
         {/* Nível + Ações admin */}
         <div className="flex items-center justify-between">
-          <span className={clsx("text-xs font-semibold", LEVEL_COLORS[tournament.level] || "text-gray-400")}>
-            {tournament.level}
+          <span className={clsx("text-xs font-semibold", LEVEL_COLORS[tournament.categoria] || "text-gray-400")}>
+            {tournament.categoria}
           </span>
 
           <div className="flex items-center gap-1">
-            {/* Editar */}
             <button
               onClick={() => onEdit(tournament)}
               className={styles.actionBtn}
@@ -58,7 +63,6 @@ export function AdminTournamentCard({
               <Pencil size={14} />
             </button>
 
-            {/* Deletar */}
             <button
               onClick={() => onDelete(tournament)}
               className={clsx(styles.actionBtn, styles.deleteBtn)}
@@ -67,7 +71,6 @@ export function AdminTournamentCard({
               <Trash2 size={14} />
             </button>
 
-            {/* Ver inscrições */}
             <button
               onClick={() => onViewRegistrations(tournament)}
               className={styles.actionBtn}
@@ -79,30 +82,16 @@ export function AdminTournamentCard({
         </div>
 
         {/* Título */}
-        <p className="font-bold text-gray-900 text-sm leading-tight">{tournament.title}</p>
+        <p className="font-bold text-gray-900 text-sm leading-tight">{tournament.nome}</p>
 
         {/* Meta info */}
         <p className="text-xs text-gray-500 flex flex-wrap items-center gap-1">
-          <span>{tournament.spots} vagas</span>
+          <span>{tournament.vagas} vagas</span>
           <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
           <span className={clsx("font-medium", isEsgotado ? "text-red-500" : "text-green-600")}>
             {isEsgotado ? "Esgotado" : "Ativo"}
           </span>
-          {tournament.phase && (
-            <>
-              <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
-              <span className="text-gray-500">{tournament.phase}</span>
-            </>
-          )}
         </p>
-
-        {/* Datas (se disponíveis) */}
-        {tournament.startDate && tournament.endDate && (
-          <p className="text-xs text-gray-400">
-            {new Date(tournament.startDate).toLocaleDateString("pt-BR")} →{" "}
-            {new Date(tournament.endDate).toLocaleDateString("pt-BR")}
-          </p>
-        )}
 
         {/* Status badge */}
         {isEsgotado ? (
@@ -111,7 +100,7 @@ export function AdminTournamentCard({
           </span>
         ) : (
           <span className="mt-auto self-start rounded-lg bg-green-600 px-4 py-1.5 text-xs font-semibold text-white">
-            Se inscrever
+            Ativo
           </span>
         )}
       </div>
