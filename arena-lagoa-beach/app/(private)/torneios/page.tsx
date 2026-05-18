@@ -6,9 +6,14 @@ import { Trophy, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { TournamentUI } from "@/app/types/torneios";
-import { getTorneios, registerForTournament } from "@/app/services/torneioService";
+import {
+  getTorneios,
+  registerForTournament,
+} from "@/app/services/torneioService";
 import { TournamentCard } from "@/components/inscricao/TournamentCard";
 import { TournamentDialogs } from "@/components/inscricao/TournamentDialogs";
+import { DuplasModal } from "@/components/ui/DuplasModal";
+import type { Dupla } from "@/app/types/duplas";
 import styles from "./_styles/tournaments.module.css";
 
 type Tab = "Todos" | "Essa semana" | "Favoritos";
@@ -24,36 +29,38 @@ export default function TorneiosPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<DialogState>("idle");
   const [selected, setSelected] = useState<TournamentUI | null>(null);
+  const [duplaModalOpen, setDuplaModalOpen] = useState(false);
+  const [duplaSelecionada, setDuplaSelecionada] = useState<Dupla | null>(null);
 
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [indicatorStyle, setIndicatorStyle] = useState({});
 
- useEffect(() => {
-  const fetchTorneios = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  useEffect(() => {
+    const fetchTorneios = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const data = await getTorneios();
+        const data = await getTorneios();
 
-      if (!data) {
-        setError("Falha ao carregar os torneios");
+        if (!data) {
+          setError("Falha ao carregar os torneios");
+          setTournaments([]);
+          return;
+        }
+
+        setTournaments(data);
+      } catch (err) {
+        console.error("Erro ao buscar torneios:", err);
+        setError("Erro ao carregar os torneios");
         setTournaments([]);
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setTournaments(data); 
-    } catch (err) {
-      console.error("Erro ao buscar torneios:", err);
-      setError("Erro ao carregar os torneios");
-      setTournaments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchTorneios();
-}, []);
+    fetchTorneios();
+  }, []);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -69,20 +76,32 @@ export default function TorneiosPage() {
 
   function handleToggleFavorite(id: string) {
     setTournaments((prev) =>
-      prev.map((t) => (t.id_torneio === id ? { ...t, favorite: !t.favorite } : t))
+      prev.map((t) =>
+        t.id_torneio === id ? { ...t, favorite: !t.favorite } : t,
+      ),
     );
   }
 
   function handleRegisterClick(tournament: TournamentUI) {
     setSelected(tournament);
-    setDialogState("confirm");
+    setDuplaModalOpen(true);
+  }
+
+  function handleDuplaSelecionada(dupla: Dupla) {
+    setDuplaSelecionada(dupla);
+    setDuplaModalOpen(false);
+    setDialogState("confirm"); // agora sim abre o confirm
   }
 
   async function handleConfirmRegister() {
-    if (!selected) return;
+    if (!selected || !duplaSelecionada) return;
     setDialogState("loading");
 
-    const result = await registerForTournament(selected.id_torneio, 1);
+    const result = await registerForTournament(
+      selected.id_torneio,
+      1,
+      //duplaSelecionada.id, // ← passe o id da dupla para sua API
+    );
 
     if (!result) {
       setDialogState("error");
@@ -97,7 +116,7 @@ export default function TorneiosPage() {
     .filter(
       (t) =>
         t.nome?.toLowerCase().includes(search.toLowerCase()) ||
-        t.categoria?.toLowerCase().includes(search.toLowerCase())
+        t.categoria?.toLowerCase().includes(search.toLowerCase()),
     );
 
   if (loading) {
@@ -116,7 +135,12 @@ export default function TorneiosPage() {
       <main className="min-h-screen px-8 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <Image src="/variante-de-bola-de-futebol.png" alt="Bola" width={40} height={40} />
+          <Image
+            src="/variante-de-bola-de-futebol.png"
+            alt="Bola"
+            width={40}
+            height={40}
+          />
           <h1 className="text-4xl font-semibold">Torneios</h1>
         </div>
 
@@ -126,11 +150,15 @@ export default function TorneiosPage() {
             {TABS.map((tab, i) => (
               <button
                 key={tab}
-                ref={(el) => { tabsRef.current[i] = el; }}
+                ref={(el) => {
+                  tabsRef.current[i] = el;
+                }}
                 onClick={() => setActiveTab(tab)}
                 className={clsx(
                   "pb-3 text-lg font-medium transition-colors",
-                  activeTab === tab ? "text-black" : "text-gray-500 hover:text-gray-300"
+                  activeTab === tab
+                    ? "text-black"
+                    : "text-gray-500 hover:text-gray-300",
                 )}
               >
                 {tab}
@@ -141,7 +169,12 @@ export default function TorneiosPage() {
         </div>
 
         {/* Banner */}
-        <div className={clsx("rounded-2xl mb-10 h-28 flex items-center justify-center", styles.banner)}>
+        <div
+          className={clsx(
+            "rounded-2xl mb-10 h-28 flex items-center justify-center",
+            styles.banner,
+          )}
+        >
           <div className="flex items-center gap-3">
             <Image src="/cup.png" alt="Troféu" width={70} height={70} />
             <p className="text-white text-3xl font-bold text-center">
@@ -186,6 +219,25 @@ export default function TorneiosPage() {
         tournament={selected}
         onClose={() => setDialogState("idle")}
         onConfirm={handleConfirmRegister}
+      />
+
+      <DuplasModal
+        isOpen={duplaModalOpen}
+        onClose={() => setDuplaModalOpen(false)}
+        onSelectDupla={handleDuplaSelecionada}
+        onCreateDupla={async (query) => {
+          // chame sua API para criar dupla aqui
+          console.log("Criar dupla:", query);
+        }}
+        onAddPlayerToDupla={(duplaId) => {
+          // abra seu fluxo de adicionar jogador
+          console.log("Adicionar jogador à dupla:", duplaId);
+        }}
+        onLeave={() => {
+          setDuplaSelecionada(null);
+          setDuplaModalOpen(false);
+        }}
+        currentDuplaId={duplaSelecionada?.id ?? null}
       />
     </>
   );
