@@ -41,6 +41,7 @@ export function LoginForm() {
     try {
       setLoading(true);
 
+<<<<<<< Updated upstream
       await login({ email, senha, recaptchaToken: recaptchaToken });
       router.push("/home");
     } catch (err: unknown) {
@@ -49,6 +50,17 @@ export function LoginForm() {
       } else {
         setModalMessage("Erro ao fazer login");
       }
+=======
+      const res = await login({ email, senha });
+
+      // salva token
+      localStorage.setItem("token", res.token);
+
+      // ✅ sucesso → NÃO mostra popup
+      router.push("/torneios");
+    } catch (err: any) {
+      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+>>>>>>> Stashed changes
       setModalOpen(true);
     } finally {
       setLoading(false);
