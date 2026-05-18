@@ -10,9 +10,9 @@ const navItems = [
   { label: "Home", href: "/home", icon: Home },
   { label: "Ranking", href: "/ranking", icon: Trophy },
   { label: "Torneios", href: "/torneios", icon: Volleyball },
-  { label: "Notificações", href: "/notificacoes", icon: Bell },
   { label: "Meu Perfil", href: "/perfil", icon: User },
-  { label: "Admin", href: "/admin/editarPartida", icon: User },
+  { label: "Admin", href: "/admin/partidas", icon: User },
+  
 ];
 
 export default function Sidebar() {

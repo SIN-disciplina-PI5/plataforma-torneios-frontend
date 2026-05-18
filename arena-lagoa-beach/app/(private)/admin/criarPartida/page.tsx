@@ -1,231 +1,261 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  ShieldCheck,
-  CircleDot,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-const fases = ['Eliminatórias', 'Oitavas', 'Quartas', 'Semifinal', 'Final'];
+const fases = ['Oitavas de Finais', 'Quartas de Finais', 'Semifinais', 'Finais', 'Eliminatórias'];
+const statusPadrao = 'PENDENTE';
 
-
-// DADOS MOCKADOS - SUBSTITUIR PELO RETORNO DA API!!!
 const duplas = [
   {
     titulo: 'Dupla 1',
-    scoreA: '3',
-    scoreB: '3',
-    vencedor: true,
     jogadores: [
-      {
-        nome: 'Kawe Doe',
-        avatar: 'https://i.pravatar.cc/100?img=12',
-      },
-      {
-        nome: 'Julia Silva',
-        avatar: 'https://i.pravatar.cc/100?img=32',
-      },
+      { nome: 'Karen Den', avatar: 'https://i.pravatar.cc/100?img=12' },
+      { nome: 'Julia Silva', avatar: 'https://i.pravatar.cc/100?img=32' },
     ],
   },
   {
     titulo: 'Dupla 2',
-    scoreA: '3',
-    scoreB: '3',
-    vencedor: false,
     jogadores: [
-      {
-        nome: 'Karen Doe',
-        avatar: 'https://i.pravatar.cc/100?img=47',
-      },
-      {
-        nome: 'Alda Silva',
-        avatar: 'https://i.pravatar.cc/100?img=20',
-      },
+      { nome: 'Márcio lima', avatar: 'https://i.pravatar.cc/100?img=47' },
+      { nome: 'Homer Cídio', avatar: 'https://i.pravatar.cc/100?img=20' },
     ],
   },
 ];
 
+type Torneio = {
+  id_torneio: number | string;
+  nome: string;
+  categoria?: string;
+};
+
+type ApiListResponse<T> = {
+  data?: T[];
+  error?: string;
+};
+
+type ApiCreateResponse = {
+  data?: {
+    id_partida: number;
+  };
+  error?: string;
+  message?: string;
+};
+
+const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL;
+
 export default function CriarPartidaPage() {
-  const [faseAtiva, setFaseAtiva] = useState('Eliminatórias');
+  const router = useRouter();
+
+  const [idTorneio, setIdTorneio] = useState('');
+  const [faseAtiva, setFaseAtiva] = useState(fases[0]);
+  const [data, setData] = useState('');
+  const [hora, setHora] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadingTorneios, setLoadingTorneios] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function fetchTorneios() {
+      try {
+        const apiUrl = getApiUrl();
+        const token = localStorage.getItem('token');
+
+        if (!apiUrl) {
+          throw new Error('NEXT_PUBLIC_API_URL não está configurada');
+        }
+
+        const res = await fetch(`${apiUrl}/api/torneio`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const json = (await res.json()) as ApiListResponse<Torneio>;
+
+        if (!res.ok) {
+          throw new Error(json.error || 'Erro ao carregar torneios');
+        }
+
+        const torneiosRecebidos = json.data || [];
+        setIdTorneio(String(torneiosRecebidos[0]?.id_torneio || ''));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erro ao carregar torneios';
+        setError(message);
+      } finally {
+        setLoadingTorneios(false);
+      }
+    }
+
+    fetchTorneios();
+  }, []);
+
+  async function handleCriar() {
+    setError('');
+
+    if (!idTorneio) {
+      setError('Selecione um torneio para criar a partida.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const apiUrl = getApiUrl();
+      const token = localStorage.getItem('token');
+
+      if (!apiUrl) {
+        throw new Error('NEXT_PUBLIC_API_URL não está configurada');
+      }
+
+      const res = await fetch(`${apiUrl}/api/partidas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_torneio: idTorneio,
+          fase: faseAtiva,
+          status: statusPadrao,
+          horario: data && hora ? `${data}T${hora}:00` : null,
+        }),
+      });
+
+      const json = (await res.json()) as ApiCreateResponse;
+
+      if (!res.ok) {
+        setError(json.error || 'Erro ao criar partida');
+        return;
+      }
+
+      router.push('/admin/partidas');
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : 'Erro na requisição';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-[#f6f6f4] text-[#2d2d2d] flex width-full">
-    
-      {/* CONTEÚDO */}
-      <div className="flex-1 flex flex-col">
-      
-        {/* MAIN */}
-        <main >
-          {/* TÍTULO */}
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-6 h-6 rounded-full border border-[#cfcfcf] flex items-center justify-center">
-              <CircleDot size={13} className="text-[#7f7f7f]" />
-            </div>
-            <h1 className="text-[28px] font-semibold text-[#2b2b2b]">
-              Criar Partida
-            </h1>
+    <div className="min-h-screen bg-white text-[#111111]">
+      <main className="w-full max-w-[610px] px-5 pt-6 pb-8">
+        <div className="mb-6 flex items-center gap-2">
+          <Image
+            src="/variante-de-bola-de-futebol.png"
+            alt="Bola de futebol"
+            width={18}
+            height={18}
+          />
+          <h1 className="text-[20px] font-bold leading-none">
+            Criar Partida
+          </h1>
+        </div>
+
+        <section className="mb-7">
+          <div className="flex items-end gap-8 border-b border-[#dddddd] overflow-x-auto">
+            {fases.map((fase) => {
+              const ativa = faseAtiva === fase;
+
+              return (
+                <button
+                  key={fase}
+                  type="button"
+                  onClick={() => setFaseAtiva(fase)}
+                  className={`relative pb-3 text-[11px] whitespace-nowrap transition ${
+                    ativa ? 'text-black' : 'text-[#a8a8a8]'
+                  }`}
+                >
+                  {fase}
+                  {ativa && (
+                    <span className="absolute bottom-[-1px] left-0 h-[3px] w-full bg-[#25a51f]" />
+                  )}
+                </button>
+              );
+            })}
           </div>
+        </section>
 
-          {/* FASE */}
-          <section className="mb-10">
-            <h2 className="text-[32px] font-semibold text-[#2f2f2f] mb-6">Fase</h2>
+        <section className="space-y-7">
+          {error && (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">
+              {error}
+            </p>
+          )}
 
-            <div className="border-b border-[#d8d8d8] flex items-end gap-10 overflow-x-auto">
-              {fases.map((fase) => {
-                const ativa = faseAtiva === fase;
+          <FormField label="Data da Partida">
+            <input
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              className="h-9 w-[272px] max-w-full rounded-md border border-transparent bg-[#f8f8f8] px-3 text-[12px] text-[#8b8b8b] outline-none focus:border-[#25a51f]"
+            />
+          </FormField>
 
-                return (
-                  <button
-                    key={fase}
-                    onClick={() => setFaseAtiva(fase)}
-                    className={`relative pb-3 text-[14px] whitespace-nowrap transition ${
-                      ativa
-                        ? 'text-[#2b2b2b] font-medium'
-                        : 'text-[#a1a1a1] hover:text-[#6f6f6f]'
-                    }`}
-                  >
-                    {fase}
-                    {ativa && (
-                      <span className="absolute left-0 bottom-1px h-3px w-full rounded-full bg-[#2faa2f]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+          <FormField label="Horário">
+            <input
+              type="time"
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+              className="h-9 w-[272px] max-w-full rounded-md border border-transparent bg-[#f8f8f8] px-3 text-[12px] text-[#8b8b8b] outline-none focus:border-[#25a51f]"
+            />
+          </FormField>
 
-          {/* FORM */}
-          <section className="max-w-920px">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {/* COLUNA ESQUERDA */}
-              <div className="space-y-6">
-                <FormField label="Data da Partida">
-                  <input
-                    type="date"
-                    defaultValue="2025-09-12"
-                    className="w-full h-12 rounded-xl border border-[#dddddd] bg-white px-4 text-sm outline-none focus:border-[#316f27]"
-                  />
-                </FormField>
+          <div>
+            <p className="mb-4 text-[12px] font-medium">Duplas</p>
 
-                <FormField label="Horário">
-                  <input
-                    type="time"
-                    defaultValue="13:30"
-                    className="w-full h-12 rounded-xl border border-[#dddddd] bg-white px-4 text-sm outline-none focus:border-[#316f27]"
-                  />
-                </FormField>
+            <div className="space-y-2">
+              {duplas.map((dupla) => (
+                <div key={dupla.titulo}>
+                  <p className="mb-2 text-[11px]">{dupla.titulo}</p>
 
-                <div>
-                  <p className="text-[15px] font-semibold text-[#3a3a3a] mb-3">
-                    Resultado Final da Partida
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {duplas.map((dupla) => (
-                      <div
-                        key={dupla.titulo}
-                        className="bg-white border border-[#e3e3e3] rounded-2xl p-4"
-                      >
-                        <p className="text-sm font-medium text-[#6a6a6a] mb-3">
-                          {dupla.titulo}
-                        </p>
-
-                        <div className="flex gap-3">
-                          <input
-                            type="number"
-                            defaultValue={dupla.scoreA}
-                            className="w-full h-12 rounded-xl border border-[#dddddd] bg-[#fafafa] px-4 text-center text-lg outline-none focus:border-[#316f27]"
+                  <div className="flex h-8 w-[236px] max-w-full items-center rounded-md bg-[#f8f8f8] px-3">
+                    <span className="flex items-center gap-8">
+                      {dupla.jogadores.map((jogador) => (
+                        <span key={jogador.nome} className="flex items-center gap-2">
+                          <span
+                            className="h-6 w-6 rounded-full bg-cover bg-center"
+                            style={{ backgroundImage: `url(${jogador.avatar})` }}
+                            aria-hidden="true"
                           />
-                          <input
-                            type="number"
-                            defaultValue={dupla.scoreB}
-                            className="w-full h-12 rounded-xl border border-[#dddddd] bg-[#fafafa] px-4 text-center text-lg outline-none focus:border-[#316f27]"
-                          />
-                        </div>
-                      </div>
-                    ))}
+                          <span className="whitespace-nowrap text-[8px] font-bold">
+                            {jogador.nome}
+                          </span>
+                        </span>
+                      ))}
+                    </span>
                   </div>
                 </div>
-              </div>
-
-              {/* COLUNA DIREITA */}
-              <div className="margin-top-6 xl:margin-top-0">
-                <p className="text-[15px] font-semibold text-[#3a3a3a] mb-4">
-                  Dupla Vencedora
-                </p>
-
-                <div className="space-y-4">
-                  {duplas.map((dupla) => (
-                    <div
-                      key={dupla.titulo}
-                      className="bg-white border border-[#e3e3e3] rounded-2xl px-5 py-4 flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-[#525252] mb-3">
-                          {dupla.titulo}
-                        </p>
-
-                        <div className="flex items-center gap-5">
-                          {dupla.jogadores.map((jogador) => (
-                            <div
-                              key={jogador.nome}
-                              className="flex items-center gap-3"
-                            >
-                              <img
-                                src={jogador.avatar}
-                                alt={jogador.nome}
-                                className="w-10 h-10 rounded-full object-cover border border-[#d9d9d9]">
-                              </img> 
-                              
-                              <span className="text-sm text-[#4b4b4b]">
-                                {jogador.nome}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <button
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center transition ${
-                          dupla.vencedor
-                            ? 'bg-[#2faa2f] border-[#2faa2f] text-white'
-                            : 'bg-white border-[#d9d9d9] text-transparent hover:border-[#316f27]'
-                        }`}
-                      >
-                        <ShieldCheck size={15} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8">
-                  <button className="h-12 px-8 rounded-xl bg-[#2faa2f] text-white font-medium hover:bg-[#289828] transition shadow-sm">
-                    Criar
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          </section>
-        </main>
-      </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCriar}
+            disabled={loading || loadingTorneios}
+            className="h-9 w-[282px] max-w-full rounded-[3px] bg-[#25a51f] text-[11px] font-bold text-white transition hover:bg-[#208d1b] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? 'Criando...' : 'Criar'}
+          </button>
+        </section>
+      </main>
     </div>
   );
 }
 
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FormField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="block text-[15px] font-semibold text-[#3a3a3a] mb-3">
+      <label className="mb-2 block text-[11px] font-medium">
         {label}
       </label>
       {children}
     </div>
   );
 }
-

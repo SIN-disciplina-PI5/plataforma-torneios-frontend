@@ -3,6 +3,10 @@
 import styles from './navbar.module.css';
 import { Search, Bell, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
+
+const avatarUrl =
+  'https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg';
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
@@ -13,6 +17,7 @@ export default function Navbar() {
       {/* Pesquisa */}
       <div className={styles.searchContainer}>
         <Search className={styles.searchIcon} size={18} />
+
         <input
           type="text"
           placeholder="Pesquisar"
@@ -22,13 +27,17 @@ export default function Navbar() {
 
       {/* Ações da direita */}
       <div className={styles.actions}>
+        
         {/* Notificação */}
-        <button className={styles.iconButton}>
+        <Link href="/notificacoes" className={styles.iconButton}>
           <div className={styles.notificationWrapper}>
             <Bell size={20} className={styles.icon} />
-            {hasNotification && <span className={styles.notificationDot}></span>}
+
+            {hasNotification && (
+              <span className={styles.notificationDot}></span>
+            )}
           </div>
-        </button>
+        </Link>
 
         {/* Tema */}
         <button
@@ -42,15 +51,19 @@ export default function Navbar() {
             <Sun size={20} className={styles.icon} />
           )}
         </button>
-
+       
+        <Link href="/perfil" className={styles.iconButton}>
+          
         {/* Perfil */}
         <button className={styles.profileButton}>
-          <img
-            src="https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg"
-            alt="Foto de perfil"
+          <span
+            role="img"
+            aria-label="Foto de perfil"
+            style={{ backgroundImage: `url(${avatarUrl})` }}
             className={styles.avatar}
           />
         </button>
+        </Link>
       </div>
     </header>
   );

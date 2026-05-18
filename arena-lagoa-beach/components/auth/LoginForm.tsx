@@ -41,9 +41,7 @@ export function LoginForm() {
     try {
       setLoading(true);
 
-      const res = await login({ email, senha, recaptchaToken: recaptchaToken });
-
-
+      await login({ email, senha, recaptchaToken: recaptchaToken });
       router.push("/home");
     } catch (err: unknown) {
       if (err instanceof Error) {
