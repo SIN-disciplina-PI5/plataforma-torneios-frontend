@@ -1,480 +1,468 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNotificacao } from "@/lib/NotificacaoContext";
 
-type Player = {
-  id: number;
-  name: string;
-  avatar?: string;
+type Jogador = {
+  id_usuario: number;
+  nome: string;
+  patente?: string;
 };
 
-type Dupla = {
-  id: number;
-  players: [Player | null, Player | null];
+type Equipe = {
+  id_equipe: number;
+  nome: string;
+  membros: Jogador[];
+  completa: boolean;
 };
 
-const MOCK_PLAYERS: Player[] = [
-  { id: 1, name: "Kaiki Bezerra" },
-  { id: 2, name: "Beatriz Martins" },
-  { id: 3, name: "Mel Lopes" },
-  { id: 4, name: "Márcio bueno" },
-  { id: 5, name: "Iago Richard" },
-  { id: 6, name: "Gabriel Santos" },
-  { id: 7, name: "Mel Lopes" },
-];
-
-const MOCK_DUPLAS: Dupla[] = [
-  {
-    id: 1,
-    players: [
-      { id: 1, name: "Kaiki Bezerra" },
-      { id: 2, name: "Beatriz Martins" },
-    ],
-  },
-  {
-    id: 2,
-    players: [
-      { id: 3, name: "Mel Lopes" },
-      { id: 4, name: "Márcio bueno" },
-    ],
-  },
-  {
-    id: 3,
-    players: [
-      { id: 5, name: "Iago Richard" },
-      { id: 6, name: "Gabriel Santos" },
-    ],
-  },
-  { id: 4, players: [{ id: 7, name: "Mel Lopes" }, null] },
-];
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
-
-function Avatar({ name, size = 36 }: { name: string; size?: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        backgroundColor: "#e5e7eb",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: size * 0.33,
-        fontWeight: 500,
-        color: "#6b7280",
-        flexShrink: 0,
-      }}
-    >
-      {getInitials(name)}
-    </div>
-  );
-}
-
-function EmptySlot({ onAdd }: { onAdd: () => void }) {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onAdd();
-      }}
-      aria-label="Adicionar jogador à dupla"
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        border: "1.5px dashed #d1d5db",
-        background: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#9ca3af",
-        fontSize: 20,
-        flexShrink: 0,
-        transition: "border-color 0.15s, color 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "#6b7280";
-        (e.currentTarget as HTMLButtonElement).style.color = "#374151";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "#d1d5db";
-        (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af";
-      }}
-    >
-      +
-    </button>
-  );
-}
-
-type DuplasModalProps = {
-  isOpen?: boolean;
-  onClose?: () => void;
-  onSelectDupla?: (dupla: Dupla) => void;
-  onAddPlayerToDupla?: (duplaId: number) => void;
-  onCreateDupla?: (searchQuery: string) => void;
-  onLeave?: () => void;
-  currentDuplaId?: number | null;
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  torneioId: string | number;
+  token: string;
+  usuarioId: number;
+  onSuccess?: () => void;
 };
 
 export function DuplasModal({
-  isOpen = true,
+  isOpen,
   onClose,
-  onSelectDupla,
-  onAddPlayerToDupla,
-  onCreateDupla,
-  onLeave,
-  currentDuplaId = null,
-}: DuplasModalProps) {
-  const [search, setSearch] = useState("");
-  const [selectedDuplaId, setSelectedDuplaId] = useState<number | null>(
-    currentDuplaId,
-  );
+  torneioId,
+  token,
+  usuarioId,
+  onSuccess,
+}: Props) {
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [selectedEquipeId, setSelectedEquipeId] = useState<number | null>(null);
+  const [nomeNovaEquipe, setNomeNovaEquipe] = useState("");
+  const [modoCriacao, setModoCriacao] = useState(false);
 
-  const filtered = MOCK_DUPLAS.filter((d) =>
-    d.players.some(
-      (p) => p && p.name.toLowerCase().includes(search.toLowerCase()),
-    ),
-  );
+  const { mostrarToast } = useNotificacao();
 
-  // Só marca visualmente, não avança o fluxo
-  const handleSelect = (dupla: Dupla) => {
-    setSelectedDuplaId(dupla.id);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const fetchEquipes = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/equipe/?id_torneio=${torneioId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao carregar equipes");
+      }
+
+      const data = await res.json();
+      setEquipes(data);
+
+      const minhaEquipe = data.find((eq: Equipe) =>
+        eq.membros.some((m: Jogador) => m.id_usuario === usuarioId)
+      );
+
+      if (minhaEquipe) {
+        setSelectedEquipeId(minhaEquipe.id_equipe);
+      } else {
+        setSelectedEquipeId(null);
+      }
+    } catch (err: any) {
+      setErro(err.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const handleCreate = () => {
-    onCreateDupla?.(search);
+  useEffect(() => {
+    if (isOpen && torneioId && token && usuarioId) {
+      fetchEquipes();
+    }
+  }, [isOpen, torneioId, token, usuarioId]);
+
+  const criarEquipe = async () => {
+    if (!nomeNovaEquipe.trim()) {
+      setErro("Nome da equipe é obrigatório");
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Erro",
+        mensagem: "Nome da equipe é obrigatório",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/equipe/${torneioId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nome: nomeNovaEquipe,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao criar equipe");
+      }
+
+      await fetchEquipes();
+
+      // Toast de sucesso
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "✅ Equipe criada!",
+        mensagem: `A equipe "${nomeNovaEquipe}" foi criada com sucesso.`,
+        tipo: "success",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      setModoCriacao(false);
+      setNomeNovaEquipe("");
+      onSuccess?.();
+    } catch (err: any) {
+      setErro(err.message);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "❌ Erro",
+        mensagem: err.message || "Erro ao criar equipe",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  // Botão "Entrar na dupla" — só aqui avança para confirmação
-  const handleEnter = () => {
-    const dupla = MOCK_DUPLAS.find((d) => d.id === selectedDuplaId);
-    if (!dupla) return;
-    onSelectDupla?.(dupla);
+  const entrarEquipe = async (idEquipe: number) => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/equipe/entrar/${torneioId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_equipe: idEquipe,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao entrar na equipe");
+      }
+
+      await fetchEquipes();
+
+      const equipeNome = equipes.find((e) => e.id_equipe === idEquipe)?.nome || "dupla";
+
+      // Toast de sucesso
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "🎮 Entrou na dupla!",
+        mensagem: `Você agora faz parte da equipe "${equipeNome}".`,
+        tipo: "success",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      onSuccess?.();
+    } catch (err: any) {
+      setErro(err.message);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "❌ Erro",
+        mensagem: err.message || "Erro ao entrar na equipe",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const handleLeave = () => {
-    setSelectedDuplaId(null);
-    onLeave?.();
+  const sairEquipe = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/equipe/sair/${torneioId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao sair da equipe");
+      }
+
+      setSelectedEquipeId(null);
+      await fetchEquipes();
+
+      // Toast de sucesso
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "👋 Saiu da dupla",
+        mensagem: "Você saiu da sua dupla atual. Pode entrar ou criar outra equipe.",
+        tipo: "info",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      onSuccess?.();
+    } catch (err: any) {
+      setErro(err.message);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "❌ Erro",
+        mensagem: err.message || "Erro ao sair da equipe",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+    } finally {
+      setCarregando(false);
+    }
   };
 
   if (!isOpen) return null;
+
+  const usuarioTemEquipe = equipes.some((eq) => eq.membros.some((m) => m.id_usuario === usuarioId));
 
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
+        backgroundColor: "rgba(0,0,0,0.25)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "rgba(0,0,0,0.25)",
         zIndex: 50,
       }}
-      onClick={(e) => e.target === e.currentTarget && onClose?.()}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Duplas"
         style={{
           backgroundColor: "#fff",
           borderRadius: 16,
-          width: 360,
+          width: 400,
           maxHeight: "80vh",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
         }}
       >
-        {/* Header */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
             padding: "16px 20px 12px",
-            borderBottom: "1px solid #f3f4f6",
+            borderBottom: "1px solid #f0f0f0",
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 16, color: "#111827" }}>
-            Duplas
-          </span>
-          <button
-            onClick={onClose}
-            aria-label="Fechar modal"
+          <div
             style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#9ca3af",
-              fontSize: 20,
-              lineHeight: 1,
-              padding: 4,
-              borderRadius: 6,
               display: "flex",
+              justifyContent: "space-between",
               alignItems: "center",
-              justifyContent: "center",
-              transition: "color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.color = "#374151")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.color = "#9ca3af")
-            }
           >
-            ✕
-          </button>
+            <strong style={{ fontSize: 16 }}>Duplas do Torneio</strong>
+
+            <button
+              onClick={onClose}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Search + Create */}
-        <div style={{ display: "flex", gap: 8, padding: "12px 16px" }}>
-          <input
-            type="text"
-            placeholder="Buscar jogador"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              flex: 1,
-              height: 38,
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              padding: "0 12px",
-              fontSize: 14,
-              color: "#111827",
-              outline: "none",
-              backgroundColor: "#fafafa",
-              transition: "border-color 0.15s",
-            }}
-            onFocus={(e) =>
-              ((e.currentTarget as HTMLInputElement).style.borderColor =
-                "#6b7280")
-            }
-            onBlur={(e) =>
-              ((e.currentTarget as HTMLInputElement).style.borderColor =
-                "#e5e7eb")
-            }
-          />
-          <button
-            onClick={handleCreate}
-            style={{
-              height: 38,
-              padding: "0 14px",
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              backgroundColor: "#f9fafb",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#374151",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              transition: "background-color 0.15s",
-            }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "#f3f4f6")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "#f9fafb")
-            }
-          >
-            Criar Dupla
-          </button>
-        </div>
-
-        {/* List */}
         <div
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "0 16px 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
+            padding: "16px",
           }}
         >
-          {filtered.length === 0 && (
-            <p
-              style={{
-                textAlign: "center",
-                color: "#9ca3af",
-                fontSize: 14,
-                padding: "24px 0",
-              }}
-            >
-              Nenhuma dupla encontrada
-            </p>
-          )}
+          {!usuarioTemEquipe && (
+            <>
+              {modoCriacao ? (
+                <div style={{ marginBottom: 16 }}>
+                  <input
+                    type="text"
+                    placeholder="Nome da nova dupla"
+                    value={nomeNovaEquipe}
+                    onChange={(e) => setNomeNovaEquipe(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: 8,
+                      borderRadius: 8,
+                      border: "1px solid #ccc",
+                    }}
+                  />
 
-          {filtered.map((dupla) => {
-            const isSelected = selectedDuplaId === dupla.id;
-            const [p1, p2] = dupla.players;
-            const isIncomplete = !p1 || !p2;
-            const isComplete = p1 !== null && p2 !== null;
-            const isDisabled = isComplete && !isSelected;
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      marginTop: 8,
+                    }}
+                  >
+                    <button
+                      onClick={criarEquipe}
+                      disabled={carregando}
+                      style={{
+                        background: "#16a34a",
+                        color: "#fff",
+                        border: "none",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                      }}
+                    >
+                      {carregando ? "Criando..." : "Criar"}
+                    </button>
 
-            return (
-              <button
-                key={dupla.id}
-                onClick={() => !isDisabled && handleSelect(dupla)}
-                aria-pressed={isSelected}
-                disabled={isDisabled}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: isSelected
-                    ? "1.5px solid #374151"
-                    : "1.5px solid #e5e7eb",
-                  backgroundColor: isSelected
-                    ? "#f9fafb"
-                    : isDisabled
-                      ? "#fafafa"
-                      : "#fff",
-                  cursor: isDisabled ? "not-allowed" : "pointer",
-                  opacity: isDisabled ? 0.45 : 1,
-                  textAlign: "left",
-                  transition: "border-color 0.15s, background-color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected && !isDisabled) {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#9ca3af";
-                    (
-                      e.currentTarget as HTMLButtonElement
-                    ).style.backgroundColor = "#f9fafb";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected && !isDisabled) {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#e5e7eb";
-                    (
-                      e.currentTarget as HTMLButtonElement
-                    ).style.backgroundColor = "#fff";
-                  }
-                }}
-              >
-                {/* Player 1 */}
-                {p1 ? (
-                  <Avatar name={p1.name} />
-                ) : (
-                  <EmptySlot onAdd={() => onAddPlayerToDupla?.(dupla.id)} />
-                )}
-                <span
+                    <button
+                      onClick={() => setModoCriacao(false)}
+                      style={{
+                        background: "transparent",
+                        border: "1px solid #ccc",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setModoCriacao(true)}
                   style={{
-                    fontSize: 14,
-                    color: "#374151",
-                    fontWeight: 400,
-                    minWidth: 90,
+                    marginBottom: 16,
+                    padding: "8px 12px",
+                    background: "#2563eb",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    width: "100%",
                   }}
                 >
-                  {p1?.name ?? (
-                    <span style={{ color: "#d1d5db", fontStyle: "italic" }}>
-                      vazio
-                    </span>
-                  )}
-                </span>
+                  + Criar nova dupla
+                </button>
+              )}
+            </>
+          )}
 
-                {/* Divider */}
-                <div style={{ flex: 1 }} />
+          {carregando && <p>Carregando...</p>}
 
-                {/* Player 2 or Add button */}
-                {isIncomplete && !p2 ? (
-                  <EmptySlot onAdd={() => onAddPlayerToDupla?.(dupla.id)} />
-                ) : p2 ? (
-                  <>
-                    <Avatar name={p2.name} />
-                    <span style={{ fontSize: 14, color: "#374151" }}>
-                      {p2.name}
-                    </span>
-                  </>
-                ) : null}
-              </button>
+          {erro && <p style={{ color: "red" }}>{erro}</p>}
+
+          {!carregando && equipes.length === 0 && <p>Nenhuma dupla cadastrada ainda.</p>}
+
+          {equipes.map((equipe) => {
+            const estaNaEquipe = equipe.membros.some((m) => m.id_usuario === usuarioId);
+            const equipeCheia = equipe.completa;
+            const podeEntrar = !usuarioTemEquipe && !equipeCheia;
+
+            return (
+              <div
+                key={equipe.id_equipe}
+                style={{
+                  border: estaNaEquipe ? "2px solid #16a34a" : "1px solid #e0e0e0",
+                  borderRadius: 12,
+                  padding: 12,
+                  marginBottom: 12,
+                  backgroundColor: estaNaEquipe ? "#f0fdf4" : "#fff",
+                }}
+              >
+                <strong>{equipe.nome}</strong>
+
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#666",
+                    marginTop: 4,
+                  }}
+                >
+                  {equipe.membros.map((m) => m.nome).join(" e ")}
+                  {equipeCheia && " ✅ (cheia)"}
+                  {estaNaEquipe && "  (você está aqui)"}
+                </div>
+
+                {podeEntrar && (
+                  <button
+                    onClick={() => entrarEquipe(equipe.id_equipe)}
+                    style={{
+                      marginTop: 8,
+                      background: "#16a34a",
+                      color: "#fff",
+                      border: "none",
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    Entrar nesta dupla
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            padding: "12px 16px 16px",
-            borderTop: "1px solid #f3f4f6",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          {/* Botão principal — avança para confirmação */}
-          <button
-            onClick={handleEnter}
-            disabled={selectedDuplaId === null}
+        {usuarioTemEquipe && (
+          <div
             style={{
-              width: "100%",
-              height: 42,
-              borderRadius: 10,
-              border: "none",
-              backgroundColor: selectedDuplaId !== null ? "#16a34a" : "#f3f4f6",
-              fontSize: 14,
-              fontWeight: 500,
-              color: selectedDuplaId !== null ? "#fff" : "#9ca3af",
-              cursor: selectedDuplaId !== null ? "pointer" : "not-allowed",
-              transition: "background-color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (selectedDuplaId !== null)
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                  "#15803d";
-            }}
-            onMouseLeave={(e) => {
-              if (selectedDuplaId !== null)
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                  "#16a34a";
+              padding: 12,
+              borderTop: "1px solid #f0f0f0",
             }}
           >
-            Entrar na dupla
-          </button>
-
-          {/* Botão secundário — sair da dupla atual */}
-          <button
-            onClick={handleLeave}
-            style={{
-              width: "100%",
-              height: 38,
-              borderRadius: 10,
-              border: "1px solid #e5e7eb",
-              backgroundColor: "transparent",
-              fontSize: 13,
-              fontWeight: 400,
-              color: "#9ca3af",
-              cursor: "pointer",
-              transition: "color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = "#374151";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af";
-            }}
-          >
-            Sair da dupla
-          </button>
-        </div>
+            <button
+              onClick={sairEquipe}
+              disabled={carregando}
+              style={{
+                width: "100%",
+                background: "#ef4444",
+                color: "#fff",
+                border: "none",
+                padding: "10px",
+                borderRadius: 8,
+              }}
+            >
+              Sair da minha dupla
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
