@@ -1,6 +1,8 @@
 import { Geist, Inter, Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClientProvider } from "@/components/ui/ClientProvider";
+
+
 import "./globals.css";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
