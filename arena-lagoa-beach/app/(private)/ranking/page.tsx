@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Ranking } from "@/app/types/ranking";
 import { getRankingGeral } from "@/app/services/rankingService";
 import { RankingCard } from "@/components/ranking/RankingCard";
-import { AlertCircle, Trophy } from "lucide-react";
+import { TrophyRanking } from "@/components/icons/TrophyRanking";
+import { AlertCircle } from "lucide-react";
 
 export default function RankingPage() {
   const [rankings, setRankings] = useState<Ranking[]>([]);
@@ -25,7 +26,7 @@ export default function RankingPage() {
           return;
         }
 
-        if (response.success && response.data) {
+        if (response.data) {
           setRankings(response.data);
         } else {
           setError("Nenhum dado de ranking disponível");
@@ -55,22 +56,21 @@ export default function RankingPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full bg-white font-sans p-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Trophy className="text-green-600" size={32} />
-          <h1 className="text-4xl font-bold text-gray-900">Ranking Geral</h1>
-        </div>
-        <p className="text-gray-600 text-sm">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+          🏆 Ranking Geral
+        </h1>
+        <p className="text-[#a1a1aa] text-sm font-medium">
           Confira a posição dos melhores jogadores da plataforma
         </p>
       </div>
 
       {/* Error State */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-          <AlertCircle className="text-red-600" size={20} />
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="text-red-600 flex-shrink-0" size={18} />
           <p className="text-red-700 font-medium text-sm">{error}</p>
         </div>
       )}
@@ -78,19 +78,18 @@ export default function RankingPage() {
       {/* Empty State */}
       {!loading && rankings.length === 0 && !error && (
         <div className="text-center py-12">
-          <Trophy className="mx-auto text-gray-300 mb-4" size={48} />
-          <p className="text-gray-600 font-medium">Nenhum ranking disponível</p>
+          <p className="text-[#a1a1aa] font-medium text-sm">Nenhum ranking disponível</p>
         </div>
       )}
 
       {/* Rankings List */}
       {rankings.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {rankings.map((ranking) => (
             <RankingCard
-              key={ranking.id_ranking}
+              key={ranking.usuario.id}
               ranking={ranking}
-              position={ranking.posicao_atual}
+              position={ranking.posicao}
             />
           ))}
         </div>

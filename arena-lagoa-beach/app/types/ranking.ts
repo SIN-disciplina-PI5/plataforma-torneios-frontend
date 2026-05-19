@@ -1,23 +1,17 @@
 export interface Usuario {
-  id_usuario: string;
+  id: string;
   nome: string;
   patente: string;
-  email: string;
 }
 
 export interface Ranking {
-  id_ranking: string;
-  id_usuario: string;
-  pontos_acumulados: number;
-  posicao_atual: number;
+  posicao: number;
+  pontos: number;
   ultima_atualizacao: string;
-  createdAt: string;
-  updatedAt: string;
   usuario: Usuario;
 }
 
 export interface RankingResponse {
-  success: boolean;
+  results: number;
   data: Ranking[];
-  message: string;
 }

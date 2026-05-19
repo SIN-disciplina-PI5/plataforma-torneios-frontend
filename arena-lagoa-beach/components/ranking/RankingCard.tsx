@@ -8,113 +8,142 @@ interface RankingCardProps {
   position: number;
 }
 
-const MEDAL_COLORS = {
-  1: "from-yellow-400 to-yellow-500",
-  2: "from-gray-300 to-gray-400",
-  3: "from-orange-300 to-orange-400",
-};
-
-const MEDAL_ICONS = {
-  1: "👑",
-  2: "🥈",
-  3: "🥉",
-};
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 function getPatenteColor(
   patente: string
-): "bg-blue-100 text-blue-700" | "bg-purple-100 text-purple-700" | "bg-green-100 text-green-700" | "bg-amber-100 text-amber-700" {
+): {
+  bg: string;
+  text: string;
+  label: string;
+} {
   const patenteNorm = patente.toLowerCase();
 
-  if (patenteNorm.includes("iniciante")) return "bg-blue-100 text-blue-700";
-  if (patenteNorm.includes("intermediário") || patenteNorm.includes("intermediario"))
-    return "bg-purple-100 text-purple-700";
-  if (patenteNorm.includes("avançado") || patenteNorm.includes("avancado"))
-    return "bg-green-100 text-green-700";
+  if (patenteNorm.includes("iniciante"))
+    return { bg: "bg-blue-50", text: "text-blue-700", label: "Iniciante" };
+  if (
+    patenteNorm.includes("amador") ||
+    patenteNorm.includes("intermediário") ||
+    patenteNorm.includes("intermediario")
+  )
+    return { bg: "bg-amber-50", text: "text-amber-700", label: "Amador" };
+  if (patenteNorm.includes("semi"))
+    return { bg: "bg-purple-50", text: "text-purple-700", label: "Semi-Pro" };
+  if (
+    patenteNorm.includes("profissional") ||
+    patenteNorm.includes("avançado") ||
+    patenteNorm.includes("avancado")
+  )
+    return { bg: "bg-green-50", text: "text-green-700", label: "Profissional" };
+  if (patenteNorm.includes("lenda"))
+    return {
+      bg: "bg-rose-50",
+      text: "text-rose-700",
+      label: "Lenda",
+    };
 
-  return "bg-amber-100 text-amber-700";
+  return { bg: "bg-gray-50", text: "text-gray-700", label: patente };
 }
 
 export function RankingCard({ ranking, position }: RankingCardProps) {
   const isTopThree = position <= 3;
-  const initials = getInitials(ranking.usuario.nome);
-  const patenteColor = getPatenteColor(ranking.usuario.patente);
+  const patenteInfo = getPatenteColor(ranking.usuario.patente);
 
   return (
-    <div
-      className={`
-        flex items-center justify-between p-4 rounded-xl transition-all
-        ${
-          isTopThree
-            ? `bg-gradient-to-r from-green-50 to-amber-50 border-2 border-green-200 shadow-md hover:shadow-lg`
-            : "bg-white border border-gray-100 shadow-sm hover:shadow-md"
-        }
-      `}
-    >
-      {/* Posição com Medal */}
-      <div className="flex items-center gap-3 min-w-fit">
-        <div className="relative">
-          {isTopThree ? (
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${MEDAL_COLORS[position as 1 | 2 | 3]} flex items-center justify-center text-lg font-bold text-white shadow-md`}>
-              {position}
-            </div>
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
-              {position}
-            </div>
-          )}
-        </div>
-
-        {/* Avatar com Iniciais */}
+    <>
+      {/* Borda Gradiente - Wrapper (Top 3) ou Borda Cinza (Resto) */}
+      {isTopThree ? (
         <div
-          className={`
-            w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-sm
-            ${
-              isTopThree
-                ? "bg-gradient-to-br from-green-500 to-green-600 shadow-md"
-                : "bg-gray-300"
-            }
-          `}
+          className="p-[3px] rounded-[12px] hover:shadow-lg transition-all duration-200 hover:scale-[1.01]"
+          style={{
+            background: "linear-gradient(90deg, #91D8FF 0%, #FFF200 100%)",
+          }}
         >
-          {initials}
-        </div>
+          {/* Card Interior - Top 3 */}
+          <div
+            className="flex items-center justify-between px-6 py-3 rounded-[12px] bg-white transition-all duration-200 bg-gradient-to-r from-green-50/50 to-white"
+            style={{
+              boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)",
+            }}
+          >
+            {/* Esquerda: Posição + Info */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {/* Posição */}
+              <div className="shrink-0 w-8 text-center">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-lg font-black text-[#111827]">
+                    {position}
+                  </span>
+                  <span className="text-xl">
+                    {[null, "👑", "🥈", "🥉"][position]}
+                  </span>
+                </div>
+              </div>
 
-        {/* Info do Usuário */}
-        <div className="flex flex-col gap-1 min-w-fit">
-          <p className={`font-bold ${isTopThree ? "text-gray-900" : "text-gray-800"} text-sm`}>
-            {ranking.usuario.nome}
-          </p>
-          <span className={`text-xs font-medium rounded-full px-2 py-0.5 w-fit ${patenteColor}`}>
-            {ranking.usuario.patente}
-          </span>
-        </div>
-      </div>
+              {/* Info: Nome + Patente */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="font-bold text-[15px] text-[#111827] truncate">
+                  {ranking.usuario.nome}
+                </p>
+                <span
+                  className={`text-xs font-semibold rounded-full px-2.5 py-0.5 w-fit ${patenteInfo.bg} ${patenteInfo.text}`}
+                >
+                  {patenteInfo.label}
+                </span>
+              </div>
+            </div>
 
-      {/* Pontuação à Direita */}
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col items-end gap-1">
-          <div className={`flex items-center gap-1.5 ${isTopThree ? "text-green-700" : "text-green-600"}`}>
-            <span className="font-bold text-lg">{ranking.pontos_acumulados}</span>
-            <Zap size={16} className="fill-current" />
+            {/* Direita: Pontos */}
+            <div className="shrink-0 flex flex-col items-end gap-1 ml-6">
+              <div className="flex items-center gap-1.5 text-green-600">
+                <span className="text-2xl font-black">{ranking.pontos}</span>
+                <Zap size={18} className="fill-current" />
+              </div>
+              <span className="text-xs text-gray-400">pontos</span>
+            </div>
           </div>
-          <span className="text-xs text-gray-400">pontos</span>
         </div>
+      ) : (
+        <div className="border border-gray-300 rounded-[12px] hover:shadow-lg transition-all duration-200 hover:scale-[1.01]">
+          {/* Card Interior - Normal */}
+          <div
+            className="flex items-center justify-between px-6 py-3 rounded-[12px] bg-white transition-all duration-200"
+            style={{
+              boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)",
+            }}
+          >
+            {/* Esquerda: Posição + Info */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {/* Posição */}
+              <div className="shrink-0 w-8 text-center">
+                <span className="text-sm font-bold text-gray-600">
+                  {position}
+                </span>
+              </div>
 
-        {/* Medal Icon para Top 3 */}
-        {isTopThree && (
-          <div className="text-2xl ml-2">
-            {MEDAL_ICONS[position as 1 | 2 | 3]}
+              {/* Info: Nome + Patente */}
+              <div className="flex flex-col gap-2 min-w-0">
+                <p className="font-bold text-[15px] text-[#111827] truncate">
+                  {ranking.usuario.nome}
+                </p>
+                <span
+                  className={`text-xs font-semibold rounded-full px-2.5 py-0.5 w-fit ${patenteInfo.bg} ${patenteInfo.text}`}
+                >
+                  {patenteInfo.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Direita: Pontos */}
+            <div className="shrink-0 flex flex-col items-end gap-1 ml-6">
+              <div className="flex items-center gap-1.5 text-green-500">
+                <span className="text-2xl font-black">{ranking.pontos}</span>
+                <Zap size={18} className="fill-current" />
+              </div>
+              <span className="text-xs text-gray-400">pontos</span>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
