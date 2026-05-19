@@ -13,7 +13,6 @@ import {
 import { TournamentCard } from "@/components/inscricao/TournamentCard";
 import { TournamentDialogs } from "@/components/inscricao/TournamentDialogs";
 import { DuplasModal } from "@/components/ui/DuplasModal";
-import type { Dupla } from "@/app/types/duplas";
 import styles from "./_styles/tournaments.module.css";
 
 type Tab = "Todos" | "Essa semana" | "Favoritos";
@@ -30,10 +29,32 @@ export default function TorneiosPage() {
   const [dialogState, setDialogState] = useState<DialogState>("idle");
   const [selected, setSelected] = useState<TournamentUI | null>(null);
   const [duplaModalOpen, setDuplaModalOpen] = useState(false);
-  const [duplaSelecionada, setDuplaSelecionada] = useState<Dupla | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [indicatorStyle, setIndicatorStyle] = useState({});
+
+  useEffect(() => {
+  const storedToken = localStorage.getItem("token");
+
+  if (!storedToken) return;
+
+  setToken(storedToken);
+
+  try {
+    const payload = JSON.parse(
+      atob(storedToken.split(".")[1])
+    );
+
+    setUsuarioId(payload.id);
+  } catch (err) {
+    console.error(
+      "Erro ao decodificar token",
+      err
+    );
+  }
+}, []);
 
   useEffect(() => {
     const fetchTorneios = async () => {
@@ -87,30 +108,6 @@ export default function TorneiosPage() {
     setDuplaModalOpen(true);
   }
 
-  function handleDuplaSelecionada(dupla: Dupla) {
-    setDuplaSelecionada(dupla);
-    setDuplaModalOpen(false);
-    setDialogState("confirm"); // agora sim abre o confirm
-  }
-
-  async function handleConfirmRegister() {
-    if (!selected || !duplaSelecionada) return;
-    setDialogState("loading");
-
-    const result = await registerForTournament(
-      selected.id_torneio,
-      1,
-      //duplaSelecionada.id, // ← passe o id da dupla para sua API
-    );
-
-    if (!result) {
-      setDialogState("error");
-      return;
-    }
-
-    setDialogState("success");
-  }
-
   const filtered = tournaments
     .filter((t) => (activeTab === "Favoritos" ? t.favorite : true))
     .filter(
@@ -133,7 +130,6 @@ export default function TorneiosPage() {
   return (
     <>
       <main className="min-h-screen px-8 py-6">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <Image
             src="/variante-de-bola-de-futebol.png"
@@ -144,7 +140,6 @@ export default function TorneiosPage() {
           <h1 className="text-4xl font-semibold">Torneios</h1>
         </div>
 
-        {/* Tabs */}
         <div className="relative">
           <div className="flex items-end gap-6 mb-8 relative" role="tablist">
             {TABS.map((tab, i) => (
@@ -168,7 +163,6 @@ export default function TorneiosPage() {
           </div>
         </div>
 
-        {/* Banner */}
         <div
           className={clsx(
             "rounded-2xl mb-10 h-28 flex items-center justify-center",
@@ -183,7 +177,6 @@ export default function TorneiosPage() {
           </div>
         </div>
 
-        {/* Error state */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
             <AlertCircle className="text-red-600" size={20} />
@@ -191,7 +184,6 @@ export default function TorneiosPage() {
           </div>
         )}
 
-        {/* Empty state */}
         {filtered.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-24 text-gray-600">
             <Trophy size={48} className="mb-4 opacity-30" />
@@ -199,7 +191,6 @@ export default function TorneiosPage() {
           </div>
         )}
 
-        {/* Grid */}
         {filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((t) => (
@@ -218,26 +209,20 @@ export default function TorneiosPage() {
         state={dialogState}
         tournament={selected}
         onClose={() => setDialogState("idle")}
-        onConfirm={handleConfirmRegister}
+        onConfirm={() => {}}
       />
 
       <DuplasModal
         isOpen={duplaModalOpen}
         onClose={() => setDuplaModalOpen(false)}
-        onSelectDupla={handleDuplaSelecionada}
-        onCreateDupla={async (query) => {
-          // chame sua API para criar dupla aqui
-          console.log("Criar dupla:", query);
+        torneioId={selected?.id_torneio || ""}
+        token={token || ""}
+        usuarioId={usuarioId || 0}
+        onSuccess={() => {
+          // setDuplaModalOpen(false);
+          setDialogState("success");
+          setTimeout(() => setDialogState("idle"), 2000);
         }}
-        onAddPlayerToDupla={(duplaId) => {
-          // abra seu fluxo de adicionar jogador
-          console.log("Adicionar jogador à dupla:", duplaId);
-        }}
-        onLeave={() => {
-          setDuplaSelecionada(null);
-          setDuplaModalOpen(false);
-        }}
-        currentDuplaId={duplaSelecionada?.id ?? null}
       />
     </>
   );
