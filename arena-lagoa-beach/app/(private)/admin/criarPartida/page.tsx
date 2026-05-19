@@ -5,8 +5,14 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-const fases = ['Oitavas de Finais', 'Quartas de Finais', 'Semifinais', 'Finais', 'Eliminatórias'];
+const fases = [
+  { label: 'Oitavas de Finais', value: 'OITAVAS_DE_FINAL' },
+  { label: 'Quartas de Finais', value: 'QUARTAS_DE_FINAL' },
+  { label: 'Semifinais', value: 'SEMI_FINAL' },
+  { label: 'Finais', value: 'FINAL' },
+];
 const statusPadrao = 'PENDENTE';
+const apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
 
 const duplas = [
   {
@@ -26,7 +32,7 @@ const duplas = [
 ];
 
 type Torneio = {
-  id_torneio: number | string;
+  id_torneio: string;
   nome: string;
   categoria?: string;
 };
@@ -38,19 +44,19 @@ type ApiListResponse<T> = {
 
 type ApiCreateResponse = {
   data?: {
-    id_partida: number;
+    id_partida: string;
   };
   error?: string;
   message?: string;
 };
 
-const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL;
+const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || apiUrlPadrao;
 
 export default function CriarPartidaPage() {
   const router = useRouter();
 
   const [idTorneio, setIdTorneio] = useState('');
-  const [faseAtiva, setFaseAtiva] = useState(fases[0]);
+  const [faseAtiva, setFaseAtiva] = useState(fases[0].value);
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
   const [loading, setLoading] = useState(false);
@@ -160,18 +166,18 @@ export default function CriarPartidaPage() {
         <section className="mb-7">
           <div className="flex items-end gap-8 border-b border-[#dddddd] overflow-x-auto">
             {fases.map((fase) => {
-              const ativa = faseAtiva === fase;
+              const ativa = faseAtiva === fase.value;
 
               return (
                 <button
-                  key={fase}
+                  key={fase.value}
                   type="button"
-                  onClick={() => setFaseAtiva(fase)}
+                  onClick={() => setFaseAtiva(fase.value)}
                   className={`relative pb-3 text-[11px] whitespace-nowrap transition ${
                     ativa ? 'text-black' : 'text-[#a8a8a8]'
                   }`}
                 >
-                  {fase}
+                  {fase.label}
                   {ativa && (
                     <span className="absolute bottom-[-1px] left-0 h-[3px] w-full bg-[#25a51f]" />
                   )}

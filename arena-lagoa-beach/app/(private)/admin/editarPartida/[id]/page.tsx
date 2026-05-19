@@ -12,14 +12,14 @@ type Placar = {
 };
 
 type Partida = {
-  id_partida: number;
-  id_torneio: number | string;
+  id_partida: string;
+  id_torneio: string;
   torneio: string | null;
   fase: string;
   status: string;
   horario: string | null;
-  placar: Placar | null;
-  vencedor_id: number | null;
+  placar: string | Placar | null;
+  vencedor_id: string | null;
   resultado: string | null;
 };
 
@@ -32,7 +32,27 @@ type ApiErrorResponse = {
   error?: string;
 };
 
-const fases = ['Oitavas de Finais', 'Quartas de Finais', 'Semifinais', 'Finais', 'Eliminatórias'];
+const fases = [
+  { label: 'Oitavas de Finais', value: 'OITAVAS_DE_FINAL' },
+  { label: 'Quartas de Finais', value: 'QUARTAS_DE_FINAL' },
+  { label: 'Semifinais', value: 'SEMI_FINAL' },
+  { label: 'Finais', value: 'FINAL' },
+];
+
+const fasePorLabel = new Map([
+  ...fases.map((fase) => [fase.label, fase.value] as const),
+  ['Oitavas', 'OITAVAS_DE_FINAL'],
+  ['Quartas', 'QUARTAS_DE_FINAL'],
+  ['Semifinal', 'SEMI_FINAL'],
+  ['Final', 'FINAL'],
+]);
+
+function normalizeFase(fase: string | null | undefined) {
+  if (!fase) return fases[0].value;
+  if (fasePorLabel.has(fase)) return fasePorLabel.get(fase) as string;
+  if (fases.some((item) => item.value === fase)) return fase;
+  return fases[0].value;
+}
 
 const duplas = [
   {
@@ -53,7 +73,9 @@ const duplas = [
   },
 ];
 
-const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL;
+const apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
+
+const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || apiUrlPadrao;
 
 function getParamId(id: string | string[] | undefined) {
   return Array.isArray(id) ? id[0] : id;
@@ -61,6 +83,14 @@ function getParamId(id: string | string[] | undefined) {
 
 function parsePlacar(placar: Partida['placar']): Placar {
   if (!placar) return { a: 0, b: 0 };
+  if (typeof placar === 'string') {
+    const [a = '0', b = '0'] = placar.split(/[xX-]/);
+    return {
+      a: Number(a.trim() || 0),
+      b: Number(b.trim() || 0),
+    };
+  }
+
   return {
     a: Number(placar.a || 0),
     b: Number(placar.b || 0),
@@ -87,7 +117,7 @@ export default function EditarPartida() {
   const { id } = useParams();
   const partidaId = getParamId(id);
 
-  const [faseAtiva, setFaseAtiva] = useState(fases[0]);
+  const [faseAtiva, setFaseAtiva] = useState(fases[0].value);
   const [partida, setPartida] = useState<Partida | null>(null);
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
@@ -123,11 +153,11 @@ export default function EditarPartida() {
         const horario = getDateTimeParts(dadosPartida.horario);
 
         setPartida(dadosPartida);
-        setFaseAtiva(dadosPartida.fase || fases[0]);
+        setFaseAtiva(normalizeFase(dadosPartida.fase));
         setData(horario.data);
         setHora(horario.hora);
         setPlacar(parsePlacar(dadosPartida.placar));
-        setVencedor(dadosPartida.vencedor_id);
+        setVencedor(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao buscar partida';
         setError(message);
@@ -163,8 +193,8 @@ export default function EditarPartida() {
         body: JSON.stringify({
           fase: faseAtiva,
           horario,
-          placar,
-          vencedor_id: vencedor,
+          placar: `${placar.a}x${placar.b}`,
+          vencedor_id: partida.vencedor_id,
           resultado: vencedor ? `${duplas.find((dupla) => dupla.id === vencedor)?.titulo} vencedora` : partida.resultado,
           status: vencedor ? 'FINALIZADA' : partida.status,
         }),
@@ -206,18 +236,18 @@ export default function EditarPartida() {
         <section className="mb-5">
           <div className="flex items-end gap-8 border-b border-[#dddddd] overflow-x-auto">
             {fases.map((fase) => {
-              const ativa = faseAtiva === fase;
+              const ativa = faseAtiva === fase.value;
 
               return (
                 <button
-                  key={fase}
+                  key={fase.value}
                   type="button"
-                  onClick={() => setFaseAtiva(fase)}
+                  onClick={() => setFaseAtiva(fase.value)}
                   className={`relative pb-3 text-[11px] whitespace-nowrap transition ${
                     ativa ? 'text-black' : 'text-[#a8a8a8]'
                   }`}
                 >
-                  {fase}
+                  {fase.label}
                   {ativa && (
                     <span className="absolute bottom-[-1px] left-0 h-[3px] w-full bg-[#25a51f]" />
                   )}
