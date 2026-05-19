@@ -37,48 +37,60 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-// 14/05 erro código, martins responsável
 var react_1 = require("react");
 var image_1 = require("next/image");
 var lucide_react_1 = require("lucide-react");
-var clsx_1 = require("clsx");
-var constants_1 = require("./_lib/constants");
-var api_1 = require("./_lib/api");
-var AdminTournamentCard_1 = require("../../../../components/admin/AdminTournamentCard");
-var AdminTournamentDialogs_1 = require("../../../../components/admin/AdminTournamentDialogs");
-var admin_tournaments_module_css_1 = require("./_styles/admin-tournaments.module.css");
+var torneioService_1 = require("@/app/services/torneioService");
+var AdminTournamentCard_1 = require("@/components/admin/AdminTournamentCard");
+var AdminTournamentDialogs_1 = require("@/components/admin/AdminTournamentDialogs");
 function AdminTorneiosPage() {
-    var _a = react_1.useState("Todos"), activeTab = _a[0], setActiveTab = _a[1];
-    var _b = react_1.useState(""), search = _b[0], setSearch = _b[1];
-    var _c = react_1.useState([]), tournaments = _c[0], setTournaments = _c[1];
-    var _d = react_1.useState(true), loading = _d[0], setLoading = _d[1];
-    var _e = react_1.useState("idle"), dialogState = _e[0], setDialogState = _e[1];
-    var _f = react_1.useState(null), selected = _f[0], setSelected = _f[1];
-    var tabsRef = react_1.useRef([]);
-    var _g = react_1.useState({}), indicatorStyle = _g[0], setIndicatorStyle = _g[1];
+    var _this = this;
+    var _a = react_1.useState([]), tournaments = _a[0], setTournaments = _a[1];
+    var _b = react_1.useState(true), loading = _b[0], setLoading = _b[1];
+    var _c = react_1.useState(null), error = _c[0], setError = _c[1];
+    var _d = react_1.useState("idle"), dialogState = _d[0], setDialogState = _d[1];
+    var _e = react_1.useState(null), selected = _e[0], setSelected = _e[1];
     react_1.useEffect(function () {
-        api_1.fetchTournaments()
-            .then(setTournaments)["catch"](function (err) { return console.error("Erro ao carregar torneios:", err); })["finally"](function () { return setLoading(false); });
+        var fetchTorneios = function () { return __awaiter(_this, void 0, void 0, function () {
+            var data, err_1;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, 3, 4]);
+                        setLoading(true);
+                        setError(null);
+                        return [4 /*yield*/, torneioService_1.getTorneios()];
+                    case 1:
+                        data = _a.sent();
+                        if (!data) {
+                            setError("Falha ao carregar os torneios");
+                            setTournaments([]);
+                            return [2 /*return*/];
+                        }
+                        setTournaments(data);
+                        return [3 /*break*/, 4];
+                    case 2:
+                        err_1 = _a.sent();
+                        console.error("Erro ao buscar torneios:", err_1);
+                        setError("Erro ao carregar os torneios");
+                        setTournaments([]);
+                        return [3 /*break*/, 4];
+                    case 3:
+                        setLoading(false);
+                        return [7 /*endfinally*/];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        }); };
+        fetchTorneios();
     }, []);
-    react_1.useEffect(function () {
-        var updateIndicator = function () {
-            var index = constants_1.ADMIN_TABS.indexOf(activeTab);
-            var el = tabsRef.current[index];
-            if (el) {
-                setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
-            }
-        };
-        updateIndicator();
-        window.addEventListener("resize", updateIndicator);
-        return function () { return window.removeEventListener("resize", updateIndicator); };
-    }, [activeTab]);
-    function handleDeleteClick(tournament) {
-        setSelected(tournament);
-        setDialogState("confirmDelete");
-    }
     function handleEditClick(tournament) {
         setSelected(tournament);
         setDialogState("edit");
+    }
+    function handleDeleteClick(tournament) {
+        setSelected(tournament);
+        setDialogState("confirmDelete");
     }
     function handleViewRegistrations(tournament) {
         setSelected(tournament);
@@ -86,67 +98,54 @@ function AdminTorneiosPage() {
     }
     function handleConfirmDelete() {
         return __awaiter(this, void 0, void 0, function () {
-            var _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var success;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         if (!selected)
                             return [2 /*return*/];
                         setDialogState("loadingDelete");
-                        _b.label = 1;
+                        return [4 /*yield*/, torneioService_1.deleteTorneio(selected.id_torneio)];
                     case 1:
-                        _b.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, api_1.deleteTournament(selected.id)];
-                    case 2:
-                        _b.sent();
-                        setTournaments(function (prev) {
-                            return prev.filter(function (t) { return t.id !== selected.id; });
-                        });
+                        success = _a.sent();
+                        if (!success) {
+                            setDialogState("errorDelete");
+                            return [2 /*return*/];
+                        }
+                        // Remove da lista localmente sem refetch
+                        setTournaments(function (prev) { return prev.filter(function (t) { return t.id_torneio !== selected.id_torneio; }); });
                         setDialogState("successDelete");
-                        return [3 /*break*/, 4];
-                    case 3:
-                        _a = _b.sent();
-                        setDialogState("errorDelete");
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/];
+                        return [2 /*return*/];
                 }
             });
         });
     }
-    var filtered = tournaments.filter(function (t) {
-        var _a, _b;
-        return ((_a = t.title) === null || _a === void 0 ? void 0 : _a.toLowerCase().includes(search.toLowerCase())) || ((_b = t.level) === null || _b === void 0 ? void 0 : _b.toLowerCase().includes(search.toLowerCase()));
-    });
+    function handleClose() {
+        setDialogState("idle");
+        setSelected(null);
+    }
+    if (loading) {
+        return (React.createElement("div", { className: "flex items-center justify-center min-h-screen" },
+            React.createElement("div", { className: "text-center" },
+                React.createElement("div", { className: "inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4" }),
+                React.createElement("p", { className: "text-gray-600 font-medium" }, "Carregando torneios..."))));
+    }
     return (React.createElement(React.Fragment, null,
-        React.createElement("main", { className: "min-h-screen px-8 py-6 relative" },
-            React.createElement("div", { className: "flex items-center gap-3 mb-8" },
-                React.createElement("div", { className: "w-9 h-9 rounded-full flex items-center justify-center select-none" },
-                    React.createElement(image_1["default"], { src: "/variante-de-bola-de-futebol.png", alt: "Bola", width: 40, height: 40 })),
-                React.createElement("h1", { className: "text-4xl font-semibold" }, "Torneios"),
-                React.createElement("span", { className: "ml-2 text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wide" }, "Admin")),
-            React.createElement("div", { className: "relative" },
-                React.createElement("div", { className: "flex items-end gap-6 mb-8 relative overflow-x-auto pb-1", role: "tablist" },
-                    constants_1.ADMIN_TABS.map(function (tab, i) { return (React.createElement("button", { key: tab, ref: function (el) {
-                            tabsRef.current[i] = el;
-                        }, onClick: function () { return setActiveTab(tab); }, className: clsx_1.clsx("pb-3 text-lg font-medium transition-colors whitespace-nowrap", activeTab === tab
-                            ? "text-black"
-                            : "text-gray-500 hover:text-gray-300") }, tab)); }),
-                    React.createElement("span", { className: admin_tournaments_module_css_1["default"].tabIndicator, style: indicatorStyle }))),
-            React.createElement("div", { className: clsx_1.clsx("rounded-2xl mb-10 h-28 flex items-center justify-center", admin_tournaments_module_css_1["default"].banner) },
+        React.createElement("main", { className: "min-h-screen px-8 py-6" },
+            React.createElement("div", { className: "flex items-center justify-between mb-8" },
                 React.createElement("div", { className: "flex items-center gap-3" },
-                    React.createElement(image_1["default"], { src: "/cup.png", alt: "Trof\u00E9u", width: 70, height: 70 }),
-                    React.createElement("p", { className: "text-white text-3xl font-bold text-center" },
-                        loading
-                            ? "..."
-                            : tournaments.length + " Torneios",
-                        " ",
-                        React.createElement("br", null),
-                        " esperando por voc\u00EA!"))),
-            loading ? (React.createElement("div", { className: "flex justify-center py-24 text-gray-400" }, "Carregando torneios...")) : filtered.length > 0 ? (React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" }, filtered.map(function (t) { return (React.createElement(AdminTournamentCard_1.AdminTournamentCard, { key: t.id, tournament: t, onEdit: handleEditClick, onDelete: handleDeleteClick, onViewRegistrations: handleViewRegistrations })); }))) : (React.createElement("div", { className: "flex flex-col items-center justify-center py-24 text-gray-600" },
+                    React.createElement(image_1["default"], { src: "/variante-de-bola-de-futebol.png", alt: "Bola", width: 40, height: 40 }),
+                    React.createElement("h1", { className: "text-4xl font-semibold" }, "Gerenciar Torneios")),
+                React.createElement("button", { onClick: function () { return setDialogState("create"); }, className: "flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors" },
+                    React.createElement(lucide_react_1.Plus, { size: 16 }),
+                    "Novo torneio")),
+            error && (React.createElement("div", { className: "mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3" },
+                React.createElement(lucide_react_1.AlertCircle, { className: "text-red-600", size: 20 }),
+                React.createElement("p", { className: "text-red-700 font-medium text-sm" }, error))),
+            tournaments.length === 0 && !error && (React.createElement("div", { className: "flex flex-col items-center justify-center py-24 text-gray-600" },
                 React.createElement(lucide_react_1.Trophy, { size: 48, className: "mb-4 opacity-30" }),
-                React.createElement("p", { className: "text-lg font-medium" }, "Nenhum torneio encontrado"))),
-            React.createElement("button", { onClick: function () { return setDialogState("create"); }, className: admin_tournaments_module_css_1["default"].fab, "aria-label": "Criar novo torneio" },
-                React.createElement(lucide_react_1.Plus, { size: 28 }))),
-        React.createElement(AdminTournamentDialogs_1.AdminTournamentDialogs, { state: dialogState, tournament: selected, onClose: function () { return setDialogState("idle"); }, onConfirmDelete: handleConfirmDelete })));
+                React.createElement("p", { className: "text-lg font-medium" }, "Nenhum torneio cadastrado"))),
+            tournaments.length > 0 && (React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" }, tournaments.map(function (t) { return (React.createElement(AdminTournamentCard_1.AdminTournamentCard, { key: t.id_torneio, tournament: t, onEdit: handleEditClick, onDelete: handleDeleteClick, onViewRegistrations: handleViewRegistrations })); })))),
+        React.createElement(AdminTournamentDialogs_1.AdminTournamentDialogs, { state: dialogState, tournament: selected, onClose: handleClose, onConfirmDelete: handleConfirmDelete })));
 }
 exports["default"] = AdminTorneiosPage;

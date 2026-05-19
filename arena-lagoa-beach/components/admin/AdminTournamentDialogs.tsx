@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Trash2, Pencil, Users } from "lucide-react";
 
-import type { AdminDialogState, Tournament } from "../../app/(private)/admin/torneios/_types";
+import type { AdminDialogState, Tournament } from "@/app/types/torneios";
 
 interface AdminTournamentDialogsProps {
   state: AdminDialogState;
@@ -30,7 +30,7 @@ export function AdminTournamentDialogs({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md rounded-2xl">
 
-        {/* ── CONFIRM DELETE ──────────────────────────────────────── */}
+        {/* CONFIRM DELETE */}
         {state === "confirmDelete" && (
           <>
             <DialogHeader>
@@ -48,9 +48,9 @@ export function AdminTournamentDialogs({
             </DialogHeader>
 
             <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 my-2">
-              <p className="font-semibold text-gray-900 text-sm">{tournament?.title}</p>
+              <p className="font-semibold text-gray-900 text-sm">{tournament?.nome}</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                Nível: {tournament?.level} · {tournament?.spots} vagas
+                Categoria: {tournament?.categoria} · {tournament?.vagas} vagas
               </p>
             </div>
 
@@ -68,7 +68,7 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* ── LOADING DELETE ──────────────────────────────────────── */}
+        {/* LOADING DELETE */}
         {state === "loadingDelete" && (
           <div className="flex flex-col items-center justify-center py-8 gap-4">
             <Loader2 className="animate-spin text-red-500" size={40} />
@@ -76,7 +76,7 @@ export function AdminTournamentDialogs({
           </div>
         )}
 
-        {/* ── SUCCESS DELETE ──────────────────────────────────────── */}
+        {/* SUCCESS DELETE */}
         {state === "successDelete" && (
           <>
             <div className="flex flex-col items-center justify-center py-6 gap-3">
@@ -86,7 +86,7 @@ export function AdminTournamentDialogs({
               </DialogTitle>
               <p className="text-sm text-gray-500 text-center">
                 O torneio{" "}
-                <span className="font-medium text-gray-700">{tournament?.title}</span>{" "}
+                <span className="font-medium text-gray-700">{tournament?.nome}</span>{" "}
                 foi removido com sucesso.
               </p>
             </div>
@@ -98,7 +98,7 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* ── ERROR DELETE ────────────────────────────────────────── */}
+        {/* ERROR DELETE */}
         {state === "errorDelete" && (
           <>
             <div className="flex flex-col items-center justify-center py-6 gap-3">
@@ -124,7 +124,7 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* ── EDIT (placeholder) ──────────────────────────────────── */}
+        {/* EDIT */}
         {state === "edit" && (
           <>
             <DialogHeader>
@@ -137,14 +137,12 @@ export function AdminTournamentDialogs({
                 </DialogTitle>
               </div>
               <DialogDescription className="text-sm text-gray-500 mt-1">
-                Edição de: <span className="font-medium text-gray-700">{tournament?.title}</span>
+                Edição de: <span className="font-medium text-gray-700">{tournament?.nome}</span>
               </DialogDescription>
             </DialogHeader>
-
             <div className="py-4 text-sm text-gray-400 text-center">
               Formulário de edição será implementado aqui.
             </div>
-
             <DialogFooter>
               <Button variant="outline" onClick={onClose} className="w-full">
                 Fechar
@@ -153,7 +151,7 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* ── CREATE (placeholder) ────────────────────────────────── */}
+        {/* CREATE */}
         {state === "create" && (
           <>
             <DialogHeader>
@@ -164,11 +162,9 @@ export function AdminTournamentDialogs({
                 Preencha os dados do novo torneio.
               </DialogDescription>
             </DialogHeader>
-
             <div className="py-4 text-sm text-gray-400 text-center">
               Formulário de criação será implementado aqui.
             </div>
-
             <DialogFooter>
               <Button variant="outline" onClick={onClose} className="w-full">
                 Fechar
@@ -177,7 +173,7 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* ── REGISTRATIONS (placeholder) ─────────────────────────── */}
+        {/* REGISTRATIONS */}
         {state === "registrations" && (
           <>
             <DialogHeader>
@@ -190,14 +186,12 @@ export function AdminTournamentDialogs({
                 </DialogTitle>
               </div>
               <DialogDescription className="text-sm text-gray-500 mt-1">
-                Torneio: <span className="font-medium text-gray-700">{tournament?.title}</span>
+                Torneio: <span className="font-medium text-gray-700">{tournament?.nome}</span>
               </DialogDescription>
             </DialogHeader>
-
             <div className="py-4 text-sm text-gray-400 text-center">
               Lista de inscrições será implementada aqui.
             </div>
-
             <DialogFooter>
               <Button variant="outline" onClick={onClose} className="w-full">
                 Fechar

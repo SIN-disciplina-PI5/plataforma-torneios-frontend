@@ -41,13 +41,14 @@ var react_1 = require("react");
 var image_1 = require("next/image");
 var navigation_1 = require("next/navigation");
 var fases = [
-    { label: 'Eliminatórias', value: 'Eliminatórias' },
-    { label: 'Oitavas de Finais', value: 'Oitavas' },
-    { label: 'Quartas de Finais', value: 'Quartas' },
-    { label: 'Semifinais', value: 'Semifinal' },
-    { label: 'Finais', value: 'Final' },
+    { label: 'Oitavas de Finais', value: 'OITAVAS_DE_FINAL' },
+    { label: 'Quartas de Finais', value: 'QUARTAS_DE_FINAL' },
+    { label: 'Semifinais', value: 'SEMI_FINAL' },
+    { label: 'Finais', value: 'FINAL' },
 ];
 var statusPadrao = 'PENDENTE';
+// trocar dps para o do .env
+var apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
 var duplas = [
     {
         titulo: 'Dupla 1',
@@ -64,7 +65,7 @@ var duplas = [
         ]
     },
 ];
-var getApiUrl = function () { return process.env.NEXT_PUBLIC_API_URL; };
+var getApiUrl = function () { return process.env.NEXT_PUBLIC_API_URL || apiUrlPadrao; };
 function CriarPartidaPage() {
     var router = navigation_1.useRouter();
     var _a = react_1.useState(''), idTorneio = _a[0], setIdTorneio = _a[1];
@@ -83,7 +84,7 @@ function CriarPartidaPage() {
                     switch (_b.label) {
                         case 0:
                             _b.trys.push([0, 3, 4, 5]);
-                            apiUrl = ;
+                            apiUrl = getApiUrl();
                             token = localStorage.getItem('token');
                             if (!apiUrl) {
                                 throw new Error('NEXT_PUBLIC_API_URL não está configurada');

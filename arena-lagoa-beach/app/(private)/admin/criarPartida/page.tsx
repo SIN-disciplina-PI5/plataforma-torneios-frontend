@@ -12,6 +12,7 @@ const fases = [
   { label: 'Finais', value: 'FINAL' },
 ];
 const statusPadrao = 'PENDENTE';
+// trocar dps para o do .env
 const apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
 
 const duplas = [
