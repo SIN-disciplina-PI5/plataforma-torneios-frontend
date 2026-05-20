@@ -2,6 +2,7 @@ import { Geist, Inter, Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClientProvider } from "@/components/ui/ClientProvider";
 import { ToastNotificacao } from "@/components/ui/ToastNotificacao";
+
 import "./globals.css";
 
 const geist = Geist({
