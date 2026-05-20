@@ -100,9 +100,12 @@ export function LoginForm() {
             <label className="text-sm text-gray-700">Lembre-se de mim</label>
           </div>
 
-          <span className="text-sm text-red-500 hover:text-red-700 cursor-pointer">
+          <Link
+            href="/esqueceu-senha"
+            className="text-sm text-red-500 hover:text-red-700 cursor-pointer"
+          >
             Esqueci minha senha
-          </span>
+          </Link>
         </div>
 
         {/* RECAPTCHA */}
