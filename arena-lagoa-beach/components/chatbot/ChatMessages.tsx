@@ -63,7 +63,7 @@ export function ChatMessages({
                 break-words
                 ${
                   isUser
-                    ? 'bg-blue-600 text-white rounded-br-sm'
+                    ? 'bg-green-600 text-white rounded-br-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm'
                 }
               `}

@@ -1,4 +1,3 @@
-// components/chatbot/ChatInput.tsx
 'use client';
 
 import type {
@@ -118,10 +117,10 @@ export function ChatInput({
             flex h-11 w-11
             items-center justify-center
             rounded-xl
-            bg-blue-600
+            bg-green-600
             text-white
             transition-all
-            hover:bg-blue-700
+            hover:bg-green-700
             disabled:cursor-not-allowed
             disabled:opacity-40
           "
