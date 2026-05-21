@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from services.grafo import chatbot
+import uvicorn
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,42 +14,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class PerguntaRequest(BaseModel):
+    pergunta: str
 
 @app.get("/")
-def root():
-    return {
-        "message": "Arena AI rodando"
-    }
+def health():
+    return {"message": "Api rodando"}
 
+@app.post("/api/chat")
+def chat(request: PerguntaRequest):
+    resultado = chatbot.invoke({
+        "pergunta":      request.pergunta,
+        "chunks":        [],
+        "contexto":      "",        
+        "historico_txt": "",       
+        "resposta":      "",
+        "historico":     []
+    })
+    return {"resposta": resultado["resposta"]}
 
-@app.post("/chat")
-async def chat(request: Request):
-
-    body = await request.json()
-
-    messages = body.get("messages", [])
-
-    ultima_mensagem = messages[-1]
-
-    texto_usuario = ""
-
-    for part in ultima_mensagem.get("parts", []):
-        if part.get("type") == "text":
-            texto_usuario = part.get("text", "")
-
-    resposta = f"🏐 Você perguntou: {texto_usuario}"
-
-    return {
-        "messages": [
-            {
-                "id": "assistant-response",
-                "role": "assistant",
-                "parts": [
-                    {
-                        "type": "text",
-                        "text": resposta
-                    }
-                ]
-            }
-        ]
-    }
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

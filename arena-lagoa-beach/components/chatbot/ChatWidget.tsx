@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 import type { UIMessage } from "ai";
 
@@ -85,7 +86,7 @@ export function ChatWidget() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/chat",
+        "http://127.0.0.1:8000/api/chat",
         {
           method: "POST",
 
@@ -95,18 +96,7 @@ export function ChatWidget() {
           },
 
           body: JSON.stringify({
-            messages: [
-              {
-                role: "user",
-
-                parts: [
-                  {
-                    type: "text",
-                    text: currentInput,
-                  },
-                ],
-              },
-            ],
+            pergunta: currentInput,
           }),
         }
       );
@@ -120,8 +110,7 @@ export function ChatWidget() {
       const data = await response.json();
 
       const respostaIA =
-        data?.messages?.[0]?.parts?.[0]
-          ?.text ??
+        data?.resposta ??
         "Sem resposta do servidor.";
 
       // resposta IA
@@ -158,7 +147,7 @@ export function ChatWidget() {
           {
             type: "text",
             text:
-              "❌ Não foi possível conectar ao servidor.",
+              "Não foi possível conectar ao servidor.",
           },
         ],
       };
@@ -192,15 +181,19 @@ export function ChatWidget() {
           <div
             className="
               flex items-center justify-between
-              bg-blue-600
+              bg-green-600
               px-4 py-3
               text-white
             "
           >
             <div className="flex items-center gap-2">
-              <span className="text-lg">
-                🏐
-              </span>
+              <Image
+                src="/bolaicon.svg"
+                alt="Assistente"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
 
               <div>
                 <p className="text-sm font-semibold">
@@ -257,16 +250,26 @@ export function ChatWidget() {
           flex h-14 w-14
           items-center justify-center
           rounded-full
-          bg-blue-600
-          text-2xl text-white
+          bg-green-600
+          text-white
           shadow-lg
           transition-transform
           hover:scale-105
-          hover:bg-blue-700
+          hover:bg-green-800
         "
         aria-label="Abrir assistente"
       >
-        {aberto ? "×" : "🏐"}
+        {aberto ? (
+          "×"
+        ) : (
+          <Image
+            src="/bolaicon.svg"
+            alt="Abrir assistente"
+            width={30}
+            height={30}
+            className="object-contain"
+          />
+        )}
       </button>
     </>
   );
