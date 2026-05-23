@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Trophy, AlertCircle, Plus, X, Pencil } from "lucide-react";
 import { clsx } from "clsx";
@@ -9,10 +10,12 @@ import type { Tournament, AdminDialogState } from "@/app/types/torneios";
 import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
+import { CreateTournamentFAB } from "@/components/admin/CreateTournamentFAB";
 
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
 
 export default function AdminTorneiosPage() {
+  const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +187,9 @@ export default function AdminTorneiosPage() {
           </div>
         </div>
       )}
+
+      {/* FAB - Floating Action Button */}
+      <CreateTournamentFAB />
     </>
   );
 }
