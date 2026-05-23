@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/services/authLogin";
+import { getUserRole } from "@/app/utils/auth";
 import PopupModelo from "@/components/ui/PopupModelo";
 import Recaptcha from "@/components/recaptcha/recaptcha";
 
@@ -50,8 +51,12 @@ export function LoginForm() {
       // salva token
       localStorage.setItem("token", res.token);
 
+      // Verificar role e redirecionar accordingly
+      const role = getUserRole();
+      const redirectPath = role === "ADMIN" ? "/admin/torneios" : "/torneios";
+
       // sucesso
-      router.push("/torneios");
+      router.push(redirectPath);
     } catch (err: any) {
       setModalMessage(err.response?.data?.message || "Erro ao fazer login");
       setModalOpen(true);

@@ -47,6 +47,11 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
     } else {
       console.warn("Aviso: ID não encontrado dentro do token!");
     }
+
+    // Salvar role do usuário se existir
+    if (payload?.role) {
+      localStorage.setItem("role", payload.role);
+    }
   }
 
   return response.data;
