@@ -6,6 +6,19 @@ interface TorneiosApiResponse {
   data: Tournament[];
 }
 
+interface CreateTorneioRequest {
+  nome: string;
+  categoria: string;
+  vagas: number;
+  data_inicio: string;
+  data_fim: string;
+}
+
+interface CreateTorneioResponse {
+  message: string;
+  data: Tournament;
+}
+
 export const getTorneios = async (): Promise<TournamentUI[] | null> => {
   const token = localStorage.getItem("token");
   if (!token) return null;
@@ -19,6 +32,31 @@ export const getTorneios = async (): Promise<TournamentUI[] | null> => {
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       console.error("Erro na API:", error.response?.data || error.message);
+    } else {
+      console.error("Erro inesperado:", error);
+    }
+    return null;
+  }
+};
+
+export const createTorneio = async (
+  torneioData: CreateTorneioRequest
+): Promise<Tournament | null> => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const response = await api.post<CreateTorneioResponse>(
+      "/torneios",
+      torneioData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("Erro ao criar torneio:", error.response?.data || error.message);
     } else {
       console.error("Erro inesperado:", error);
     }
