@@ -6,10 +6,10 @@ import type { Tournament } from "@/app/types/torneios";
 import styles from "./AdminTournamentCard.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
-  Avançado: "/avancado.png",
-  Intermediário: "/intermediario.png",
-  Básico: "/basico.png",
-  Iniciante: "/basico.png",
+  Avançado: "/avancado2.png",
+  Intermediário: "/intermediario2.png",
+  Básico: "/iniciante.png",
+  Iniciante: "/iniciante.png",
   default: "/cup.png",
 };
 
@@ -43,7 +43,7 @@ export function AdminTournamentCard({
           src={LEVEL_IMAGES[tournament.categoria] || LEVEL_IMAGES.default}
           alt={`Torneio ${tournament.categoria}`}
           fill
-          className="object-contain"
+          className="object-cover object-bottom"
         />
       </div>
 
