@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Ranking } from "@/app/types/ranking";
 import { getRankingGeral } from "@/app/services/rankingService";
 import { RankingCard } from "@/components/ranking/RankingCard";
-import { TrophyRanking } from "@/components/icons/TrophyRanking";
 import { AlertCircle } from "lucide-react";
 
 export default function RankingPage() {
