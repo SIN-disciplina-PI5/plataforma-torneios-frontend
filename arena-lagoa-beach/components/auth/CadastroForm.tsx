@@ -1,21 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
 import { signup } from "@/app/services/auth";
+import { signup } from "@/app/services/authCadastro";
+import PopupModelo from "@/components/ui/PopupModelo";
+import Recaptcha from "@/components/recaptcha/recaptcha";
 
 export function CadastroForm() {
   const router = useRouter();
 
-  const [nome, setNome] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [senha, setSenha] = useState<string>("");
-  const [confirmarSenha, setConfirmarSenha] = useState<string>("");
-  const [termosAceitos, setTermosAceitos] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [termosAceitos, setTermosAceitos] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  //  captcha
+  const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  //  modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState<"success" | "error">("success");
 
   // visualizar senha
   const [showPassword, setShowPassword] = useState(false);
@@ -25,17 +36,31 @@ export function CadastroForm() {
     e.preventDefault();
 
     if (!nome || !email || !senha || !confirmarSenha) {
-      alert("Preencha todos os campos");
+      setModalMessage("Preencha todos os campos");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
     if (senha !== confirmarSenha) {
-      alert("As senhas não coincidem");
+      setModalMessage("As senhas não coincidem");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
     if (!termosAceitos) {
-      alert("Você precisa aceitar os termos");
+      setModalMessage("Você precisa aceitar os termos");
+      setModalType("error");
+      setModalOpen(true);
+      return;
+    }
+
+    //  valida captcha
+    if (!recaptchaToken) {
+      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalType("error");
+      setModalOpen(true);
       return;
     }
 
@@ -46,9 +71,12 @@ export function CadastroForm() {
         nome,
         email,
         senha,
+        recaptchaToken, // ENVIA PRO BACK
       });
 
-      alert(res.message);
+      setModalMessage(res.message || "Cadastro realizado com sucesso!");
+      setModalType("success");
+      setModalOpen(true);
 
       // limpa formulário
       setNome("");
@@ -56,15 +84,30 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
+      setCaptchaToken(null); // eseta captcha
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setModalMessage(error.response?.data?.error || "Erro ao cadastrar");
+      setModalType("error");
+      setModalOpen(true);
 
-      // redireciona
-      router.push("/login");
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Erro ao cadastrar");
+      setCaptchaToken(null); // reseta captcha em erro
     } finally {
       setLoading(false);
     }
   };
+
+  // redirect após sucesso
+  useEffect(() => {
+    if (modalOpen && modalType === "success") {
+      const timer = setTimeout(() => {
+        setModalOpen(false);
+        router.push("/login");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [modalOpen, modalType, router]);
 
   return (
     <div>
@@ -78,7 +121,7 @@ export function CadastroForm() {
             type="text"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Digite seu nome"
           />
         </div>
@@ -92,7 +135,7 @@ export function CadastroForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
             placeholder="Digite seu email"
           />
         </div>
@@ -119,6 +162,13 @@ export function CadastroForm() {
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
+            placeholder="Digite sua senha"
+          />
         </div>
 
         <div className="mb-6">
@@ -149,6 +199,13 @@ export function CadastroForm() {
               )}
             </button>
           </div>
+          <input
+            type="password"
+            value={confirmarSenha}
+            onChange={(e) => setConfirmarSenha(e.target.value)}
+            className="bg-white border border-gray-300 rounded w-full py-2 px-3"
+            placeholder="Confirme sua senha"
+          />
         </div>
 
         <div className="flex items-center gap-2 mb-4">
@@ -167,11 +224,16 @@ export function CadastroForm() {
           </span>
         </div>
 
+        {/*  RECAPTCHA */}
+        <div className="flex justify-center mb-4">
+          <Recaptcha onChange={setCaptchaToken} />
+        </div>
+
         <div className="flex justify-center">
           <button
             type="submit"
-            disabled={loading}
-            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:opacity-50"
+            disabled={loading || !recaptchaToken}
+            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 disabled:opacity-50"
           >
             {loading ? "Cadastrando..." : "Cadastrar"}
           </button>
@@ -184,6 +246,16 @@ export function CadastroForm() {
           </Link>
         </span>
       </form>
+
+      <PopupModelo
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalType === "success" ? "Sucesso 🎉" : "Erro ❌"}
+      >
+        <p className="text-center text-lg">
+          {modalType === "success" ? "✅" : "❌"} {modalMessage}
+        </p>
+      </PopupModelo>
     </div>
   );
 }

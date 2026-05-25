@@ -5,7 +5,7 @@ export default function Cadastro() {
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center bg-white min-h-screen gap-10 px-4 py-10 lg:py-0">
       {/* IMAGEM */}
-      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0 min-h-[600px]">
+      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0 min-h-600px">
         <Image
           src="/CadastroImage.png"
           alt="Imagem da tela de cadastro"
