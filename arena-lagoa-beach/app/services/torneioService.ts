@@ -3,6 +3,8 @@ import type {
   Tournament,
   TournamentUI,
   CreateInscricaoResponse,
+  TorneioCriacaoError,
+  TorneioCriacaoResponse,
 } from "@/app/types/torneios";
 import axios from "axios";
 
@@ -55,11 +57,18 @@ export const getTorneios = async (): Promise<TournamentUI[] | null> => {
 
 export const createTorneio = async (
   torneioData: CreateTorneioRequest
-): Promise<Tournament> => {
+): Promise<TorneioCriacaoResponse> => {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    throw new Error("Token não encontrado");
+    return {
+      sucesso: false,
+      erro: {
+        type: "invalid-token",
+        mensagem: "Sua sessão expirou. Faça login novamente.",
+        statusCode: 401,
+      },
+    };
   }
 
   try {
@@ -73,8 +82,13 @@ export const createTorneio = async (
       }
     );
 
-    return response.data.data;
+    return {
+      sucesso: true,
+      dados: response.data.data,
+    };
   } catch (error: unknown) {
+    const torneioError = mapearErroParaTorneioCriacao(error);
+
     if (axios.isAxiosError(error)) {
       console.error(
         "Erro ao criar torneio:",
@@ -84,8 +98,60 @@ export const createTorneio = async (
       console.error("Erro inesperado:", error);
     }
 
-    throw error;
+    return {
+      sucesso: false,
+      erro: torneioError,
+    };
   }
+};
+
+const mapearErroParaTorneioCriacao = (error: unknown): TorneioCriacaoError => {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const mensagemAPI = error.response?.data?.message;
+
+    switch (status) {
+      case 409:
+        return {
+          type: "duplicate-name",
+          mensagem: "Já existe um torneio com esse nome.",
+          statusCode: 409,
+        };
+
+      case 401:
+        return {
+          type: "invalid-token",
+          mensagem: "Sua sessão expirou. Faça login novamente.",
+          statusCode: 401,
+        };
+
+      case 403:
+        return {
+          type: "forbidden",
+          mensagem: "Você não tem permissão para criar torneios.",
+          statusCode: 403,
+        };
+
+      case 400:
+        return {
+          type: "validation-error",
+          mensagem: mensagemAPI || "Dados inválidos. Verifique os campos.",
+          statusCode: 400,
+        };
+
+      default:
+        return {
+          type: "generic-error",
+          mensagem: "Erro ao criar torneio. Tente novamente.",
+          statusCode: status,
+        };
+    }
+  }
+
+  return {
+    type: "generic-error",
+    mensagem: "Erro inesperado ao criar torneio. Tente novamente.",
+  };
 };
 
 export const deleteTorneio = async (
