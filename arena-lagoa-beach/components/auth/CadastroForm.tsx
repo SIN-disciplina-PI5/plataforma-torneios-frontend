@@ -63,7 +63,7 @@ const senhaTemEspecial = /[@$!%*?&._-]/.test(senha);
 
     //  valida captcha
     if (!recaptchaToken) {
-      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalMessage("Confirme que você não é um robô");
       setModalType("error");
       setModalOpen(true);
       return;
@@ -283,11 +283,10 @@ const senhaTemEspecial = /[@$!%*?&._-]/.test(senha);
       <PopupModelo
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={modalType === "success" ? "Sucesso 🎉" : "Erro ❌"}
+        type={modalType}
+        title={modalType === "success" ? "Sucesso" : "Erro"}
       >
-        <p className="text-center text-lg">
-          {modalType === "success" ? "✅" : "❌"} {modalMessage}
-        </p>
+        <p className="text-center text-lg">{modalMessage}</p>
       </PopupModelo>
     </div>
   );

@@ -38,7 +38,7 @@ export function LoginForm() {
     }
 
     if (!recaptchaToken) {
-      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalMessage("Confirme que você não é um robô");
       setModalOpen(true);
       return;
     }
@@ -59,8 +59,9 @@ export function LoginForm() {
         role === "ADMIN" ? "/admin/torneios" : "/torneios";
 
       router.push(redirectPath);
-    } catch (err: any) {
-      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setModalMessage(error.response?.data?.message || "Erro ao fazer login");
       setModalOpen(true);
     } finally {
       setLoading(false);
@@ -157,7 +158,8 @@ export function LoginForm() {
       <PopupModelo
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Erro ❌"
+        type="error"
+        title="Erro"
         footer={
           <div className="w-full flex justify-center">
             <button
@@ -169,7 +171,7 @@ export function LoginForm() {
           </div>
         }
       >
-        <p className="text-center text-lg">❌ {modalMessage}</p>
+        <p className="text-center text-lg">{modalMessage}</p>
       </PopupModelo>
     </div>
   );
