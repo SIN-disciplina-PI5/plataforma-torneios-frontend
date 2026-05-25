@@ -1,11 +1,10 @@
-import React from "react";
+import { ListaNotificacoes } from "@/lib/ListaNotificacoes";
 
-const Notificacoes = () => {
-    return (
-        <div>
-            <h1 className="text-4xl font-bold mb-4 text-[#2d2d2d]">Notificações</h1>
-        </div>
-    )
+export default function NotificationsPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Suas notificações</h1>
+      <ListaNotificacoes />
+    </div>
+  );
 }
-
-export default Notificacoes;
