@@ -10,6 +10,7 @@ import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
+import { AdminDuplasModal } from "@/components/admin/adminDuplasModal";
 
 export default function AdminTorneiosPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -147,7 +148,11 @@ export default function AdminTorneiosPage() {
       </main>
 
       <AdminTournamentDialogs
-        state={dialogState}
+        state={
+          dialogState === "edit" || dialogState === "registrations"
+            ? "idle"
+            : dialogState
+        }
         tournament={selected}
         onClose={handleClose}
         onConfirmDelete={handleConfirmDelete}
@@ -186,6 +191,10 @@ export default function AdminTorneiosPage() {
             <EditTournamentForm tournament={selected} onClose={handleClose} />
           </div>
         </div>
+      )}
+
+      {dialogState === "registrations" && selected && (
+        <AdminDuplasModal onClose={handleClose} tournament={selected} />
       )}
     </>
   );
