@@ -24,11 +24,11 @@ export default function Cadastro() {
       </div>
       {/* FORM */}
       <div className="flex flex-col justify-center w-full max-w-md">
-        <h1 className="text-3xl lg:text-4xl font-bold text-black mb-4">
+        <h1 className="text-3xl lg:text-4xl font-bold text-black mb-2">
           Cadastro
         </h1>
 
-        <p className="text-gray-500 mb-6 text-sm lg:text-base">
+        <p className="text-gray-500 mb-2 text-sm lg:text-base">
           Vamos configurar tudo para você acessar sua conta pessoal.
         </p>
 
