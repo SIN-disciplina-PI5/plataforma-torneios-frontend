@@ -27,10 +27,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import type {
-  AdminDialogState,
-  Tournament,
-} from "@/app/types/torneios";
+import type { AdminDialogState, Tournament } from "@/app/types/torneios";
 
 import { createTorneio } from "@/app/services/torneioService";
 
@@ -111,8 +108,7 @@ export function AdminTournamentDialogs({
       const inicio = new Date(dataInicio);
 
       if (inicio < hoje) {
-        novoErros.dataInicio =
-          "Data de início não pode ser anterior a hoje";
+        novoErros.dataInicio = "Data de início não pode ser anterior a hoje";
       }
     }
 
@@ -120,8 +116,7 @@ export function AdminTournamentDialogs({
       const fim = new Date(dataFim);
 
       if (fim < hoje) {
-        novoErros.dataFim =
-          "Data de término não pode ser anterior a hoje";
+        novoErros.dataFim = "Data de término não pode ser anterior a hoje";
       }
     }
 
@@ -188,10 +183,7 @@ export function AdminTournamentDialogs({
         handleClose();
       }, 800);
     } catch (err) {
-      if (
-        axios.isAxiosError(err) &&
-        err.response?.status === 409
-      ) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
         setDuplicateNameError(true);
         return;
       }
@@ -205,12 +197,8 @@ export function AdminTournamentDialogs({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => !open && handleClose()}
-    >
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md rounded-2xl">
-
         {/* CONFIRM DELETE */}
         {state === "confirmDelete" && (
           <>
@@ -226,8 +214,8 @@ export function AdminTournamentDialogs({
               </div>
 
               <DialogDescription className="text-sm text-gray-500 mt-2">
-                Tem certeza que deseja deletar este torneio?
-                Esta ação não pode ser desfeita.
+                Tem certeza que deseja deletar este torneio? Esta ação não pode
+                ser desfeita.
               </DialogDescription>
             </DialogHeader>
 
@@ -237,17 +225,12 @@ export function AdminTournamentDialogs({
               </p>
 
               <p className="text-xs text-gray-500 mt-0.5">
-                Categoria: {tournament?.categoria} ·{" "}
-                {tournament?.vagas} vagas
+                Categoria: {tournament?.categoria} · {tournament?.vagas} vagas
               </p>
             </div>
 
             <DialogFooter className="flex gap-2 mt-2">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={onClose} className="flex-1">
                 Cancelar
               </Button>
 
@@ -264,14 +247,9 @@ export function AdminTournamentDialogs({
         {/* LOADING DELETE */}
         {state === "loadingDelete" && (
           <div className="flex flex-col items-center justify-center py-8 gap-4">
-            <Loader2
-              className="animate-spin text-red-500"
-              size={40}
-            />
+            <Loader2 className="animate-spin text-red-500" size={40} />
 
-            <p className="text-sm text-gray-500">
-              Deletando torneio...
-            </p>
+            <p className="text-sm text-gray-500">Deletando torneio...</p>
           </div>
         )}
 
@@ -279,10 +257,7 @@ export function AdminTournamentDialogs({
         {state === "successDelete" && (
           <>
             <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <CheckCircle2
-                className="text-green-600"
-                size={48}
-              />
+              <CheckCircle2 className="text-green-600" size={48} />
 
               <DialogTitle className="text-lg font-bold text-gray-900">
                 Torneio deletado!
@@ -312,27 +287,19 @@ export function AdminTournamentDialogs({
         {state === "errorDelete" && (
           <>
             <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <XCircle
-                className="text-red-500"
-                size={48}
-              />
+              <XCircle className="text-red-500" size={48} />
 
               <DialogTitle className="text-lg font-bold text-gray-900">
                 Erro ao deletar
               </DialogTitle>
 
               <p className="text-sm text-gray-500 text-center">
-                Não foi possível deletar o torneio.
-                Tente novamente.
+                Não foi possível deletar o torneio. Tente novamente.
               </p>
             </div>
 
             <DialogFooter className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={onClose} className="flex-1">
                 Fechar
               </Button>
 
@@ -352,10 +319,7 @@ export function AdminTournamentDialogs({
             <DialogHeader>
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Pencil
-                    size={18}
-                    className="text-blue-600"
-                  />
+                  <Pencil size={18} className="text-blue-600" />
                 </div>
 
                 <DialogTitle className="text-lg font-bold text-gray-900">
@@ -376,11 +340,7 @@ export function AdminTournamentDialogs({
             </div>
 
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="w-full"
-              >
+              <Button variant="outline" onClick={onClose} className="w-full">
                 Fechar
               </Button>
             </DialogFooter>
@@ -403,7 +363,6 @@ export function AdminTournamentDialogs({
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-
               {/* Nome */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -428,9 +387,7 @@ export function AdminTournamentDialogs({
                 />
 
                 {errors.nome && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.nome}
-                  </p>
+                  <p className="mt-1 text-xs text-red-600">{errors.nome}</p>
                 )}
               </div>
 
@@ -455,21 +412,13 @@ export function AdminTournamentDialogs({
                     }}
                     className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 transition-all"
                   >
-                    <option value="">
-                      Selecione uma categoria
-                    </option>
+                    <option value="">Selecione uma categoria</option>
 
-                    <option value="Iniciante">
-                      Iniciante
-                    </option>
+                    <option value="Iniciante">Iniciante</option>
 
-                    <option value="Intermediário">
-                      Intermediário
-                    </option>
+                    <option value="Intermediário">Intermediário</option>
 
-                    <option value="Avançado">
-                      Avançado
-                    </option>
+                    <option value="Avançado">Avançado</option>
                   </select>
 
                   <ChevronDown
@@ -523,10 +472,7 @@ export function AdminTournamentDialogs({
 
                 <input
                   type="date"
-                  min={
-                    dataInicio ||
-                    new Date().toISOString().split("T")[0]
-                  }
+                  min={dataInicio || new Date().toISOString().split("T")[0]}
                   value={dataFim}
                   onChange={(e) => {
                     setDataFim(e.target.value);
@@ -542,9 +488,7 @@ export function AdminTournamentDialogs({
                 />
 
                 {errors.dataFim && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.dataFim}
-                  </p>
+                  <p className="mt-1 text-xs text-red-600">{errors.dataFim}</p>
                 )}
               </div>
 
@@ -558,11 +502,7 @@ export function AdminTournamentDialogs({
                   <select
                     value={numVagas}
                     onChange={(e) => {
-                      setNumVagas(
-                        e.target.value
-                          ? Number(e.target.value)
-                          : ""
-                      );
+                      setNumVagas(e.target.value ? Number(e.target.value) : "");
 
                       if (errors.numVagas) {
                         setErrors({
@@ -586,9 +526,7 @@ export function AdminTournamentDialogs({
                 </div>
 
                 {errors.numVagas && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.numVagas}
-                  </p>
+                  <p className="mt-1 text-xs text-red-600">{errors.numVagas}</p>
                 )}
               </div>
 
@@ -596,10 +534,7 @@ export function AdminTournamentDialogs({
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
                   <ul className="space-y-1">
                     {Object.values(errors).map((erro, idx) => (
-                      <li
-                        key={idx}
-                        className="text-xs text-red-700"
-                      >
+                      <li key={idx} className="text-xs text-red-700">
                         • {erro}
                       </li>
                     ))}
@@ -640,18 +575,15 @@ export function AdminTournamentDialogs({
         {state === "create" && duplicateNameError && (
           <>
             <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <AlertCircle
-                className="text-orange-500"
-                size={48}
-              />
+              <AlertCircle className="text-orange-500" size={48} />
 
               <DialogTitle className="text-lg font-bold text-gray-900">
                 Torneio já existente
               </DialogTitle>
 
               <p className="text-sm text-gray-500 text-center">
-                Já existe um torneio com esse nome.
-                Escolha outro nome para continuar.
+                Já existe um torneio com esse nome. Escolha outro nome para
+                continuar.
               </p>
             </div>
 
@@ -672,10 +604,7 @@ export function AdminTournamentDialogs({
             <DialogHeader>
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
-                  <Users
-                    size={18}
-                    className="text-green-600"
-                  />
+                  <Users size={18} className="text-green-600" />
                 </div>
 
                 <DialogTitle className="text-lg font-bold text-gray-900">
@@ -696,11 +625,7 @@ export function AdminTournamentDialogs({
             </div>
 
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="w-full"
-              >
+              <Button variant="outline" onClick={onClose} className="w-full">
                 Fechar
               </Button>
             </DialogFooter>

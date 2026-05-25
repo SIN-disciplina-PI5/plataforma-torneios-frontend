@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Trophy, AlertCircle, Plus } from "lucide-react";
+import { Trophy, AlertCircle, Plus, X, Pencil } from "lucide-react";
+import { clsx } from "clsx";
 
 import type { Tournament, AdminDialogState } from "@/app/types/torneios";
 import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
+import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
 
 export default function AdminTorneiosPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -103,8 +105,8 @@ export default function AdminTorneiosPage() {
               height={40}
             />
             <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
-            Gerenciamento de Torneios
-          </h1>
+              Gerenciamento de Torneios
+            </h1>
           </div>
           <button
             onClick={() => setDialogState("create")}
@@ -153,6 +155,38 @@ export default function AdminTorneiosPage() {
           setTournaments((prev) => [...prev, newTournament]);
         }}
       />
+
+      {dialogState === "edit" && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 m-4 relative animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-50 p-2 rounded-full text-blue-500">
+                  <Pencil size={18} />
+                </div>
+                <h2 className="text-xl font-bold text-black">Editar torneio</h2>
+              </div>
+              <button
+                onClick={handleClose}
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-5 ml-11">
+              <p className="text-[14px] text-gray-500">
+                Edição de:{" "}
+                <span className="font-semibold text-black">
+                  {selected.nome}
+                </span>
+              </p>
+            </div>
+
+            <EditTournamentForm tournament={selected} onClose={handleClose} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
