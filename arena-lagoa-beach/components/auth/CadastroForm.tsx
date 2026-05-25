@@ -106,13 +106,20 @@ export function CadastroForm() {
   useEffect(() => {
     if (modalOpen && modalType === "success") {
       const timer = setTimeout(() => {
-        setModalOpen(false);
         router.push("/login");
-      }, 2000);
+      }, 1500);
 
       return () => clearTimeout(timer);
     }
   }, [modalOpen, modalType, router]);
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+
+    if (modalType === "success") {
+      router.push("/login");
+    }
+  };
 
   return (
     <div>
@@ -268,7 +275,7 @@ export function CadastroForm() {
 
       <PopupModelo
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleModalClose}
         type={modalType}
         title={modalType === "success" ? "Sucesso" : "Erro"}
       >
