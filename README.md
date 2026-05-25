@@ -1,75 +1,155 @@
-🏆 Plataforma de Torneios - Fullstack Web
+# Arena Lagoa Beach - Frontend
 
-Bem-vindo ao repositório da Plataforma de Torneios. Recentemente, o projeto passou por uma transição arquitetural significativa para melhor atender aos requisitos de escalabilidade, SEO e performance.
+Plataforma web para gestão de torneios de futevôlei, criada para transformar o processo manual de organização dos torneios já realizados de forma manual em uma solução digital rápida, organizada e escalável. Trazendo mais controle, agilidade e profissionalização para a gestão esportiva
 
-🚀 O Pivot Tecnológico: Expo ➔ Next.js
+A plataforma também incentiva a **competitividade entre atletas**, principalmente através da tela de **ranking**, que exibe desempenho, evolução e posição dos jogadores, estimulando participação contínua e melhora de performance.
 
-Originalmente concebido como uma aplicação móvel utilizando Expo (React Native), o projeto foi migrado para uma solução Fullstack Web utilizando Next.js 15 e React.
+---
 
-Esta mudança permite:
+## 👤 Perfis do Sistema
 
-Renderização no Lado do Servidor (SSR): Melhor indexação e performance.
+### 🧑 USER (Atleta)
 
-Ecossistema Web: Integração nativa com ferramentas de análise e dashboards.
+- Participa de torneios
+- Realiza inscrições
+- Acompanha partidas e resultados
+- Consulta ranking geral
+- Acompanha sua evolução competitiva
 
-Unificação de Stack: Melhor sincronia com o nosso backend em Node.js e PostgreSQL.
-
-📂 Estrutura de Branches (Importante)
-
-Para manter a integridade do trabalho já realizado, o repositório foi organizado da seguinte forma:
-
-main (Padrão): Contém o novo projeto Next.js. Todo o desenvolvimento atual e futuro será realizado aqui.
-
-producao-mobile: Contém o código legado da aplicação móvel desenvolvida em Expo/React Native. Esta branch serve como documentação e backup da versão mobile estável.
-
-Como aceder à versão anterior (Mobile)?
-
-Se precisar de consultar ou executar o código mobile, utilize:
-
-git checkout producao-mobile
+A experiência é focada em incentivar participação constante e evolução dentro da plataforma.
 
 
-🛠️ Tecnologias Utilizadas (Versão Web)
 
-Frontend: React 19, Next.js 15, Tailwind CSS.
+### 🛠️ ADMIN (Organização)
 
-Backend (API): Node.js, Express, Sequelize.
+- Cria e gerencia torneios
+- Controla inscrições
+- Monta e atualiza partidas
+- Atualiza resultados em tempo real
+- Gerencia usuários e estrutura geral
+- Mantém o ranking atualizado
 
-Base de Dados: PostgreSQL (Hosted via Neon/Render).
-
-Segurança: Autenticação via JWT, Middlewares de propriedade de recurso.
-
-Infraestrutura: Docker, Vercel (Frontend), Render (Backend).
-
-⚙️ Como Executar o Projeto
-
-Pré-requisitos
-
-Node.js v20+
-
-PostgreSQL configurado (ou acesso ao NeonDB)
-
-Instalação (Branch Main)
-
-Clone o repositório:
-
-git clone [https://github.com/kaikibarros/plataforma-torneios-frontend.git](https://github.com/kaikibarros/plataforma-torneios-frontend.git)
+Responsável por transformar a organização manual em um fluxo digital eficiente.
 
 
-Instale as dependências:
 
+## 🚀 Quick Start
+
+### Pré-requisitos
+- Node.js 20+
+- npm ou yarn
+
+### Instalação
+
+```bash
+# Clone o repositório
+git clone https://github.com/seu-repo/arena-lagoa-beach.git
+cd arena-lagoa-beach
+
+# Instale as dependências
 npm install
 
-Inicie o servidor de desenvolvimento:
+# Configure as variáveis de ambiente
+cp .env.example .env.local
 
+# Inicie o servidor de desenvolvimento
 npm run dev
+```
+### 📁 Estrutura de Pastas
 
+```bash
+arena-lagoa-beach/
+├── app/
+│   ├── (public)/
+│   ├── (private)/
+│   ├── services/
+│   ├── types/
+│   ├── utils/
+│   ├── globals.css
+│   └── layout.tsx
+├── components/
+│   ├── ui/
+│   ├── auth/
+│   ├── admin/
+│   ├── chatbot/
+│   ├── navbar/
+│   └── sidebar/
+├── lib/
+├── public/
+├── package.json
+└── ...
+```
+### 📦 Stack Tecnológico
+React 19
+Next.js 16
+TypeScript 5
+Tailwind CSS 4
+shadcn/ui + Radix UI
+Axios
+Lucide React
+Sonner
+JWT (JSON Web Token)
+ReCAPTCHA v3
+Vercel AI SDK
 
-👥 Equipa e Contribuição
+### 🔐 Autenticação
+Login gera JWT
+Token salvo em localStorage
+Requisições usam Bearer Token
 
-Certifique-se de criar a sua branch a partir da main atualizada
-Metodologiad: Ágil (Scrum)
+### 🔄 Fluxo de autenticação
+Usuário realiza login ou cadastro
+Backend retorna token JWT
+Frontend armazena token, userId e role
+Requisições incluem Authorization: Bearer {token}
+Rotas privadas validam autenticação
+Usuário é redirecionado para /login se inválido
 
-📝 Licença
+### 👤 Roles
+ADMIN
+USER
 
-Este projeto é para fins educativos e de portfólio.
+### 🛡️ Rotas Protegidas
+(private) controla acesso autenticado
+Proteção via HOC ProtecaoRota
+Validação de token antes de renderizar páginas privadas
+
+### 📝 Scripts
+
+```bash
+npm run dev      # Desenvolvimento
+npm run build    # Build de produção
+npm start        # Execução em produção
+npm run lint     # Lint do projeto
+```
+## 🤝 Processo de Contribuição
+### 🔀 Criação de branch
+```bash
+git checkout -b feature/nome-da-feature
+```
+### 💻 Desenvolvimento e commits
+```bash
+git add .
+git commit -m "feat: descrição da feature"
+```
+### 📤 Envio da branch
+```bash
+git push origin feature/nome-da-feature
+```
+### 🔍 Pull Request
+```bash
+Abrir PR para branch develop
+Descrever mudanças feitas
+Aguardar review
+Ajustar se necessário
+```
+## 📚 Documentação
+```bash
+Next.js: https://nextjs.org/docs
+React: https://react.dev
+TypeScript: https://www.typescriptlang.org/docs
+Tailwind CSS: https://tailwindcss.com/docs
+shadcn/ui: https://ui.shadcn.com
+Axios: https://axios-http.com
+```
+
