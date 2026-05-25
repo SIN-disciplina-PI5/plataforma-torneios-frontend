@@ -27,7 +27,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import type { AdminDialogState, Tournament } from "@/app/types/torneios";
+import type { AdminDialogState, Tournament, TorneioCriacaoError } from "@/app/types/torneios";
 
 import { createTorneio } from "@/app/services/torneioService";
 
@@ -60,9 +60,11 @@ export function AdminTournamentDialogs({
 
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const [duplicateNameError, setDuplicateNameError] = useState(false);
+  const [apiError, setApiError] = useState<TorneioCriacaoError | null>(null);
 
-  const isOpen = state !== "idle";
+  const isOpen =
+    state !== "idle" &&
+    state !== "edit";
 
   const handleClose = () => {
     setNome("");
@@ -73,7 +75,7 @@ export function AdminTournamentDialogs({
 
     setErrors({});
 
-    setDuplicateNameError(false);
+    setApiError(null);
 
     onClose();
   };
@@ -144,7 +146,7 @@ export function AdminTournamentDialogs({
     try {
       setLoading(true);
 
-      setDuplicateNameError(false);
+      setApiError(null);
 
       const dataInicioIso = new Date(dataInicio).toISOString();
 
@@ -167,30 +169,31 @@ export function AdminTournamentDialogs({
 
       const resultado = await createTorneio(torneioData);
 
+      if (!resultado.sucesso) {
+        setApiError(resultado.erro || null);
+        return;
+      }
+
       toast.success("Torneio criado com sucesso!");
 
-      if (onTournamentCreated) {
+      if (onTournamentCreated && resultado.dados) {
         onTournamentCreated({
-          id_torneio: resultado.id_torneio || "",
-          nome: resultado.nome,
-          categoria: resultado.categoria,
-          vagas: resultado.vagas,
-          status: resultado.status,
+          id_torneio: resultado.dados.id_torneio || "",
+          nome: resultado.dados.nome,
+          categoria: resultado.dados.categoria,
+          vagas: resultado.dados.vagas,
+          status: resultado.dados.status,
         });
       }
 
       setTimeout(() => {
         handleClose();
       }, 800);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setDuplicateNameError(true);
-        return;
-      }
-
-      console.error(err);
-
-      toast.error("Erro na requisição. Tente novamente.");
+    } catch {
+      setApiError({
+        type: "generic-error",
+        mensagem: "Erro ao criar torneio. Tente novamente.",
+      });
     } finally {
       setLoading(false);
     }
@@ -313,42 +316,9 @@ export function AdminTournamentDialogs({
           </>
         )}
 
-        {/* EDIT */}
-        {state === "edit" && (
-          <>
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Pencil size={18} className="text-blue-600" />
-                </div>
-
-                <DialogTitle className="text-lg font-bold text-gray-900">
-                  Editar torneio
-                </DialogTitle>
-              </div>
-
-              <DialogDescription className="text-sm text-gray-500 mt-1">
-                Edição de:{" "}
-                <span className="font-medium text-gray-700">
-                  {tournament?.nome}
-                </span>
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="py-4 text-sm text-gray-400 text-center">
-              Formulário de edição será implementado aqui.
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={onClose} className="w-full">
-                Fechar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-
+       
         {/* CREATE */}
-        {state === "create" && !duplicateNameError && (
+        {state === "create" && (
           <>
             <DialogHeader>
               <div className="flex items-center gap-3">
@@ -363,6 +333,51 @@ export function AdminTournamentDialogs({
             </DialogHeader>
 
             <div className="space-y-4 py-4">
+              {/* ERRO DA API */}
+              {apiError && (
+                <div
+                  className={`rounded-lg border px-4 py-3 flex items-start gap-3 ${
+                    apiError.type === "duplicate-name"
+                      ? "border-orange-200 bg-orange-50"
+                      : apiError.type === "invalid-token"
+                      ? "border-red-200 bg-red-50"
+                      : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <AlertCircle
+                    size={18}
+                    className={`shrink-0 mt-0.5 ${
+                      apiError.type === "duplicate-name"
+                        ? "text-orange-600"
+                        : "text-red-600"
+                    }`}
+                  />
+                  <div className="flex-1">
+                    <p
+                      className={`text-sm font-medium ${
+                        apiError.type === "duplicate-name"
+                          ? "text-orange-900"
+                          : "text-red-900"
+                      }`}
+                    >
+                      {apiError.type === "duplicate-name"
+                        ? "Torneio já existente"
+                        : apiError.type === "invalid-token"
+                        ? "Sessão expirada"
+                        : "Erro ao criar torneio"}
+                    </p>
+                    <p
+                      className={`text-sm mt-1 ${
+                        apiError.type === "duplicate-name"
+                          ? "text-orange-700"
+                          : "text-red-700"
+                      }`}
+                    >
+                      {apiError.mensagem}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* Nome */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -380,6 +395,10 @@ export function AdminTournamentDialogs({
                         ...errors,
                         nome: "",
                       });
+                    }
+
+                    if (apiError?.type === "duplicate-name") {
+                      setApiError(null);
                     }
                   }}
                   placeholder="Ex: Copa Westeros"
@@ -566,33 +585,6 @@ export function AdminTournamentDialogs({
                 ) : (
                   "Criar"
                 )}
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-
-        {/* DUPLICATE NAME ERROR */}
-        {state === "create" && duplicateNameError && (
-          <>
-            <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <AlertCircle className="text-orange-500" size={48} />
-
-              <DialogTitle className="text-lg font-bold text-gray-900">
-                Torneio já existente
-              </DialogTitle>
-
-              <p className="text-sm text-gray-500 text-center">
-                Já existe um torneio com esse nome. Escolha outro nome para
-                continuar.
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                onClick={() => setDuplicateNameError(false)}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                Entendi
               </Button>
             </DialogFooter>
           </>
