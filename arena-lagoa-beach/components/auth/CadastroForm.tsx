@@ -31,6 +31,12 @@ export function CadastroForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const senhaTem8Caracteres = senha.length >= 8;
+const senhaTemMaiuscula = /[A-Z]/.test(senha);
+const senhaTemMinuscula = /[a-z]/.test(senha);
+const senhaTemNumero = /\d/.test(senha);
+const senhaTemEspecial = /[@$!%*?&._-]/.test(senha);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -139,29 +145,71 @@ export function CadastroForm() {
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Senha
-          </label>
+        <div className="mb-2">
+  <label className="block text-gray-700 text-sm font-bold mb-2">
+    Senha
+  </label>
 
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="bg-white border border-gray-300 rounded w-full py-2 px-3 pr-10 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
-              placeholder="Digite sua senha"
-            />
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      value={senha}
+      onChange={(e) => setSenha(e.target.value)}
+      className="bg-white border border-gray-300 rounded w-full py-2 px-3 pr-10 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+      placeholder="Digite sua senha"
+    />
 
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
-        </div>
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+    >
+      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </button>
+  </div>
+
+ <div className="mt-2 text-xs grid grid-cols-2 gap-x-4 gap-y-1">
+  <span
+    className={
+      senhaTem8Caracteres ? "text-green-600" : "text-red-500"
+    }
+  >
+    • 8+ caracteres
+  </span>
+
+  <span
+    className={
+      senhaTemMaiuscula ? "text-green-600" : "text-red-500"
+    }
+  >
+    • 1 maiúscula
+  </span>
+
+  <span
+    className={
+      senhaTemMinuscula ? "text-green-600" : "text-red-500"
+    }
+  >
+    • 1 minúscula
+  </span>
+
+  <span
+    className={
+      senhaTemNumero ? "text-green-600" : "text-red-500"
+    }
+  >
+    • 1 número
+  </span>
+
+  <span
+    className={
+      senhaTemEspecial ? "text-green-600" : "text-red-500"
+    }
+  >
+    • 1 especial
+  </span>
+</div>
+</div>
 
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">
