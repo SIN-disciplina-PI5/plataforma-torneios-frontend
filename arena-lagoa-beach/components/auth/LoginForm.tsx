@@ -10,6 +10,39 @@ import { getUserRole } from "@/app/utils/auth";
 import PopupModelo from "@/components/ui/PopupModelo";
 import Recaptcha from "@/components/recaptcha/recaptcha";
 
+type LoginApiError = {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+      erro?: string;
+    };
+  };
+};
+
+function getLoginErrorMessage(err: unknown) {
+  const error = err as LoginApiError;
+  const apiMessage =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.response?.data?.erro;
+
+  if (apiMessage) {
+    return apiMessage;
+  }
+
+  switch (error.response?.status) {
+    case 404:
+      return "E-mail não encontrado";
+    case 401:
+    case 403:
+      return "E-mail ou senha incorretos";
+    default:
+      return "Erro ao fazer login";
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
 
@@ -60,8 +93,7 @@ export function LoginForm() {
 
       router.push(redirectPath);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setModalMessage(error.response?.data?.message || "Erro ao fazer login");
+      setModalMessage(getLoginErrorMessage(err));
       setModalOpen(true);
     } finally {
       setLoading(false);
