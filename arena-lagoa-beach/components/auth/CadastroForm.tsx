@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
 import { signup } from "@/app/services/auth";
 
 export function CadastroForm() {
@@ -14,6 +16,10 @@ export function CadastroForm() {
   const [confirmarSenha, setConfirmarSenha] = useState<string>("");
   const [termosAceitos, setTermosAceitos] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // visualizar senha
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,6 +73,7 @@ export function CadastroForm() {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Nome de usuário
           </label>
+
           <input
             type="text"
             value={nome}
@@ -80,6 +87,7 @@ export function CadastroForm() {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
+
           <input
             type="email"
             value={email}
@@ -93,26 +101,54 @@ export function CadastroForm() {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Senha
           </label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
-            placeholder="Digite sua senha"
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="bg-white border border-gray-300 rounded w-full py-2 px-3 pr-10 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+              placeholder="Digite sua senha"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
 
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Confirme sua senha
           </label>
-          <input
-            type="password"
-            value={confirmarSenha}
-            onChange={(e) => setConfirmarSenha(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
-            placeholder="Confirme sua senha"
-          />
+
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmarSenha}
+              onChange={(e) => setConfirmarSenha(e.target.value)}
+              className="bg-white border border-gray-300 rounded w-full py-2 px-3 pr-10 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+              placeholder="Confirme sua senha"
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showConfirmPassword ? (
+                <EyeOff size={20} />
+              ) : (
+                <Eye size={20} />
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-4">
@@ -122,6 +158,7 @@ export function CadastroForm() {
             onChange={(e) => setTermosAceitos(e.target.checked)}
             className="h-4 w-4 accent-[#C2E96A]"
           />
+
           <span className="text-sm text-gray-700">
             Eu concordo com os{" "}
             <span className="text-red-500">
