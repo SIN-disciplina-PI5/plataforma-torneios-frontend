@@ -40,3 +40,23 @@ export type AdminDialogState =
   | "edit"
   | "create"
   | "registrations";
+
+export type TorneioCriacaoErrorType =
+  | "duplicate-name"
+  | "invalid-token"
+  | "expired-token"
+  | "forbidden"
+  | "validation-error"
+  | "generic-error";
+
+export interface TorneioCriacaoError {
+  type: TorneioCriacaoErrorType;
+  mensagem: string;
+  statusCode?: number;
+}
+
+export interface TorneioCriacaoResponse {
+  sucesso: boolean;
+  erro?: TorneioCriacaoError;
+  dados?: Tournament;
+}
