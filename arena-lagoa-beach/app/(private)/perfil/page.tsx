@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera, ImagePlus } from "lucide-react";
+import { Camera, ImagePlus, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -40,8 +40,10 @@ export default function MeuPerfil() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-
   const [avatarPreview, setAvatarPreview] = useState(avatarPadrao);
+
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -57,8 +59,6 @@ export default function MeuPerfil() {
       try {
         const dados = await getMeuPerfil();
 
-        console.log("O que o back-end devolveu:", dados);
-
         if (dados) {
           setFormData((prev) => ({
             ...prev,
@@ -68,7 +68,6 @@ export default function MeuPerfil() {
             patente: dados.patente || "Não ranqueado",
           }));
 
-          // 2. Se o back-end retornar a URL da foto salva, nós a colocamos no preview
           if (dados.foto_perfil) {
             setAvatarPreview(dados.foto_perfil);
           }
@@ -88,14 +87,11 @@ export default function MeuPerfil() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 3. Função que lida com a escolha do arquivo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Cria uma URL local rápida apenas para visualização imediata na tela
       setAvatarPreview(URL.createObjectURL(file));
 
-      // Converte a imagem para Base64 para enviar no JSON junto com o texto
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({
@@ -117,7 +113,6 @@ export default function MeuPerfil() {
       }
 
       try {
-        // 4. Incluímos a foto no payload caso o usuário tenha escolhido uma nova
         const payload: any = {
           nome: formData.nome,
           email: formData.email,
@@ -128,7 +123,7 @@ export default function MeuPerfil() {
         }
 
         if (formData.fotoBase64) {
-          payload.foto_perfil = formData.fotoBase64; // Nome da variável que o backend espera
+          payload.foto_perfil = formData.fotoBase64;
         }
 
         await updateMeuPerfil(payload);
@@ -141,6 +136,8 @@ export default function MeuPerfil() {
           fotoBase64: "",
         }));
         setIsEditing(false);
+        setMostrarSenha(false);
+        setMostrarConfirmarSenha(false);
       } catch (error: unknown) {
         const apiError = error as ApiError;
 
@@ -179,6 +176,8 @@ export default function MeuPerfil() {
       : "bg-[#f6f6f6] border border-transparent"
   }`;
 
+  const passwordInputClassName = `${inputClassName} pr-10`;
+
   if (isLoading) {
     return (
       <div className="flex-1 min-h-screen p-8 flex items-center justify-center">
@@ -201,7 +200,6 @@ export default function MeuPerfil() {
 
         <div className="px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div className="flex items-center gap-5">
-            {/* 5. Área da Foto com o Ícone de Upload */}
             <div className="relative -mt-10">
               <div
                 role="img"
@@ -211,7 +209,6 @@ export default function MeuPerfil() {
               />
               {isEditing && (
                 <>
-                  {/* Input invisível que abre a janela do Windows */}
                   <input
                     type="file"
                     id="avatar-upload"
@@ -219,7 +216,6 @@ export default function MeuPerfil() {
                     className="hidden"
                     onChange={handleImageChange}
                   />
-                  {/* Label que funciona como botão estético */}
                   <label
                     htmlFor="avatar-upload"
                     className="absolute bottom-0 right-0 bg-[#316f27] text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
@@ -248,7 +244,7 @@ export default function MeuPerfil() {
             onClick={handleEditToggle}
             className={`mt-4 md:mt-2 text-white border-none px-6 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
               isEditing
-                ? "bg-blue-600 hover:bg-blue-700"
+                ? "bg-green-600 hover:bg-green-800"
                 : "bg-[#316f27] hover:bg-green-800"
             }`}
           >
@@ -291,33 +287,63 @@ export default function MeuPerfil() {
               className="px-4 py-3 rounded-md text-sm text-gray-500 bg-[#f6f6f6] border border-transparent outline-none cursor-not-allowed w-full"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
               Nova Senha
             </label>
-            <input
-              type="password"
-              name="senha"
-              placeholder={isEditing ? "Digite uma nova senha" : "••••••••"}
-              value={formData.senha}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
+            <div className="relative">
+              <input
+                type={mostrarSenha ? "text" : "password"}
+                name="senha"
+                placeholder={isEditing ? "Digite uma nova senha" : "••••••••"}
+                value={formData.senha}
+                onChange={handleChange}
+                readOnly={!isEditing}
+                className={passwordInputClassName}
+              />
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              )}
+            </div>
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
               Confirmar Nova Senha
             </label>
-            <input
-              type="password"
-              name="confirmarSenha"
-              placeholder={isEditing ? "Confirme a nova senha" : "••••••••"}
-              value={formData.confirmarSenha}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
+            <div className="relative">
+              <input
+                type={mostrarConfirmarSenha ? "text" : "password"}
+                name="confirmarSenha"
+                placeholder={isEditing ? "Confirme a nova senha" : "••••••••"}
+                value={formData.confirmarSenha}
+                onChange={handleChange}
+                readOnly={!isEditing}
+                className={passwordInputClassName}
+              />
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarConfirmarSenha(!mostrarConfirmarSenha)
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {mostrarConfirmarSenha ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </form>
 
