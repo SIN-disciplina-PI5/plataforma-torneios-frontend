@@ -5,6 +5,7 @@ import type {
   CreateInscricaoResponse,
   TorneioCriacaoError,
   TorneioCriacaoResponse,
+  UserInscriptionResponse,
 } from "@/app/types/torneios";
 import axios from "axios";
 
@@ -27,30 +28,19 @@ interface CreateTorneioResponse {
 
 export const getTorneios = async (): Promise<TournamentUI[] | null> => {
   const token = localStorage.getItem("token");
-
   if (!token) return null;
 
   try {
     const response = await api.get<TorneiosApiResponse>("/torneio", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    return response.data.data.map((t) => ({
-      ...t,
-      favorite: false,
-    }));
+    return response.data.data.map((t) => ({ ...t, favorite: false }));
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      console.error(
-        "Erro na API:",
-        error.response?.data || error.message
-      );
+      console.error("Erro na API:", error.response?.data || error.message);
     } else {
       console.error("Erro inesperado:", error);
     }
-
     return null;
   }
 };
@@ -72,36 +62,18 @@ export const createTorneio = async (
   }
 
   try {
-    const response = await api.post<CreateTorneioResponse>(
-      "/torneio",
-      torneioData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return {
-      sucesso: true,
-      dados: response.data.data,
-    };
+    const response = await api.post<CreateTorneioResponse>("/torneio", torneioData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { sucesso: true, dados: response.data.data };
   } catch (error: unknown) {
     const torneioError = mapearErroParaTorneioCriacao(error);
-
     if (axios.isAxiosError(error)) {
-      console.error(
-        "Erro ao criar torneio:",
-        error.response?.data || error.message
-      );
+      console.error("Erro ao criar torneio:", error.response?.data || error.message);
     } else {
       console.error("Erro inesperado:", error);
     }
-
-    return {
-      sucesso: false,
-      erro: torneioError,
-    };
+    return { sucesso: false, erro: torneioError };
   }
 };
 
@@ -112,74 +84,120 @@ const mapearErroParaTorneioCriacao = (error: unknown): TorneioCriacaoError => {
 
     switch (status) {
       case 409:
-        return {
-          type: "duplicate-name",
-          mensagem: "Já existe um torneio com esse nome.",
-          statusCode: 409,
-        };
-
+        return { type: "duplicate-name", mensagem: "Já existe um torneio com esse nome.", statusCode: 409 };
       case 401:
-        return {
-          type: "invalid-token",
-          mensagem: "Sua sessão expirou. Faça login novamente.",
-          statusCode: 401,
-        };
-
+        return { type: "invalid-token", mensagem: "Sua sessão expirou. Faça login novamente.", statusCode: 401 };
       case 403:
-        return {
-          type: "forbidden",
-          mensagem: "Você não tem permissão para criar torneios.",
-          statusCode: 403,
-        };
-
+        return { type: "forbidden", mensagem: "Você não tem permissão para criar torneios.", statusCode: 403 };
       case 400:
-        return {
-          type: "validation-error",
-          mensagem: mensagemAPI || "Dados inválidos. Verifique os campos.",
-          statusCode: 400,
-        };
-
+        return { type: "validation-error", mensagem: mensagemAPI || "Dados inválidos. Verifique os campos.", statusCode: 400 };
       default:
-        return {
-          type: "generic-error",
-          mensagem: "Erro ao criar torneio. Tente novamente.",
-          statusCode: status,
-        };
+        return { type: "generic-error", mensagem: "Erro ao criar torneio. Tente novamente.", statusCode: status };
     }
   }
-
-  return {
-    type: "generic-error",
-    mensagem: "Erro inesperado ao criar torneio. Tente novamente.",
-  };
+  return { type: "generic-error", mensagem: "Erro inesperado ao criar torneio. Tente novamente." };
 };
 
-export const deleteTorneio = async (
-  id_torneio: string
-): Promise<boolean> => {
+export const deleteTorneio = async (id_torneio: string): Promise<boolean> => {
   const token = localStorage.getItem("token");
-
   if (!token) return false;
 
   try {
     await api.delete(`/torneio/${id_torneio}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
     return true;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      console.error(
-        "Erro ao deletar:",
-        error.response?.data || error.message
-      );
+      console.error("Erro ao deletar:", error.response?.data || error.message);
     } else {
       console.error("Erro inesperado:", error);
     }
-
     return false;
+  }
+};
+
+export const registerUserInTournament = async (
+  id_torneio: string,
+  id_usuario: string
+): Promise<{ sucesso: boolean; mensagem?: string; data?: UserInscriptionResponse }> => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return { sucesso: false, mensagem: "Sessão expirada. Faça login novamente." };
+  }
+
+  try {
+    const response = await api.post<UserInscriptionResponse>(
+      "/inscricoes",
+      { id_usuario, id_torneio },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return { sucesso: true, data: response.data };
+  } catch (error: unknown) {
+    let mensagem = "Erro ao inscrever no torneio.";
+    if (axios.isAxiosError(error)) {
+      mensagem = error.response?.data?.error || error.response?.data?.message || mensagem;
+      console.error("Erro na inscrição individual:", error.response?.data || error.message);
+    } else {
+      console.error("Erro inesperado:", error);
+    }
+    return { sucesso: false, mensagem };
+  }
+};
+
+/**
+ * Busca o id_inscricao do usuário em um torneio específico.
+ * Retorna null se o usuário não estiver inscrito.
+ */
+export const getInscricaoDoUsuario = async (
+  id_torneio: string,
+  id_usuario: string
+): Promise<string | null> => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const response = await api.get<Array<{ id_inscricao: string; id_usuario: string }>>(
+      `/inscricoes/torneio/${id_torneio}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const inscricoes = Array.isArray(response.data)
+      ? response.data
+      : (response.data as { data?: Array<{ id_inscricao: string; id_usuario: string }> }).data ?? [];
+
+    const minha = inscricoes.find((i) => i.id_usuario === id_usuario);
+    return minha?.id_inscricao ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Cancela a inscrição do usuário logado em um torneio.
+ * O backend valida se o usuário tem permissão (dono da inscrição ou admin).
+ */
+export const cancelarInscricao = async (
+  id_inscricao: string
+): Promise<{ sucesso: boolean; mensagem: string }> => {
+  const token = localStorage.getItem("token");
+  if (!token) return { sucesso: false, mensagem: "Não autenticado" };
+
+  try {
+    await api.delete(`/inscricoes/${id_inscricao}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { sucesso: true, mensagem: "Inscrição cancelada com sucesso" };
+  } catch (error: unknown) {
+    let mensagem = "Erro ao cancelar inscrição.";
+    if (axios.isAxiosError(error)) {
+      mensagem = error.response?.data?.error || error.response?.data?.message || mensagem;
+      console.error("Erro ao cancelar inscrição:", error.response?.data || error.message);
+    } else {
+      console.error("Erro inesperado:", error);
+    }
+    return { sucesso: false, mensagem };
   }
 };
 
@@ -188,34 +206,21 @@ export const registerForTournament = async (
   id_equipe: number
 ): Promise<CreateInscricaoResponse | null> => {
   const token = localStorage.getItem("token");
-
   if (!token) return null;
 
   try {
     const response = await api.post<CreateInscricaoResponse>(
       "/inscricoes",
-      {
-        id_equipe,
-        id_torneio,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { id_equipe, id_torneio },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      console.error(
-        "Erro na API:",
-        error.response?.data || error.message
-      );
+      console.error("Erro na API:", error.response?.data || error.message);
     } else {
       console.error("Erro inesperado:", error);
     }
-
     return null;
   }
 };
