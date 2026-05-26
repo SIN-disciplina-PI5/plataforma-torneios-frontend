@@ -8,10 +8,10 @@ interface RankingCardProps {
   position: number;
 }
 
+const avatarPadrao =
+  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
-function getPatenteColor(
-  patente: string
-): {
+function getPatenteColor(patente: string): {
   bg: string;
   text: string;
   label: string;
@@ -48,9 +48,10 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
   const isTopThree = position <= 3;
   const patenteInfo = getPatenteColor(ranking.usuario.patente);
 
+  const fotoPerfil = (ranking.usuario as any).foto_perfil || avatarPadrao;
+
   return (
     <>
-      {/* Borda Gradiente - Wrapper (Top 3) ou Borda Cinza (Resto) */}
       {isTopThree ? (
         <div
           className="p-[3px] rounded-[12px] hover:shadow-lg transition-all duration-200 hover:scale-[1.01]"
@@ -58,16 +59,13 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
             background: "linear-gradient(90deg, #91D8FF 0%, #FFF200 100%)",
           }}
         >
-          {/* Card Interior - Top 3 */}
           <div
             className="flex items-center justify-between px-6 py-3 rounded-[12px] bg-white transition-all duration-200 bg-gradient-to-r from-green-50/50 to-white"
             style={{
               boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)",
             }}
           >
-            {/* Esquerda: Posição + Info */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              {/* Posição */}
               <div className="shrink-0 w-8 text-center">
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-lg font-black text-[#111827]">
@@ -79,7 +77,11 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
                 </div>
               </div>
 
-              {/* Info: Nome + Patente */}
+              <div
+                className="w-12 h-12 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${fotoPerfil})` }}
+              />
+
               <div className="flex flex-col gap-2 min-w-0">
                 <p className="font-bold text-[15px] text-[#111827] truncate">
                   {ranking.usuario.nome}
@@ -92,7 +94,6 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
               </div>
             </div>
 
-            {/* Direita: Pontos */}
             <div className="shrink-0 flex flex-col items-end gap-1 ml-6">
               <div className="flex items-center gap-1.5 text-green-600">
                 <span className="text-2xl font-black">{ranking.pontos}</span>
@@ -104,23 +105,24 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
         </div>
       ) : (
         <div className="border border-gray-300 rounded-[12px] hover:shadow-lg transition-all duration-200 hover:scale-[1.01]">
-          {/* Card Interior - Normal */}
           <div
             className="flex items-center justify-between px-6 py-3 rounded-[12px] bg-white transition-all duration-200"
             style={{
               boxShadow: "0 4px 20px rgba(15, 23, 42, 0.04)",
             }}
           >
-            {/* Esquerda: Posição + Info */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              {/* Posição */}
               <div className="shrink-0 w-8 text-center">
                 <span className="text-sm font-bold text-gray-600">
                   {position}
                 </span>
               </div>
 
-              {/* Info: Nome + Patente */}
+              <div
+                className="w-10 h-10 rounded-full border border-gray-200 flex-shrink-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${fotoPerfil})` }}
+              />
+
               <div className="flex flex-col gap-2 min-w-0">
                 <p className="font-bold text-[15px] text-[#111827] truncate">
                   {ranking.usuario.nome}
@@ -133,7 +135,6 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
               </div>
             </div>
 
-            {/* Direita: Pontos */}
             <div className="shrink-0 flex flex-col items-end gap-1 ml-6">
               <div className="flex items-center gap-1.5 text-green-500">
                 <span className="text-2xl font-black">{ranking.pontos}</span>
