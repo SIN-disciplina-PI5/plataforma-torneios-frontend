@@ -6,7 +6,7 @@ Bem-vindo ao repositório da Plataforma de Torneios.
 
 Plataforma web para gestão de torneios de futevôlei, criada para transformar o processo manual de organização dos torneios já realizados de forma manual em uma solução digital rápida, organizada e escalável. Trazendo mais controle, agilidade e profissionalização para a gestão esportiva.
 
-A plataforma também incentiva a **competitividade entre atletas**, principalmente através da tela de **ranking**, que exibe desempenho, evolução e posição dos jogadores, estimulando participação contínua e melhora de performance.
+A plataforma também incentiva a **competitividade entre atletas**, principalmente através da tela de ranking, que exibe desempenho, evolução e posição dos jogadores, estimulando participação contínua e melhora de performance.
 
 ## 🚀 O Pivot Tecnológico: Expo ➔ Next.js
 
@@ -36,7 +36,8 @@ git checkout producao-mobile
 
 ### 👤 Perfis do Sistema
 ### 🧑 USER (Atleta)
--Participa de torneios
+
+- Participa de torneios
 
 - Realiza inscrições
 
