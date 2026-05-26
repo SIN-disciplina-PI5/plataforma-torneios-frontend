@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera } from "lucide-react";
+import { Camera, ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -32,7 +32,7 @@ type ApiError = {
   };
 };
 
-const avatarUrl =
+const avatarPadrao =
   "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export default function MeuPerfil() {
@@ -40,12 +40,16 @@ export default function MeuPerfil() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+
+  const [avatarPreview, setAvatarPreview] = useState(avatarPadrao);
+
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     patente: "",
     senha: "",
     confirmarSenha: "",
+    fotoBase64: "",
   });
 
   useEffect(() => {
@@ -63,6 +67,11 @@ export default function MeuPerfil() {
             username: dados.username || "",
             patente: dados.patente || "Não ranqueado",
           }));
+
+          // 2. Se o back-end retornar a URL da foto salva, nós a colocamos no preview
+          if (dados.foto_perfil) {
+            setAvatarPreview(dados.foto_perfil);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
@@ -79,6 +88,25 @@ export default function MeuPerfil() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 3. Função que lida com a escolha do arquivo
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Cria uma URL local rápida apenas para visualização imediata na tela
+      setAvatarPreview(URL.createObjectURL(file));
+
+      // Converte a imagem para Base64 para enviar no JSON junto com o texto
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          fotoBase64: reader.result as string,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleEditToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -89,7 +117,8 @@ export default function MeuPerfil() {
       }
 
       try {
-        const payload: Partial<UpdatePerfilRequest> = {
+        // 4. Incluímos a foto no payload caso o usuário tenha escolhido uma nova
+        const payload: any = {
           nome: formData.nome,
           email: formData.email,
         };
@@ -98,10 +127,19 @@ export default function MeuPerfil() {
           payload.senha = formData.senha;
         }
 
+        if (formData.fotoBase64) {
+          payload.foto_perfil = formData.fotoBase64; // Nome da variável que o backend espera
+        }
+
         await updateMeuPerfil(payload);
         toast.success("Perfil atualizado com sucesso!");
 
-        setFormData((prev) => ({ ...prev, senha: "", confirmarSenha: "" }));
+        setFormData((prev) => ({
+          ...prev,
+          senha: "",
+          confirmarSenha: "",
+          fotoBase64: "",
+        }));
         setIsEditing(false);
       } catch (error: unknown) {
         const apiError = error as ApiError;
@@ -163,17 +201,33 @@ export default function MeuPerfil() {
 
         <div className="px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div className="flex items-center gap-5">
+            {/* 5. Área da Foto com o Ícone de Upload */}
             <div className="relative -mt-10">
               <div
                 role="img"
                 aria-label="Foto de perfil"
-                style={{ backgroundImage: `url(${avatarUrl})` }}
-                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm"
+                style={{ backgroundImage: `url(${avatarPreview})` }}
+                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm relative"
               />
               {isEditing && (
-                <button className="absolute bottom-1 -right-1 bg-[#316f27] text-white border-2 border-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                  <Camera size={14} />
-                </button>
+                <>
+                  {/* Input invisível que abre a janela do Windows */}
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/png, image/jpeg, image/svg+xml"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  {/* Label que funciona como botão estético */}
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 bg-[#316f27] text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
+                    title="Alterar foto"
+                  >
+                    <ImagePlus size={16} strokeWidth={2.5} />
+                  </label>
+                </>
               )}
             </div>
 
@@ -204,7 +258,9 @@ export default function MeuPerfil() {
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-10 pt-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">Nome</label>
+            <label className="text-sm text-gray-600 font-medium">
+              Nome Completo
+            </label>
             <input
               type="text"
               name="nome"
