@@ -3,9 +3,45 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react"; 
+
 import { login } from "@/app/services/authLogin";
+import { getUserRole } from "@/app/utils/auth";
 import PopupModelo from "@/components/ui/PopupModelo";
 import Recaptcha from "@/components/recaptcha/recaptcha";
+
+type LoginApiError = {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+      erro?: string;
+    };
+  };
+};
+
+function getLoginErrorMessage(err: unknown) {
+  const error = err as LoginApiError;
+  const apiMessage =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.response?.data?.erro;
+
+  if (apiMessage) {
+    return apiMessage;
+  }
+
+  switch (error.response?.status) {
+    case 404:
+      return "E-mail não encontrado";
+    case 401:
+    case 403:
+      return "E-mail ou senha incorretos";
+    default:
+      return "Erro ao fazer login";
+  }
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -15,10 +51,13 @@ export function LoginForm() {
   const [lembrar, setLembrar] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  //  captcha
+  // 👇 controle da visualização da senha
+  const [showPassword, setShowPassword] = useState(false);
+
+  // captcha
   const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  //  popup
+  // popup
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -31,9 +70,8 @@ export function LoginForm() {
       return;
     }
 
-    // valida captcha
     if (!recaptchaToken) {
-      setModalMessage("Confirme que você não é um robô 🤖");
+      setModalMessage("Confirme que você não é um robô");
       setModalOpen(true);
       return;
     }
@@ -47,13 +85,15 @@ export function LoginForm() {
         recaptchaToken,
       });
 
-      // salva token
       localStorage.setItem("token", res.token);
 
-      // sucesso
-      router.push("/torneios");
-    } catch (err: any) {
-      setModalMessage(err.response?.data?.message || "Erro ao fazer login");
+      const role = getUserRole();
+      const redirectPath =
+        role === "ADMIN" ? "/admin/torneios" : "/torneios";
+
+      router.push(redirectPath);
+    } catch (err: unknown) {
+      setModalMessage(getLoginErrorMessage(err));
       setModalOpen(true);
     } finally {
       setLoading(false);
@@ -67,6 +107,7 @@ export function LoginForm() {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
+
           <input
             type="email"
             value={email}
@@ -80,13 +121,26 @@ export function LoginForm() {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Senha
           </label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="bg-white border border-gray-300 rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
-            placeholder="Digite sua senha"
-          />
+
+          {/* 👇 container relativo */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="bg-white border border-gray-300 rounded w-full py-2 px-3 pr-10 text-gray-700 focus:outline-none focus:border-[#C2E96A]"
+              placeholder="Digite sua senha"
+            />
+
+            {/* 👇 botão do olho */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mb-4">
@@ -97,7 +151,10 @@ export function LoginForm() {
               onChange={(e) => setLembrar(e.target.checked)}
               className="h-4 w-4 accent-[#C2E96A]"
             />
-            <label className="text-sm text-gray-700">Lembre-se de mim</label>
+
+            <label className="text-sm text-gray-700">
+              Lembre-se de mim
+            </label>
           </div>
 
           <Link
@@ -108,7 +165,6 @@ export function LoginForm() {
           </Link>
         </div>
 
-        {/* RECAPTCHA */}
         <div className="flex justify-center mb-4">
           <Recaptcha onChange={setCaptchaToken} />
         </div>
@@ -131,11 +187,11 @@ export function LoginForm() {
         </span>
       </form>
 
-      {/* 🔥 POPUP */}
       <PopupModelo
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Erro ❌"
+        type="error"
+        title="Erro"
         footer={
           <div className="w-full flex justify-center">
             <button
@@ -147,7 +203,7 @@ export function LoginForm() {
           </div>
         }
       >
-        <p className="text-center text-lg">❌ {modalMessage}</p>
+        <p className="text-center text-lg">{modalMessage}</p>
       </PopupModelo>
     </div>
   );

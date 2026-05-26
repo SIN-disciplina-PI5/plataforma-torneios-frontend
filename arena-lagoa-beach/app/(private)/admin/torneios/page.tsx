@@ -9,8 +9,8 @@ import type { Tournament, AdminDialogState } from "@/app/types/torneios";
 import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
-
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
+import { AdminDuplasModal } from "@/components/admin/adminDuplasModal";
 
 export default function AdminTorneiosPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -99,13 +99,10 @@ export default function AdminTorneiosPage() {
       <main className="min-h-screen px-8 py-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Image
-              src="/variante-de-bola-de-futebol.png"
-              alt="Bola"
-              width={40}
-              height={40}
-            />
-            <h1 className="text-4xl font-semibold">Gerenciar Torneios</h1>
+        
+            <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+              ⚽ Gerenciamento de Torneios
+            </h1>
           </div>
           <button
             onClick={() => setDialogState("create")}
@@ -146,16 +143,22 @@ export default function AdminTorneiosPage() {
       </main>
 
       <AdminTournamentDialogs
-        state={dialogState === "edit" ? "idle" : dialogState}
+        state={
+          dialogState === "edit" || dialogState === "registrations"
+            ? "idle"
+            : dialogState
+        }
         tournament={selected}
         onClose={handleClose}
         onConfirmDelete={handleConfirmDelete}
+        onTournamentCreated={(newTournament) => {
+          setTournaments((prev) => [...prev, newTournament]);
+        }}
       />
 
       {dialogState === "edit" && selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 m-4 relative animate-in fade-in zoom-in duration-200">
-            {/* Header do Modal */}
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-50 p-2 rounded-full text-blue-500">
@@ -183,6 +186,10 @@ export default function AdminTorneiosPage() {
             <EditTournamentForm tournament={selected} onClose={handleClose} />
           </div>
         </div>
+      )}
+
+      {dialogState === "registrations" && selected && (
+        <AdminDuplasModal onClose={handleClose} tournament={selected} />
       )}
     </>
   );
