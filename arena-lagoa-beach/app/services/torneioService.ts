@@ -37,9 +37,14 @@ export const getTorneios = async (): Promise<TournamentUI[] | null> => {
     return response.data.data.map((t) => ({ ...t, favorite: false }));
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      console.error("Erro na API:", error.response?.data || error.message);
+      console.error("Erro na API [getTorneios]:", {
+        status: error.response?.status,
+        data: JSON.stringify(error.response?.data),
+        message: error.message,
+        url: error.config?.url,
+      });
     } else {
-      console.error("Erro inesperado:", error);
+      console.error("Erro inesperado [getTorneios]:", error);
     }
     return null;
   }
@@ -49,7 +54,6 @@ export const createTorneio = async (
   torneioData: CreateTorneioRequest
 ): Promise<TorneioCriacaoResponse> => {
   const token = localStorage.getItem("token");
-
   if (!token) {
     return {
       sucesso: false,
@@ -146,10 +150,6 @@ export const registerUserInTournament = async (
   }
 };
 
-/**
- * Busca o id_inscricao do usuário em um torneio específico.
- * Retorna null se o usuário não estiver inscrito.
- */
 export const getInscricaoDoUsuario = async (
   id_torneio: string,
   id_usuario: string
@@ -174,10 +174,6 @@ export const getInscricaoDoUsuario = async (
   }
 };
 
-/**
- * Cancela a inscrição do usuário logado em um torneio.
- * O backend valida se o usuário tem permissão (dono da inscrição ou admin).
- */
 export const cancelarInscricao = async (
   id_inscricao: string
 ): Promise<{ sucesso: boolean; mensagem: string }> => {
@@ -192,12 +188,45 @@ export const cancelarInscricao = async (
   } catch (error: unknown) {
     let mensagem = "Erro ao cancelar inscrição.";
     if (axios.isAxiosError(error)) {
-      mensagem = error.response?.data?.error || error.response?.data?.message || mensagem;
-      console.error("Erro ao cancelar inscrição:", error.response?.data || error.message);
+      const status = error.response?.status;
+      const data = error.response?.data;
+      mensagem = data?.error || data?.message || mensagem;
+      console.error("Erro ao cancelar inscrição:", {
+        status,
+        data: JSON.stringify(data),
+        message: error.message,
+        url: error.config?.url,
+      });
     } else {
-      console.error("Erro inesperado:", error);
+      console.error("Erro inesperado ao cancelar inscrição:", error);
     }
     return { sucesso: false, mensagem };
+  }
+};
+
+export const sairDaEquipe = async (
+  id_torneio: string
+): Promise<{ sucesso: boolean; mensagem?: string }> => {
+  const token = localStorage.getItem("token");
+  if (!token) return { sucesso: false, mensagem: "Não autenticado" };
+
+  try {
+    await api.post(
+      `/equipe/sair/${id_torneio}`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return { sucesso: true };
+  } catch (error: unknown) {
+    // 400 = usuário não está em nenhuma equipe → não bloqueia o fluxo
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      console.warn("Usuário não estava em uma equipe, continuando...");
+      return { sucesso: true };
+    }
+    if (axios.isAxiosError(error)) {
+      console.error("Erro ao sair da equipe:", error.response?.data || error.message);
+    }
+    return { sucesso: false, mensagem: "Erro ao sair da equipe." };
   }
 };
 
