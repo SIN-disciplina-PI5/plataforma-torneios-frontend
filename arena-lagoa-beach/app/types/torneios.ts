@@ -4,12 +4,16 @@ export interface Tournament {
   categoria: string;
   vagas: number;
   status: boolean;
+  data_inicio?: string;
+  data_fim?: string;
 }
 
 export interface TournamentUI extends Tournament {
   favorite: boolean;
-}
 
+  jaInscrito?: boolean;
+  id_inscricao?: string | null;
+}
 
 export interface TournamentResponse {
   id_torneio: string;
@@ -17,6 +21,14 @@ export interface TournamentResponse {
   categoria: string;
   vagas: number;
   status: boolean;
+}
+
+export interface InscricaoResponse {
+  id_inscricao: string;
+  id_usuario: number;
+  id_torneio: string;
+  status: boolean;
+  data_inscricao: string;
 }
 
 export interface CreateInscricaoResponse {
@@ -60,3 +72,6 @@ export interface TorneioCriacaoResponse {
   erro?: TorneioCriacaoError;
   dados?: Tournament;
 }
+
+export type UserInscriptionResponse =
+  InscricaoResponse;
