@@ -9,6 +9,9 @@ interface AdminDuplasModalProps {
   tournament: any;
 }
 
+const avatarPadrao =
+  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
+
 export function AdminDuplasModal({
   onClose,
   tournament,
@@ -280,7 +283,13 @@ export function AdminDuplasModal({
                   <div className="flex items-center gap-3 w-[45%]">
                     {jogador1 ? (
                       <>
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                        <div
+                          className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${jogador1.foto_perfil || avatarPadrao})`,
+                          }}
+                        ></div>
+
                         <span className="text-[14px] font-semibold text-gray-800 truncate">
                           {jogador1.nome}
                         </span>
@@ -309,7 +318,13 @@ export function AdminDuplasModal({
                   <div className="flex items-center gap-3 w-[45%]">
                     {jogador2 ? (
                       <>
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                        <div
+                          className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${jogador2.foto_perfil || avatarPadrao})`,
+                          }}
+                        ></div>
+
                         <span className="text-[14px] font-semibold text-gray-800 truncate">
                           {jogador2.nome}
                         </span>
