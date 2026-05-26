@@ -1,4 +1,3 @@
-_partidas_helpers
 from services.db._client import get, R
 
 async def get_equipes_do_usuario(token: str, id_usuario: str) -> list[str]:

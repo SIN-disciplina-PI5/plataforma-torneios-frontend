@@ -1,4 +1,4 @@
- _PALAVRAS_BANCO = [
+_PALAVRAS_BANCO = [
     "minha partida", "minhas partidas", "próxima partida", "proxima partida",
     "quando jogo", "que horas", "horário", "horario",
     "meu jogo", "meus jogos", "partidas hoje", "partidas amanhã",
@@ -12,7 +12,6 @@
     "quem é minha", "quem joga comigo", "meu parceiro",
     "resultado", "placar", "fase", "semifinal", "final",
 ]
-
 _FRASES_BANCO = [
     "qual a minha", "quais são os meus", "quais são as minhas",
     "quando é minha", "qual o horário",
