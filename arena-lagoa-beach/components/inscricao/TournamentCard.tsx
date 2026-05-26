@@ -5,10 +5,10 @@ import { clsx } from "clsx";
 import type { TournamentUI } from "@/app/types/torneios";
 
 const LEVEL_IMAGES: Record<string, string> = {
-  Avançado: "/avancado2.png",
-  Intermediário: "/intermediario2.png",
-  Básico: "/iniciante.png",
-  Iniciante: "/iniciante.png",
+  Avançado: "/avancado3.png",
+  Intermediário: "/intermediario3.png",
+  Básico: "/iniciante3.png",
+  Iniciante: "/iniciante3.png",
   default: "/cup.png",
 };
 
