@@ -27,6 +27,7 @@ type ApiError = {
   response?: {
     data?: {
       message?: string;
+      error?: string;
     };
   };
 };
@@ -42,7 +43,6 @@ export default function MeuPerfil() {
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
-    username: "",
     patente: "",
     senha: "",
     confirmarSenha: "",
@@ -53,7 +53,6 @@ export default function MeuPerfil() {
       try {
         const dados = await getMeuPerfil();
 
-        // RASTREADOR 2
         console.log("O que o back-end devolveu:", dados);
 
         if (dados) {
@@ -84,17 +83,15 @@ export default function MeuPerfil() {
     e.preventDefault();
 
     if (isEditing) {
-      // Validação de senha
       if (formData.senha && formData.senha !== formData.confirmarSenha) {
         toast.error("As senhas não coincidem!");
         return;
       }
 
       try {
-        const payload: UpdatePerfilRequest = {
+        const payload: Partial<UpdatePerfilRequest> = {
           nome: formData.nome,
           email: formData.email,
-          username: formData.username,
         };
 
         if (formData.senha) {
@@ -108,10 +105,12 @@ export default function MeuPerfil() {
         setIsEditing(false);
       } catch (error: unknown) {
         const apiError = error as ApiError;
-        console.error(error);
-        toast.error(
-          apiError.response?.data?.message || "Erro ao atualizar perfil.",
-        );
+
+        const mensagemErro =
+          apiError.response?.data?.error || "Erro ao atualizar perfil.";
+
+        console.error("Erro da API:", mensagemErro);
+        toast.error(mensagemErro);
       }
     } else {
       setIsEditing(true);
@@ -205,9 +204,7 @@ export default function MeuPerfil() {
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-10 pt-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">
-              Nome Completo
-            </label>
+            <label className="text-sm text-gray-600 font-medium">Nome</label>
             <input
               type="text"
               name="nome"
@@ -223,19 +220,6 @@ export default function MeuPerfil() {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">
-              Nome de usuário
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
               onChange={handleChange}
               readOnly={!isEditing}
               className={inputClassName}

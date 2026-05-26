@@ -55,7 +55,7 @@ def construir_banco_vetorial(pasta_arquivos: str = "base_conhecimento") -> None:
                     try:
                         texto_pagina = page.extract_text() or ""
                         if texto_pagina.strip():
-                            # Gera chunks por página para preservar metadado de página
+                            # Gera chunks por página pra preservar metadado de página
                             for chunk in processar_texto(texto_pagina):
                                 chunks_do_arquivo.append({
                                     "texto":   chunk,
@@ -124,5 +124,5 @@ def construir_banco_vetorial(pasta_arquivos: str = "base_conhecimento") -> None:
           f"com {len(todos_os_chunks)} chunks.")
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     construir_banco_vetorial()

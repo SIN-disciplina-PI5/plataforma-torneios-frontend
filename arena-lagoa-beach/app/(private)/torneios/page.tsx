@@ -226,13 +226,9 @@ export default function TorneiosPage() {
     <>
       <main className="min-h-screen px-8 py-6">
         <div className="flex items-center gap-3 mb-8">
-          <Image
-            src="/variante-de-bola-de-futebol.png"
-            alt="Bola"
-            width={40}
-            height={40}
-          />
-          <h1 className="text-4xl font-semibold">Torneios</h1>
+          
+        
+          <h1 className="text-2xl font-semibold">⚽ Torneios</h1>
         </div>
 
         {/* TABS */}
