@@ -99,14 +99,9 @@ export default function AdminTorneiosPage() {
       <main className="min-h-screen px-8 py-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Image
-              src="/variante-de-bola-de-futebol.png"
-              alt="Bola"
-              width={40}
-              height={40}
-            />
+        
             <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
-              Gerenciamento de Torneios
+              ⚽ Gerenciamento de Torneios
             </h1>
           </div>
           <button

@@ -27,7 +27,8 @@ export default function RankingPage() {
 
         if (response.data) {
           setRankings(response.data);
-        } else {
+        } 
+        else {
           setError("Nenhum dado de ranking disponível");
           setRankings([]);
         }
@@ -84,13 +85,13 @@ export default function RankingPage() {
       {/* Rankings List */}
       {rankings.length > 0 && (
         <div className="space-y-2">
-          {rankings.map((ranking) => (
-            <RankingCard
-              key={ranking.usuario.id}
-              ranking={ranking}
-              position={ranking.posicao}
-            />
-          ))}
+{rankings.map((ranking, index) => (
+  <RankingCard
+    key={ranking.usuario.id}
+    ranking={ranking}
+    position={index + 1}
+  />
+))}
         </div>
       )}
     </div>
