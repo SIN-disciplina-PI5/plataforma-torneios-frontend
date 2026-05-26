@@ -278,7 +278,10 @@ export default function TorneiosPage() {
             <button
               onClick={() => {
                 setConfirmacaoOpen(false);
-                setDuplaModalOpen(true);
+                if (selected?.id_torneio) {
+                  setDuplasTorneioId(selected.id_torneio);
+                  setDuplaModalOpen(true);
+                }
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
             >

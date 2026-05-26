@@ -100,6 +100,20 @@ export function DuplasModal({
   }, [isOpen, torneioId, token, usuarioId, fetchEquipes]);
 
   const criarEquipe = async () => {
+    if (!torneioId) {
+      const msg = "ID do torneio não informado";
+      setErro(msg);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Erro",
+        mensagem: msg,
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
     if (!nomeNovaEquipe.trim()) {
       mostrarToast({
         id_notificacao: Date.now().toString(),
@@ -162,6 +176,20 @@ export function DuplasModal({
   };
 
   const entrarEquipe = async (idEquipe: number) => {
+    if (!torneioId) {
+      const msg = "ID do torneio não informado";
+      setErro(msg);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Erro",
+        mensagem: msg,
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
     setCarregando(true);
     setErro(null);
 
@@ -209,6 +237,20 @@ export function DuplasModal({
   };
 
   const sairEquipe = async () => {
+    if (!torneioId) {
+      const msg = "ID do torneio não informado";
+      setErro(msg);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Erro",
+        mensagem: msg,
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
     setCarregando(true);
     setErro(null);
 
