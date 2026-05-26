@@ -12,10 +12,10 @@ import {
   getInscricaoDoUsuario,
   cancelarInscricao,
   registerUserInTournament,
+  sairDaEquipe,
 } from "@/app/services/torneioService";
 
 import { TournamentCard } from "@/components/inscricao/TournamentCard";
-import { TournamentDialogs } from "@/components/inscricao/TournamentDialogs";
 import { DuplasModal } from "@/components/ui/DuplasModal";
 
 import styles from "./_styles/tournaments.module.css";
@@ -44,6 +44,7 @@ export default function TorneiosPage() {
   const [selected, setSelected] = useState<TournamentUI | null>(null);
 
   const [duplaModalOpen, setDuplaModalOpen] = useState(false);
+  const [duplasTorneioId, setDuplasTorneioId] = useState<string>("");
 
   const [confirmacaoOpen, setConfirmacaoOpen] = useState(false);
 
@@ -146,6 +147,12 @@ export default function TorneiosPage() {
     );
   }
 
+  function handleVerDuplas(tournament: TournamentUI) {
+    setSelected(tournament);
+    setDuplasTorneioId(tournament.id_torneio);
+    setDuplaModalOpen(true);
+  }
+
   async function handleRegisterClick(tournament: TournamentUI) {
     if (!usuarioId) {
       alert("Usuário não autenticado");
@@ -185,7 +192,11 @@ export default function TorneiosPage() {
   }
 
   async function handleUnregister(tournament: TournamentUI) {
-    if (!tournament.id_inscricao) return;
+    if (!tournament.id_inscricao || !usuarioId) return;
+
+    // Sai da dupla antes de cancelar a inscrição.
+    // Se não estiver em nenhuma equipe, o service ignora silenciosamente (status 400).
+    await sairDaEquipe(tournament.id_torneio);
 
     const response = await cancelarInscricao(tournament.id_inscricao);
 
@@ -203,8 +214,36 @@ export default function TorneiosPage() {
     );
   }
 
+  // FIX: filtro "Essa semana" verifica se data_inicio do torneio
+  // cai dentro da semana corrente (domingo a sábado).
+  // Ajuste para segunda a domingo se necessário (ver comentário abaixo).
   const filtered = tournaments
-    .filter((t) => (activeTab === "Favoritos" ? t.favorite : true))
+    .filter((t) => {
+      if (activeTab === "Favoritos") return t.favorite;
+
+      if (activeTab === "Essa semana") {
+        if (!t.data_inicio) return false;
+
+        const hoje = new Date();
+
+        // Semana começando no domingo (0). 
+        // Para começar na segunda-feira, troque por:
+        // const diaSemana = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1;
+        // inicioSemana.setDate(hoje.getDate() - diaSemana);
+        const inicioSemana = new Date(hoje);
+        inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+        inicioSemana.setHours(0, 0, 0, 0);
+
+        const fimSemana = new Date(inicioSemana);
+        fimSemana.setDate(inicioSemana.getDate() + 6);
+        fimSemana.setHours(23, 59, 59, 999);
+
+        const dataInicio = new Date(t.data_inicio);
+        return dataInicio >= inicioSemana && dataInicio <= fimSemana;
+      }
+
+      return true; // "Todos"
+    })
     .filter(
       (t) =>
         t.nome?.toLowerCase().includes(search.toLowerCase()) ||
@@ -226,13 +265,7 @@ export default function TorneiosPage() {
     <>
       <main className="min-h-screen px-8 py-6">
         <div className="flex items-center gap-3 mb-8">
-          <Image
-            src="/variante-de-bola-de-futebol.png"
-            alt="Bola"
-            width={40}
-            height={40}
-          />
-          <h1 className="text-4xl font-semibold">Torneios</h1>
+          <h1 className="text-2xl font-semibold">⚽ Torneios</h1>
         </div>
 
         {/* TABS */}
@@ -284,7 +317,7 @@ export default function TorneiosPage() {
 
         {/* LISTA */}
         {filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((t) => (
               <TournamentCard
                 key={t.id_torneio}
@@ -292,6 +325,7 @@ export default function TorneiosPage() {
                 onToggleFavorite={handleToggleFavorite}
                 onRegister={handleRegisterClick}
                 onUnregister={handleUnregister}
+                onVerDuplas={handleVerDuplas}
               />
             ))}
           </div>
@@ -335,7 +369,7 @@ export default function TorneiosPage() {
       <DuplasModal
         isOpen={duplaModalOpen}
         onClose={() => setDuplaModalOpen(false)}
-        torneioId={selected?.id_torneio || ""}
+        torneioId={duplasTorneioId}
         token={token || ""}
         usuarioId={usuarioId || 0}
         onSuccess={async () => {

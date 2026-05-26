@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNotificacao } from "@/lib/NotificacaoContext";
 
 type Jogador = {
@@ -25,6 +25,14 @@ type Props = {
   onSuccess?: () => void;
 };
 
+// Capitaliza a primeira letra de cada palavra
+function capitalizarPalavras(texto: string): string {
+  return texto
+    .split(" ")
+    .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+    .join(" ");
+}
+
 export function DuplasModal({
   isOpen,
   onClose,
@@ -44,7 +52,7 @@ export function DuplasModal({
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  const fetchEquipes = async () => {
+  const fetchEquipes = useCallback(async () => {
     setCarregando(true);
     setErro(null);
 
@@ -71,18 +79,18 @@ export function DuplasModal({
       } else {
         setSelectedEquipeId(null);
       }
-    } catch (err: any) {
-      setErro(err.message);
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : "Erro desconhecido");
     } finally {
       setCarregando(false);
     }
-  };
+  }, [API_BASE_URL, torneioId, token, usuarioId]);
 
   useEffect(() => {
     if (isOpen && torneioId && token && usuarioId) {
       fetchEquipes();
     }
-  }, [isOpen, torneioId, token, usuarioId]);
+  }, [isOpen, torneioId, token, usuarioId, fetchEquipes]);
 
   const criarEquipe = async () => {
     if (!nomeNovaEquipe.trim()) {
@@ -101,6 +109,9 @@ export function DuplasModal({
     setCarregando(true);
     setErro(null);
 
+    // Garante capitalização antes de enviar ao backend
+    const nomeFormatado = capitalizarPalavras(nomeNovaEquipe.trim());
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/equipe/${torneioId}`, {
         method: "POST",
@@ -109,7 +120,7 @@ export function DuplasModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          nome: nomeNovaEquipe,
+          nome: nomeFormatado,
         }),
       });
 
@@ -120,11 +131,10 @@ export function DuplasModal({
 
       await fetchEquipes();
 
-      // Toast de sucesso
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "✅ Equipe criada!",
-        mensagem: `A equipe "${nomeNovaEquipe}" foi criada com sucesso.`,
+        mensagem: `A equipe "${nomeFormatado}" foi criada com sucesso.`,
         tipo: "success",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -133,12 +143,12 @@ export function DuplasModal({
       setModoCriacao(false);
       setNomeNovaEquipe("");
       onSuccess?.();
-    } catch (err: any) {
-      setErro(err.message);
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : "Erro desconhecido");
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err.message || "Erro ao criar equipe",
+        mensagem: err instanceof Error ? err.message : "Erro ao criar equipe",
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -173,7 +183,6 @@ export function DuplasModal({
 
       const equipeNome = equipes.find((e) => e.id_equipe === idEquipe)?.nome || "dupla";
 
-      // Toast de sucesso
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "🎮 Entrou na dupla!",
@@ -184,12 +193,12 @@ export function DuplasModal({
       });
 
       onSuccess?.();
-    } catch (err: any) {
-      setErro(err.message);
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : "Erro desconhecido");
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err.message || "Erro ao entrar na equipe",
+        mensagem: err instanceof Error ? err.message : "Erro ao entrar na equipe",
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -219,7 +228,6 @@ export function DuplasModal({
       setSelectedEquipeId(null);
       await fetchEquipes();
 
-      // Toast de sucesso
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "👋 Saiu da dupla",
@@ -230,12 +238,12 @@ export function DuplasModal({
       });
 
       onSuccess?.();
-    } catch (err: any) {
-      setErro(err.message);
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : "Erro desconhecido");
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err.message || "Erro ao sair da equipe",
+        mensagem: err instanceof Error ? err.message : "Erro ao sair da equipe",
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -247,7 +255,9 @@ export function DuplasModal({
 
   if (!isOpen) return null;
 
-  const usuarioTemEquipe = equipes.some((eq) => eq.membros.some((m) => m.id_usuario === usuarioId));
+  const usuarioTemEquipe = equipes.some((eq) =>
+    eq.membros.some((m) => m.id_usuario === usuarioId)
+  );
 
   return (
     <div
@@ -322,7 +332,10 @@ export function DuplasModal({
                     type="text"
                     placeholder="Nome da nova dupla"
                     value={nomeNovaEquipe}
-                    onChange={(e) => setNomeNovaEquipe(e.target.value)}
+                    onChange={(e) =>
+                      // Capitaliza em tempo real enquanto o usuário digita
+                      setNomeNovaEquipe(capitalizarPalavras(e.target.value))
+                    }
                     style={{
                       width: "100%",
                       padding: 8,
@@ -388,10 +401,14 @@ export function DuplasModal({
 
           {erro && <p style={{ color: "red" }}>{erro}</p>}
 
-          {!carregando && equipes.length === 0 && <p>Nenhuma dupla cadastrada ainda.</p>}
+          {!carregando && equipes.length === 0 && (
+            <p>Nenhuma dupla cadastrada ainda.</p>
+          )}
 
           {equipes.map((equipe) => {
-            const estaNaEquipe = equipe.membros.some((m) => m.id_usuario === usuarioId);
+            const estaNaEquipe = equipe.membros.some(
+              (m) => m.id_usuario === usuarioId
+            );
             const equipeCheia = equipe.completa;
             const podeEntrar = !usuarioTemEquipe && !equipeCheia;
 
@@ -399,14 +416,17 @@ export function DuplasModal({
               <div
                 key={equipe.id_equipe}
                 style={{
-                  border: estaNaEquipe ? "2px solid #16a34a" : "1px solid #e0e0e0",
+                  border: estaNaEquipe
+                    ? "2px solid #16a34a"
+                    : "1px solid #e0e0e0",
                   borderRadius: 12,
                   padding: 12,
                   marginBottom: 12,
                   backgroundColor: estaNaEquipe ? "#f0fdf4" : "#fff",
                 }}
               >
-                <strong>{equipe.nome}</strong>
+                {/* Nome da equipe sempre capitalizado na exibição */}
+                <strong>{capitalizarPalavras(equipe.nome)}</strong>
 
                 <div
                   style={{
@@ -415,7 +435,10 @@ export function DuplasModal({
                     marginTop: 4,
                   }}
                 >
-                  {equipe.membros.map((m) => m.nome).join(" e ")}
+                  {/* Nomes dos membros sempre capitalizados na exibição */}
+                  {equipe.membros
+                    .map((m) => capitalizarPalavras(m.nome))
+                    .join(" e ")}
                   {equipeCheia && " ✅ (cheia)"}
                   {estaNaEquipe && "  (você está aqui)"}
                 </div>
