@@ -21,32 +21,59 @@ const LEVEL_COLORS: Record<string, string> = {
 
 interface TournamentCardProps {
   tournament: TournamentUI;
+
   onToggleFavorite: (id: string) => void;
-  onRegister: (tournament: TournamentUI) => void;
+
+  onRegister: (
+    tournament: TournamentUI
+  ) => void;
+
+  onUnregister: (
+    tournament: TournamentUI
+  ) => void;
 }
 
-export function TournamentCard({ tournament, onToggleFavorite, onRegister }: TournamentCardProps) {
-  const isEsgotado = !tournament.status || tournament.vagas <= 0;
+export function TournamentCard({
+  tournament,
+  onToggleFavorite,
+  onRegister,
+  onUnregister,
+}: TournamentCardProps) {
+  const isEsgotado =
+    !tournament.status || tournament.vagas <= 0;
 
   return (
     <article className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col w-[300px]">
       <div className="relative h-36 overflow-hidden bg-neutral-200">
         <Image
-          src={LEVEL_IMAGES[tournament.categoria] || LEVEL_IMAGES.default}
+          src={
+            LEVEL_IMAGES[tournament.categoria] ||
+            LEVEL_IMAGES.default
+          }
           alt={`Torneio ${tournament.categoria}`}
           fill
-          className="object-cover" //"object-cover object-bottom" para quando consertar o tamanho, pra ficar igual a admin
+          className="object-cover"
         />
       </div>
 
       <div className="px-4 pt-3 pb-4 flex flex-col gap-2 flex-1">
         <div className="flex items-center justify-between">
-          <span className={clsx("text-xs font-semibold", LEVEL_COLORS[tournament.categoria] || "text-gray-400")}>
+          <span
+            className={clsx(
+              "text-xs font-semibold",
+              LEVEL_COLORS[tournament.categoria] ||
+                "text-gray-400"
+            )}
+          >
             {tournament.categoria}
           </span>
+
           <button
-            onClick={() => onToggleFavorite(tournament.id_torneio)}
-            aria-label={tournament.favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            onClick={() =>
+              onToggleFavorite(
+                tournament.id_torneio
+              )
+            }
           >
             <Star
               size={16}
@@ -60,13 +87,28 @@ export function TournamentCard({ tournament, onToggleFavorite, onRegister }: Tou
           </button>
         </div>
 
-        <p className="font-bold text-gray-900 text-sm leading-tight">{tournament.nome}</p>
+        <p className="font-bold text-gray-900 text-sm leading-tight">
+          {tournament.nome}
+        </p>
 
         <p className="text-xs text-gray-500">
           {tournament.vagas} vagas
-          <span className="mx-2 text-gray-200" aria-hidden="true">|</span>
-          <span className={clsx("font-medium", isEsgotado ? "text-red-500" : "text-green-600")}>
-            {isEsgotado ? "Esgotado" : "Disponível"}
+
+          <span className="mx-2 text-gray-200">
+            |
+          </span>
+
+          <span
+            className={clsx(
+              "font-medium",
+              isEsgotado
+                ? "text-red-500"
+                : "text-green-600"
+            )}
+          >
+            {isEsgotado
+              ? "Esgotado"
+              : "Disponível"}
           </span>
         </p>
 
@@ -77,9 +119,20 @@ export function TournamentCard({ tournament, onToggleFavorite, onRegister }: Tou
           >
             Esgotado
           </button>
+        ) : tournament.jaInscrito ? (
+          <button
+            onClick={() =>
+              onUnregister(tournament)
+            }
+            className="mt-auto self-start rounded-lg bg-red-500 hover:bg-red-600 active:bg-red-700 px-4 py-1.5 text-xs font-semibold text-white transition-colors"
+          >
+            Desinscrever
+          </button>
         ) : (
           <button
-            onClick={() => onRegister(tournament)}
+            onClick={() =>
+              onRegister(tournament)
+            }
             className="mt-auto self-start rounded-lg bg-green-600 hover:bg-green-700 active:bg-green-800 px-4 py-1.5 text-xs font-semibold text-white transition-colors"
           >
             Se inscrever
