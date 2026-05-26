@@ -54,7 +54,6 @@ export const createTorneio = async (
   torneioData: CreateTorneioRequest
 ): Promise<TorneioCriacaoResponse> => {
   const token = localStorage.getItem("token");
-
   if (!token) {
     return {
       sucesso: false,
@@ -151,10 +150,6 @@ export const registerUserInTournament = async (
   }
 };
 
-/**
- * Busca o id_inscricao do usuário em um torneio específico.
- * Retorna null se o usuário não estiver inscrito.
- */
 export const getInscricaoDoUsuario = async (
   id_torneio: string,
   id_usuario: string
@@ -179,10 +174,6 @@ export const getInscricaoDoUsuario = async (
   }
 };
 
-/**
- * Cancela a inscrição do usuário logado em um torneio.
- * O backend valida se o usuário tem permissão (dono da inscrição ou admin).
- */
 export const cancelarInscricao = async (
   id_inscricao: string
 ): Promise<{ sucesso: boolean; mensagem: string }> => {
@@ -213,10 +204,6 @@ export const cancelarInscricao = async (
   }
 };
 
-/**
- * Remove o usuário da sua dupla em um torneio específico.
- * Chamado antes de cancelar a inscrição para garantir que o vínculo seja desfeito.
- */
 export const sairDaEquipe = async (
   id_torneio: string
 ): Promise<{ sucesso: boolean; mensagem?: string }> => {
@@ -231,8 +218,9 @@ export const sairDaEquipe = async (
     );
     return { sucesso: true };
   } catch (error: unknown) {
-    // 400 significa que o usuário não está em nenhuma equipe — não bloqueia o fluxo
+    // 400 = usuário não está em nenhuma equipe → não bloqueia o fluxo
     if (axios.isAxiosError(error) && error.response?.status === 400) {
+      console.warn("Usuário não estava em uma equipe, continuando...");
       return { sucesso: true };
     }
     if (axios.isAxiosError(error)) {

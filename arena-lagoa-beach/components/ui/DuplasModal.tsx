@@ -25,11 +25,10 @@ type Props = {
   onSuccess?: () => void;
 };
 
-// Capitaliza a primeira letra de cada palavra
 function capitalizarPalavras(texto: string): string {
   return texto
     .split(" ")
-    .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+    .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase())
     .join(" ");
 }
 
@@ -53,18 +52,21 @@ export function DuplasModal({
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   const fetchEquipes = useCallback(async () => {
+    if (!torneioId) return;
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/equipe/?id_torneio=${torneioId}`, {
+      // 🔥 URL corrigida: sem barra antes do ? e sem barra extra
+      const res = await fetch(`${API_BASE_URL}/api/equipe?id_torneio=${torneioId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!res.ok) {
-        throw new Error("Erro ao carregar equipes");
+        const text = await res.text();
+        throw new Error(`Erro ${res.status}: ${text.substring(0, 100)}`);
       }
 
       const data = await res.json();
@@ -74,17 +76,22 @@ export function DuplasModal({
         eq.membros.some((m: Jogador) => m.id_usuario === usuarioId)
       );
 
-      if (minhaEquipe) {
-        setSelectedEquipeId(minhaEquipe.id_equipe);
-      } else {
-        setSelectedEquipeId(null);
-      }
+      setSelectedEquipeId(minhaEquipe?.id_equipe || null);
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(msg);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Erro",
+        mensagem: msg,
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
     } finally {
       setCarregando(false);
     }
-  }, [API_BASE_URL, torneioId, token, usuarioId]);
+  }, [API_BASE_URL, torneioId, token, usuarioId, mostrarToast]);
 
   useEffect(() => {
     if (isOpen && torneioId && token && usuarioId) {
@@ -94,7 +101,6 @@ export function DuplasModal({
 
   const criarEquipe = async () => {
     if (!nomeNovaEquipe.trim()) {
-      setErro("Nome da equipe é obrigatório");
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "Erro",
@@ -109,7 +115,6 @@ export function DuplasModal({
     setCarregando(true);
     setErro(null);
 
-    // Garante capitalização antes de enviar ao backend
     const nomeFormatado = capitalizarPalavras(nomeNovaEquipe.trim());
 
     try {
@@ -119,9 +124,7 @@ export function DuplasModal({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          nome: nomeFormatado,
-        }),
+        body: JSON.stringify({ nome: nomeFormatado }),
       });
 
       if (!res.ok) {
@@ -130,11 +133,10 @@ export function DuplasModal({
       }
 
       await fetchEquipes();
-
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "✅ Equipe criada!",
-        mensagem: `A equipe "${nomeFormatado}" foi criada com sucesso.`,
+        mensagem: `Equipe "${nomeFormatado}" criada com sucesso.`,
         tipo: "success",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -144,11 +146,12 @@ export function DuplasModal({
       setNomeNovaEquipe("");
       onSuccess?.();
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(msg);
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err instanceof Error ? err.message : "Erro ao criar equipe",
+        mensagem: msg,
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -169,9 +172,7 @@ export function DuplasModal({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          id_equipe: idEquipe,
-        }),
+        body: JSON.stringify({ id_equipe: idEquipe }),
       });
 
       if (!res.ok) {
@@ -180,9 +181,7 @@ export function DuplasModal({
       }
 
       await fetchEquipes();
-
       const equipeNome = equipes.find((e) => e.id_equipe === idEquipe)?.nome || "dupla";
-
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "🎮 Entrou na dupla!",
@@ -194,11 +193,12 @@ export function DuplasModal({
 
       onSuccess?.();
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(msg);
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err instanceof Error ? err.message : "Erro ao entrar na equipe",
+        mensagem: msg,
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -220,7 +220,7 @@ export function DuplasModal({
         },
       });
 
-      if (!res.ok) {
+      if (!res.ok && res.status !== 400) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Erro ao sair da equipe");
       }
@@ -231,7 +231,7 @@ export function DuplasModal({
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "👋 Saiu da dupla",
-        mensagem: "Você saiu da sua dupla atual. Pode entrar ou criar outra equipe.",
+        mensagem: "Você saiu da sua dupla atual.",
         tipo: "info",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -239,11 +239,12 @@ export function DuplasModal({
 
       onSuccess?.();
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(msg);
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "❌ Erro",
-        mensagem: err instanceof Error ? err.message : "Erro ao sair da equipe",
+        mensagem: msg,
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -271,9 +272,7 @@ export function DuplasModal({
         zIndex: 50,
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
@@ -288,42 +287,16 @@ export function DuplasModal({
           boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
         }}
       >
-        <div
-          style={{
-            padding: "16px 20px 12px",
-            borderBottom: "1px solid #f0f0f0",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+        <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid #f0f0f0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: 16 }}>Duplas do Torneio</strong>
-
-            <button
-              onClick={onClose}
-              style={{
-                background: "none",
-                border: "none",
-                fontSize: 20,
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}>
               ✕
             </button>
           </div>
         </div>
 
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "16px",
-          }}
-        >
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
           {!usuarioTemEquipe && (
             <>
               {modoCriacao ? (
@@ -332,47 +305,20 @@ export function DuplasModal({
                     type="text"
                     placeholder="Nome da nova dupla"
                     value={nomeNovaEquipe}
-                    onChange={(e) =>
-                      // Capitaliza em tempo real enquanto o usuário digita
-                      setNomeNovaEquipe(capitalizarPalavras(e.target.value))
-                    }
-                    style={{
-                      width: "100%",
-                      padding: 8,
-                      borderRadius: 8,
-                      border: "1px solid #ccc",
-                    }}
+                    onChange={(e) => setNomeNovaEquipe(capitalizarPalavras(e.target.value))}
+                    style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ccc" }}
                   />
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      marginTop: 8,
-                    }}
-                  >
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                     <button
                       onClick={criarEquipe}
                       disabled={carregando}
-                      style={{
-                        background: "#16a34a",
-                        color: "#fff",
-                        border: "none",
-                        padding: "6px 12px",
-                        borderRadius: 8,
-                      }}
+                      style={{ background: "#16a34a", color: "#fff", border: "none", padding: "6px 12px", borderRadius: 8 }}
                     >
                       {carregando ? "Criando..." : "Criar"}
                     </button>
-
                     <button
                       onClick={() => setModoCriacao(false)}
-                      style={{
-                        background: "transparent",
-                        border: "1px solid #ccc",
-                        padding: "6px 12px",
-                        borderRadius: 8,
-                      }}
+                      style={{ background: "transparent", border: "1px solid #ccc", padding: "6px 12px", borderRadius: 8 }}
                     >
                       Cancelar
                     </button>
@@ -381,15 +327,7 @@ export function DuplasModal({
               ) : (
                 <button
                   onClick={() => setModoCriacao(true)}
-                  style={{
-                    marginBottom: 16,
-                    padding: "8px 12px",
-                    background: "#2563eb",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    width: "100%",
-                  }}
+                  style={{ marginBottom: 16, padding: "8px 12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, width: "100%" }}
                 >
                   + Criar nova dupla
                 </button>
@@ -398,17 +336,11 @@ export function DuplasModal({
           )}
 
           {carregando && <p>Carregando...</p>}
-
           {erro && <p style={{ color: "red" }}>{erro}</p>}
-
-          {!carregando && equipes.length === 0 && (
-            <p>Nenhuma dupla cadastrada ainda.</p>
-          )}
+          {!carregando && equipes.length === 0 && <p>Nenhuma dupla cadastrada ainda.</p>}
 
           {equipes.map((equipe) => {
-            const estaNaEquipe = equipe.membros.some(
-              (m) => m.id_usuario === usuarioId
-            );
+            const estaNaEquipe = equipe.membros.some((m) => m.id_usuario === usuarioId);
             const equipeCheia = equipe.completa;
             const podeEntrar = !usuarioTemEquipe && !equipeCheia;
 
@@ -416,44 +348,23 @@ export function DuplasModal({
               <div
                 key={equipe.id_equipe}
                 style={{
-                  border: estaNaEquipe
-                    ? "2px solid #16a34a"
-                    : "1px solid #e0e0e0",
+                  border: estaNaEquipe ? "2px solid #16a34a" : "1px solid #e0e0e0",
                   borderRadius: 12,
                   padding: 12,
                   marginBottom: 12,
                   backgroundColor: estaNaEquipe ? "#f0fdf4" : "#fff",
                 }}
               >
-                {/* Nome da equipe sempre capitalizado na exibição */}
                 <strong>{capitalizarPalavras(equipe.nome)}</strong>
-
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#666",
-                    marginTop: 4,
-                  }}
-                >
-                  {/* Nomes dos membros sempre capitalizados na exibição */}
-                  {equipe.membros
-                    .map((m) => capitalizarPalavras(m.nome))
-                    .join(" e ")}
+                <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+                  {equipe.membros.map((m) => capitalizarPalavras(m.nome)).join(" e ")}
                   {equipeCheia && " ✅ (cheia)"}
-                  {estaNaEquipe && "  (você está aqui)"}
+                  {estaNaEquipe && " (você está aqui)"}
                 </div>
-
                 {podeEntrar && (
                   <button
                     onClick={() => entrarEquipe(equipe.id_equipe)}
-                    style={{
-                      marginTop: 8,
-                      background: "#16a34a",
-                      color: "#fff",
-                      border: "none",
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                    }}
+                    style={{ marginTop: 8, background: "#16a34a", color: "#fff", border: "none", padding: "4px 8px", borderRadius: 6 }}
                   >
                     Entrar nesta dupla
                   </button>
@@ -464,23 +375,11 @@ export function DuplasModal({
         </div>
 
         {usuarioTemEquipe && (
-          <div
-            style={{
-              padding: 12,
-              borderTop: "1px solid #f0f0f0",
-            }}
-          >
+          <div style={{ padding: 12, borderTop: "1px solid #f0f0f0" }}>
             <button
               onClick={sairEquipe}
               disabled={carregando}
-              style={{
-                width: "100%",
-                background: "#ef4444",
-                color: "#fff",
-                border: "none",
-                padding: "10px",
-                borderRadius: 8,
-              }}
+              style={{ width: "100%", background: "#ef4444", color: "#fff", border: "none", padding: "10px", borderRadius: 8 }}
             >
               Sair da minha dupla
             </button>
