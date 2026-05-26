@@ -1,10 +1,13 @@
 import httpx
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-BASE_URL = "https://plataforma-torneios-backend.vercel.app"
-TIMEOUT  = 10.0
+load_dotenv()
 
-# Prefixos das rotas — conforme app.js: app.use("/api", routes)
+NODE_API_BASE_URL = os.getenv("NODE_API_BASE_URL")
+TIMEOUT  = float(os.getenv("TIMEOUT", 10.0))
+
 R = {
     "usuario":         "/api/users",
     "torneio":         "/api/torneio",
@@ -15,13 +18,12 @@ R = {
     "equipe_usuario":  "/api/equipe-usuarios",
 }
 
-
 async def get(endpoint: str, token: str) -> dict | list | None:
     """GET autenticado no backend Node. Retorna None em caso de erro."""
     headers = {"Authorization": f"Bearer {token}"}
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            resp = await client.get(f"{BASE_URL}{endpoint}", headers=headers)
+            resp = await client.get(f"{NODE_API_BASE_URL}{endpoint}", headers=headers)
             resp.raise_for_status()
             return resp.json()
     except httpx.HTTPStatusError as e:

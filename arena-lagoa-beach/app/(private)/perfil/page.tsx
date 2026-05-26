@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera } from "lucide-react";
+import { Camera, ImagePlus, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -27,11 +27,12 @@ type ApiError = {
   response?: {
     data?: {
       message?: string;
+      error?: string;
     };
   };
 };
 
-const avatarUrl =
+const avatarPadrao =
   "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export default function MeuPerfil() {
@@ -39,22 +40,24 @@ export default function MeuPerfil() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(avatarPadrao);
+
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
-    username: "",
     patente: "",
     senha: "",
     confirmarSenha: "",
+    fotoBase64: "",
   });
 
   useEffect(() => {
     async function carregarPerfil() {
       try {
         const dados = await getMeuPerfil();
-
-        // RASTREADOR 2
-        console.log("O que o back-end devolveu:", dados);
 
         if (dados) {
           setFormData((prev) => ({
@@ -64,6 +67,10 @@ export default function MeuPerfil() {
             username: dados.username || "",
             patente: dados.patente || "Não ranqueado",
           }));
+
+          if (dados.foto_perfil) {
+            setAvatarPreview(dados.foto_perfil);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
@@ -80,38 +87,65 @@ export default function MeuPerfil() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarPreview(URL.createObjectURL(file));
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          fotoBase64: reader.result as string,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleEditToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (isEditing) {
-      // Validação de senha
       if (formData.senha && formData.senha !== formData.confirmarSenha) {
         toast.error("As senhas não coincidem!");
         return;
       }
 
       try {
-        const payload: UpdatePerfilRequest = {
+        const payload: any = {
           nome: formData.nome,
           email: formData.email,
-          username: formData.username,
         };
 
         if (formData.senha) {
           payload.senha = formData.senha;
         }
 
+        if (formData.fotoBase64) {
+          payload.foto_perfil = formData.fotoBase64;
+        }
+
         await updateMeuPerfil(payload);
         toast.success("Perfil atualizado com sucesso!");
 
-        setFormData((prev) => ({ ...prev, senha: "", confirmarSenha: "" }));
+        setFormData((prev) => ({
+          ...prev,
+          senha: "",
+          confirmarSenha: "",
+          fotoBase64: "",
+        }));
         setIsEditing(false);
+        setMostrarSenha(false);
+        setMostrarConfirmarSenha(false);
       } catch (error: unknown) {
         const apiError = error as ApiError;
-        console.error(error);
-        toast.error(
-          apiError.response?.data?.message || "Erro ao atualizar perfil.",
-        );
+
+        const mensagemErro =
+          apiError.response?.data?.error || "Erro ao atualizar perfil.";
+
+        console.error("Erro da API:", mensagemErro);
+        toast.error(mensagemErro);
       }
     } else {
       setIsEditing(true);
@@ -142,6 +176,8 @@ export default function MeuPerfil() {
       : "bg-[#f6f6f6] border border-transparent"
   }`;
 
+  const passwordInputClassName = `${inputClassName} pr-10`;
+
   if (isLoading) {
     return (
       <div className="flex-1 min-h-screen p-8 flex items-center justify-center">
@@ -168,13 +204,26 @@ export default function MeuPerfil() {
               <div
                 role="img"
                 aria-label="Foto de perfil"
-                style={{ backgroundImage: `url(${avatarUrl})` }}
-                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm"
+                style={{ backgroundImage: `url(${avatarPreview})` }}
+                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm relative"
               />
               {isEditing && (
-                <button className="absolute bottom-1 -right-1 bg-[#316f27] text-white border-2 border-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                  <Camera size={14} />
-                </button>
+                <>
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/png, image/jpeg, image/svg+xml"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 bg-[#316f27] text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
+                    title="Alterar foto"
+                  >
+                    <ImagePlus size={16} strokeWidth={2.5} />
+                  </label>
+                </>
               )}
             </div>
 
@@ -195,7 +244,7 @@ export default function MeuPerfil() {
             onClick={handleEditToggle}
             className={`mt-4 md:mt-2 text-white border-none px-6 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
               isEditing
-                ? "bg-blue-600 hover:bg-blue-700"
+                ? "bg-green-600 hover:bg-green-800"
                 : "bg-[#316f27] hover:bg-green-800"
             }`}
           >
@@ -229,19 +278,6 @@ export default function MeuPerfil() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">
-              Nome de usuário
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">Patente</label>
             <input
               type="text"
@@ -251,33 +287,63 @@ export default function MeuPerfil() {
               className="px-4 py-3 rounded-md text-sm text-gray-500 bg-[#f6f6f6] border border-transparent outline-none cursor-not-allowed w-full"
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
               Nova Senha
             </label>
-            <input
-              type="password"
-              name="senha"
-              placeholder={isEditing ? "Digite uma nova senha" : "••••••••"}
-              value={formData.senha}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
+            <div className="relative">
+              <input
+                type={mostrarSenha ? "text" : "password"}
+                name="senha"
+                placeholder={isEditing ? "Digite uma nova senha" : "••••••••"}
+                value={formData.senha}
+                onChange={handleChange}
+                readOnly={!isEditing}
+                className={passwordInputClassName}
+              />
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              )}
+            </div>
           </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
               Confirmar Nova Senha
             </label>
-            <input
-              type="password"
-              name="confirmarSenha"
-              placeholder={isEditing ? "Confirme a nova senha" : "••••••••"}
-              value={formData.confirmarSenha}
-              onChange={handleChange}
-              readOnly={!isEditing}
-              className={inputClassName}
-            />
+            <div className="relative">
+              <input
+                type={mostrarConfirmarSenha ? "text" : "password"}
+                name="confirmarSenha"
+                placeholder={isEditing ? "Confirme a nova senha" : "••••••••"}
+                value={formData.confirmarSenha}
+                onChange={handleChange}
+                readOnly={!isEditing}
+                className={passwordInputClassName}
+              />
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarConfirmarSenha(!mostrarConfirmarSenha)
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {mostrarConfirmarSenha ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </form>
 
