@@ -20,10 +20,10 @@ import { DuplasModal } from "@/components/ui/DuplasModal";
 
 import styles from "./_styles/tournaments.module.css";
 
-type Tab = "Todos" | "Essa semana" | "Favoritos";
+type Tab = "Todos" | "Essa semana" | "Meus Torneios" | "Favoritos";
 type DialogState = "idle" | "confirm" | "loading" | "success" | "error";
 
-const TABS: Tab[] = ["Todos", "Essa semana", "Favoritos"];
+const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos"];
 
 export default function TorneiosPage() {
   const [activeTab, setActiveTab] = useState<Tab>("Essa semana");
@@ -38,6 +38,7 @@ export default function TorneiosPage() {
   const [duplaModalOpen, setDuplaModalOpen] = useState(false);
   const [duplasTorneioId, setDuplasTorneioId] = useState<string>("");
   const [confirmacaoOpen, setConfirmacaoOpen] = useState(false);
+  const [cancelacaoOpen, setCancelacaoOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
@@ -161,9 +162,11 @@ export default function TorneiosPage() {
           : t
       )
     );
+    // Abrir popup de confirmação de cancelamento
+    setCancelacaoOpen(true);
   }
 
-  // Filtro "Essa semana" (domingo a sábado)
+  // Filtros das tabs
   const filtered = tournaments
     .filter((t) => {
       if (activeTab === "Favoritos") return t.favorite;
@@ -178,6 +181,9 @@ export default function TorneiosPage() {
         fimSemana.setHours(23, 59, 59, 999);
         const dataInicio = new Date(t.data_inicio);
         return dataInicio >= inicioSemana && dataInicio <= fimSemana;
+      }
+      if (activeTab === "Meus Torneios") {
+        return !!t.jaInscrito;
       }
       return true;
     })
@@ -264,7 +270,11 @@ export default function TorneiosPage() {
         {filtered.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-24 text-gray-600">
             <Trophy size={48} className="mb-4 opacity-30" />
-            <p className="text-lg font-medium">Nenhum torneio encontrado</p>
+            <p className="text-lg font-medium">
+              {activeTab === "Meus Torneios"
+                ? "Você ainda não está inscrito em nenhum torneio."
+                : "Nenhum torneio encontrado"}
+            </p>
           </div>
         )}
       </main>
@@ -282,6 +292,24 @@ export default function TorneiosPage() {
                   setDuplasTorneioId(selected.id_torneio);
                   setDuplaModalOpen(true);
                 }
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP CANCELAMENTO */}
+      {cancelacaoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+            <h2 className="text-xl font-bold mb-4">Inscrição cancelada</h2>
+            <p className="text-gray-600 mb-6">Inscrição cancelada com sucesso.</p>
+            <button
+              onClick={() => {
+                setCancelacaoOpen(false);
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
             >
