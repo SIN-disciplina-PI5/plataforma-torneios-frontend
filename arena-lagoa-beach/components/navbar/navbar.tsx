@@ -56,8 +56,10 @@ export default function Navbar() {
           </div>
         </Link>
 
+        
         {/* Tema */}
-        <button
+        {/* remover na versãoo final */}
+        {/* <button
           className={styles.iconButton}
           onClick={() => setDarkMode(!darkMode)}
           aria-label="Alternar tema"
@@ -67,7 +69,7 @@ export default function Navbar() {
           ) : (
             <Sun size={20} className={styles.icon} />
           )}
-        </button>
+        </button> */}
 
         <Link href="/perfil" className={styles.iconButton}>
           {/* Perfil */}
