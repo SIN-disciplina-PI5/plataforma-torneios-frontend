@@ -9,12 +9,12 @@ import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 
 export function ChatWidget() {
-  const [mounted, setMounted]           = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [aberto, setAberto]             = useState(false);
-  const [input, setInput]               = useState("");
-  const [messages, setMessages]         = useState<UIMessage[]>([]);
-  const [isLoading, setIsLoading]       = useState(false);
+  const [aberto, setAberto] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // session_id fixo por aba — gerado uma vez e mantido na ref
   const sessionId = useRef<string>(crypto.randomUUID());
@@ -25,7 +25,7 @@ export function ChatWidget() {
     setAuthenticated(!!token);
   }, []);
 
-  if (!mounted)       return null;
+  if (!mounted) return null;
   if (!authenticated) return null;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,8 +41,8 @@ export function ChatWidget() {
     setInput("");
 
     const userMessage: UIMessage = {
-      id:    crypto.randomUUID(),
-      role:  "user",
+      id: crypto.randomUUID(),
+      role: "user",
       parts: [{ type: "text", text: currentInput }],
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -52,39 +52,44 @@ export function ChatWidget() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Usuário não autenticado");
 
-      const response = await fetch("http://127.0.0.1:8000/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${token}`,
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            pergunta: currentInput,
+            session_id: sessionId.current,
+          }),
         },
-        body: JSON.stringify({
-          pergunta:   currentInput,
-          session_id: sessionId.current,
-        }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`Erro ${response.status}`);
       }
 
-      const data       = await response.json();
+      const data = await response.json();
       const respostaIA = data?.resposta ?? "Sem resposta do servidor.";
 
       const assistantMessage: UIMessage = {
-        id:    crypto.randomUUID(),
-        role:  "assistant",
+        id: crypto.randomUUID(),
+        role: "assistant",
         parts: [{ type: "text", text: respostaIA }],
       };
       setMessages((prev) => [...prev, assistantMessage]);
-
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
 
       const errorMessage: UIMessage = {
-        id:    crypto.randomUUID(),
-        role:  "assistant",
-        parts: [{ type: "text", text: "Não foi possível conectar ao servidor." }],
+        id: crypto.randomUUID(),
+        role: "assistant",
+        parts: [
+          { type: "text", text: "Não foi possível conectar ao servidor." },
+        ],
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
