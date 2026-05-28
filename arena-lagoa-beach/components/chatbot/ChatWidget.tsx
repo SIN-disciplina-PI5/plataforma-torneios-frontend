@@ -47,7 +47,7 @@ export function ChatWidget() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Sessão expirada. Faça login novamente.");
 
-      // ✅ Chama a API Route interna do Next.js — nunca a FastAPI diretamente
+      // Chama a API Route interna do Next.js — nunca a FastAPI diretamente
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {

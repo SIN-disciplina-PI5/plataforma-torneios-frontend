@@ -21,9 +21,9 @@ interface ChatInputProps {
 }
 
 const sugestoes = [
-  'Ranking atual',
-  'Quadras livres hoje',
+  'Minha próxima partida',
   'Próximos torneios',
+  'Torneios que estou inscrito',
 ];
 
 export function ChatInput({
