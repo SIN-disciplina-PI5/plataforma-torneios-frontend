@@ -46,6 +46,7 @@ export function DuplasModal({
   const [selectedEquipeId, setSelectedEquipeId] = useState<number | null>(null);
   const [nomeNovaEquipe, setNomeNovaEquipe] = useState("");
   const [modoCriacao, setModoCriacao] = useState(false);
+  const [tentouFechar, setTentouFechar] = useState(false);
 
   const { mostrarToast } = useNotificacao();
 
@@ -296,11 +297,41 @@ export function DuplasModal({
     }
   };
 
-  if (!isOpen) return null;
-
   const usuarioTemEquipe = equipes.some((eq) =>
     eq.membros.some((m) => m.id_usuario === usuarioId)
   );
+
+  const handleAttemptClose = useCallback(() => {
+    if (!usuarioTemEquipe) {
+      setTentouFechar(true);
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Ação bloqueada",
+        mensagem: "É necessário entrar em uma dupla ou criar uma dupla para concluir sua inscrição.",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
+    setTentouFechar(false);
+    onClose();
+  }, [usuarioTemEquipe, mostrarToast, onClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isOpen || event.key !== "Escape") return;
+
+      event.preventDefault();
+      handleAttemptClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleAttemptClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -314,7 +345,7 @@ export function DuplasModal({
         zIndex: 50,
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) handleAttemptClose();
       }}
     >
       <div
@@ -332,7 +363,7 @@ export function DuplasModal({
         <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid #f0f0f0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: 16 }}>Duplas do Torneio</strong>
-            <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}>
+            <button onClick={handleAttemptClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer" }}>
               ✕
             </button>
           </div>
