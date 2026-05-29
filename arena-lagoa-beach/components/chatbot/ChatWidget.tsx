@@ -12,12 +12,39 @@ export function ChatWidget() {
   const [input, setInput]         = useState("");
   const [messages, setMessages]   = useState<UIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
 
   const sessionId = useRef<string>(crypto.randomUUID());
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-foco no input ao abrir widget
+  useEffect(() => {
+    if (aberto && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [aberto]);
+
+  // Fecha com tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && aberto) {
+        setAberto(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [aberto]);
+
+  // Notificação de nova mensagem
+  useEffect(() => {
+    if (messages.length > 0 && messages[messages.length - 1].role === 'assistant' && !aberto) {
+      setHasNewMessage(true);
+    }
+  }, [messages, aberto]);
 
   // Evita render no SSR (Next.js server component)
   if (!mounted) return null;
@@ -33,6 +60,7 @@ export function ChatWidget() {
 
     setIsLoading(true);
     setInput("");
+    setHasNewMessage(false);
 
     setMessages((prev) => [
       ...prev,
@@ -47,7 +75,6 @@ export function ChatWidget() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Sessão expirada. Faça login novamente.");
 
-      // Chama a API Route interna do Next.js — nunca a FastAPI diretamente
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -96,7 +123,7 @@ export function ChatWidget() {
   return (
     <>
       {aberto && (
-        <div className="fixed bottom-20 right-4 z-50 flex h-[520px] w-80 flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl sm:w-96">
+        <div className="fixed bottom-20 right-4 z-50 flex h-[520px] w-80 flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl sm:w-96 animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
           <div className="flex items-center justify-between bg-green-600 px-4 py-3 text-white">
             <div className="flex items-center gap-2">
@@ -115,7 +142,7 @@ export function ChatWidget() {
             <button
               type="button"
               onClick={() => setAberto(false)}
-              className="text-xl leading-none text-white/80 hover:text-white"
+              className="text-xl leading-none text-white/80 hover:text-white transition-transform hover:scale-150 active:scale-95"
             >
               ×
             </button>
@@ -128,6 +155,7 @@ export function ChatWidget() {
             onChange={handleInputChange}
             onSubmit={handleSubmit}
             isLoading={isLoading}
+            inputRef={inputRef}
           />
         </div>
       )}
@@ -135,21 +163,22 @@ export function ChatWidget() {
       {/* Botão flutuante */}
       <button
         type="button"
-        onClick={() => setAberto((v) => !v)}
-        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-green-800"
+        onClick={() => {
+          setAberto((v) => !v);
+          if (!aberto) setHasNewMessage(false);
+        }}
+        className={`fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-green-700 active:scale-95 ${
+          hasNewMessage && !aberto ? 'ring-1 ring-green-400 ring-offset-1' : ''
+        }`}
         aria-label="Abrir assistente"
       >
-        {aberto ? (
-          <span className="text-2xl leading-none">×</span>
-        ) : (
-          <Image
-            src="/BolaChatBot.svg"
-            alt="Abrir assistente"
-            width={30}
-            height={30}
-            className="object-contain"
-          />
-        )}
+        <span className={`transition-transform duration-300 ${aberto ? 'rotate-90' : 'rotate-0'}`}>
+          {aberto ? (
+            <span className="text-2xl leading-none">×</span>
+          ) : (
+            <Image src="/BolaChatBot.svg" alt="Abrir assistente" width={30} height={30} className="object-contain" />
+          )}
+        </span>
       </button>
     </>
   );
