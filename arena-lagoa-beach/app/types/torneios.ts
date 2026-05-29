@@ -6,6 +6,7 @@ export interface Tournament {
   status: boolean;
   data_inicio?: string;
   data_fim?: string;
+  turno: "MANHA" | "TARDE" | "NOITE";
 }
 
 export interface TournamentUI extends Tournament {
@@ -21,6 +22,7 @@ export interface TournamentResponse {
   categoria: string;
   vagas: number;
   status: boolean;
+  turno: "MANHA" | "TARDE" | "NOITE";
 }
 
 export interface InscricaoResponse {

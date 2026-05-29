@@ -19,6 +19,7 @@ interface CreateTorneioRequest {
   vagas: number;
   data_inicio: string;
   data_fim: string;
+  turno: "MANHA" | "TARDE" | "NOITE";
 }
 
 interface CreateTorneioResponse {

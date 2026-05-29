@@ -20,6 +20,12 @@ const LEVEL_COLORS: Record<string, string> = {
   Básico: "text-sky-400",
 };
 
+const TURNO_LABELS: Record<string, string> = {
+  MANHA: "Manhã",
+  TARDE: "Tarde",
+  NOITE: "Noite",
+};
+
 interface TournamentCardProps {
   tournament: TournamentUI;
   onToggleFavorite: (id: string) => void;
@@ -95,6 +101,8 @@ export function TournamentCard({
 
         <p className="text-xs text-gray-500">
           {tournament.vagas} vagas
+          <span className="mx-2 text-gray-200">|</span>
+          {TURNO_LABELS[tournament.turno] || tournament.turno}
           <span className="mx-2 text-gray-200">|</span>
           <span
             className={clsx(
