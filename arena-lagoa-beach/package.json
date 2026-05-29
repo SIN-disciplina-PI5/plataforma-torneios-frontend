@@ -12,6 +12,7 @@
     "@ai-sdk/react": "^3.0.187",
     "ai": "^6.0.185",
     "axios": "^1.14.0",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jwt-decode": "^4.0.0",
