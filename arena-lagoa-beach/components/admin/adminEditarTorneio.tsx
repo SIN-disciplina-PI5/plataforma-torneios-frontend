@@ -17,6 +17,8 @@ export function EditTournamentForm({
   const [categoria, setCategoria] = useState(
     tournament?.categoria || "Intermediário",
   );
+  const [turno, setTurno] = useState<"MANHA" | "TARDE" | "NOITE">
+    (tournament?.turno || "MANHA");
 
   const [dataInicio, setDataInicio] = useState(
     tournament?.data_inicio ? tournament.data_inicio.split("T")[0] : "",
@@ -56,6 +58,7 @@ export function EditTournamentForm({
       const dadosAtualizados = {
         nome,
         categoria,
+        turno,
         data_inicio: dataInicio,
         data_fim: dataFim,
       };
@@ -125,6 +128,27 @@ export function EditTournamentForm({
             <option value="Iniciante">Iniciante</option>
             <option value="Intermediário">Intermediário</option>
             <option value="Avançado">Avançado</option>
+          </select>
+          <ChevronDown
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            size={18}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-[15px] font-semibold text-gray-800 mb-2">
+          Turno
+        </label>
+        <div className="relative">
+          <select
+            value={turno}
+            onChange={(e) => setTurno(e.target.value as "MANHA" | "TARDE" | "NOITE")}
+            className="w-full bg-[#f9fafb] text-gray-500 border-none rounded-xl px-4 py-3 text-[15px] appearance-none focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="MANHA">Manhã</option>
+            <option value="TARDE">Tarde</option>
+            <option value="NOITE">Noite</option>
           </select>
           <ChevronDown
             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"

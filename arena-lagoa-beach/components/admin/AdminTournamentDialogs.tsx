@@ -55,6 +55,7 @@ export function AdminTournamentDialogs({
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [numVagas, setNumVagas] = useState<number | "">(4);
+  const [turno, setTurno] = useState<"MANHA" | "TARDE" | "NOITE" | "">("");
 
   const [loading, setLoading] = useState(false);
 
@@ -72,6 +73,7 @@ export function AdminTournamentDialogs({
     setDataInicio("");
     setDataFim("");
     setNumVagas(4);
+    setTurno("");
 
     setErrors({});
 
@@ -104,6 +106,10 @@ export function AdminTournamentDialogs({
 
     if (!numVagas) {
       novoErros.numVagas = "Número de vagas é obrigatório";
+    }
+
+    if (!turno) {
+      novoErros.turno = "Turno é obrigatório";
     }
 
     if (dataInicio) {
@@ -162,6 +168,8 @@ export function AdminTournamentDialogs({
 
         vagas: Number(numVagas),
 
+        turno,
+
         data_inicio: dataInicioIso,
 
         data_fim: dataFimIso,
@@ -183,6 +191,9 @@ export function AdminTournamentDialogs({
           categoria: resultado.dados.categoria,
           vagas: resultado.dados.vagas,
           status: resultado.dados.status,
+          turno: resultado.dados.turno,
+          data_inicio: resultado.dados.data_inicio,
+          data_fim: resultado.dados.data_fim,
         });
       }
 
@@ -450,6 +461,44 @@ export function AdminTournamentDialogs({
                   <p className="mt-1 text-xs text-red-600">
                     {errors.categoria}
                   </p>
+                )}
+              </div>
+
+              {/* Turno */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Turno
+                </label>
+
+                <div className="relative">
+                  <select
+                    value={turno}
+                    onChange={(e) => {
+                      setTurno(e.target.value as "MANHA" | "TARDE" | "NOITE" | "");
+
+                      if (errors.turno) {
+                        setErrors({
+                          ...errors,
+                          turno: "",
+                        });
+                      }
+                    }}
+                    className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 transition-all"
+                  >
+                    <option value="">Selecione o turno</option>
+                    <option value="MANHA">Manhã</option>
+                    <option value="TARDE">Tarde</option>
+                    <option value="NOITE">Noite</option>
+                  </select>
+
+                  <ChevronDown
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
+                </div>
+
+                {errors.turno && (
+                  <p className="mt-1 text-xs text-red-600">{errors.turno}</p>
                 )}
               </div>
 
