@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Camera, ImagePlus, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
+
 import {
   getMeuPerfil,
   updateMeuPerfil,
@@ -87,19 +89,32 @@ export default function MeuPerfil() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarPreview(URL.createObjectURL(file));
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          fotoBase64: reader.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const options = {
+          maxSizeMB: 0.1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        };
+
+        const compressedFile = await imageCompression(file, options);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFormData((prev) => ({
+            ...prev,
+            fotoBase64: reader.result as string,
+          }));
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error("Erro ao comprimir a imagem:", error);
+        toast.error("Erro ao processar a foto. Tente uma imagem mais simples.");
+      }
     }
   };
 
