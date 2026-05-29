@@ -11,6 +11,7 @@ _PALAVRAS_BANCO = [
     "minha dupla", "meu parceiro", "minha parceira", "minha equipe",
     "quem é minha", "quem joga comigo", "meu parceiro",
     "resultado", "placar", "fase", "semifinal", "final",
+    "minhas duplas", "minhas equipes", "quais duplas",
 ]
 
 _FRASES_BANCO = [
@@ -73,14 +74,20 @@ _FRASES_DISPONIVEIS = [
     "quais torneios", "que torneios",
 ]
 
+# Frases para duplas
+_FRASES_DUPLAS = [
+    "minha dupla", "meu parceiro", "minha parceira",
+    "quem joga comigo", "minha equipe", "quem é meu parceiro",
+    "quem é minha", "minhas duplas", "minhas equipes",
+    "quais duplas", "quais são minhas duplas",
+]
+
 
 def extrair_intencao_banco(pergunta: str) -> str:
     texto = pergunta.lower()
 
-    if any(p in texto for p in [
-        "minha dupla", "meu parceiro", "minha parceira",
-        "quem joga comigo", "minha equipe", "quem é meu parceiro",
-    ]):
+    # Detectar duplas (prioridade alta) → agora retorna "dupla"
+    if any(p in texto for p in _FRASES_DUPLAS):
         return "dupla"
 
     if any(p in texto for p in [

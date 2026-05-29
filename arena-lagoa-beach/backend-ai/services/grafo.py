@@ -13,6 +13,8 @@ from services.database_service import (
     get_inscricoes_do_usuario,
     get_todos_torneios,
     get_dupla_usuario,
+    get_duplas_com_torneios,       # ← novo
+    get_minhas_duplas_resumido,    # ← novo
 )
 
 load_dotenv()
@@ -52,24 +54,54 @@ async def buscar_banco(estado: EstadoChatbot) -> dict:
 
     if consulta == "proxima_partida":
         dados = await get_proxima_partida(token, id_usuario)
+
     elif consulta == "todas_partidas":
         dados = await get_todas_partidas_usuario(token, id_usuario)
+
     elif consulta == "partidas_hoje":
         dados = await get_partidas_hoje(token, id_usuario)
+
     elif consulta == "partidas_semana":
         dados = await get_partidas_semana(token, id_usuario)
+
     elif consulta == "partidas_por_torneio":
         texto  = pergunta.lower()
         partes = texto.split("torneio")
         nome   = partes[-1].strip().strip("?.,!") if len(partes) > 1 else ""
         dados  = await get_partidas_por_torneio(token, id_usuario, nome) if nome \
                  else await get_todas_partidas_usuario(token, id_usuario)
+
     elif consulta == "torneios_inscritos":
         dados = await get_inscricoes_do_usuario(token, id_usuario)
+
     elif consulta == "todos_torneios":
         dados = await get_todos_torneios(token)
+
+    # ── Duplas ──────────────────────────────────────────────────────────────
     elif consulta == "dupla":
+        # Resposta descritiva completa (ex: "qual é minha dupla?")
         dados = await get_dupla_usuario(token, id_usuario)
+
+    elif consulta == "duplas_resumo":
+        # Listagem rápida de todas as duplas (ex: "me mostre todas minhas duplas")
+        dados = await get_minhas_duplas_resumido(token, id_usuario)
+
+    elif consulta == "duplas_detalhes":
+        # Dados estruturados — útil quando a IA precisa raciocinar sobre as duplas
+        duplas = await get_duplas_com_torneios(token, id_usuario)
+        if not duplas:
+            dados = "Você não está em nenhuma equipe no momento."
+        else:
+            linhas = []
+            for d in duplas:
+                parceiro = d["parceiro"] or "sem parceiro ainda"
+                linhas.append(
+                    f"• Equipe: {d['equipe']} | Parceiro: {parceiro} | "
+                    f"Torneio: {d['torneio']} ({d['categoria']})"
+                )
+            dados = "Suas duplas e torneios:\n" + "\n".join(linhas)
+    # ────────────────────────────────────────────────────────────────────────
+
     else:
         dados = await get_todos_torneios(token)
 
