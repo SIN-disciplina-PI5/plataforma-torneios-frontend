@@ -39,6 +39,8 @@ interface AdminTournamentDialogsProps {
   onTournamentCreated?: (newTournament: Tournament) => void;
 }
 
+type Turno = "MANHA" | "TARDE" | "NOITE";
+
 type FormErrors = {
   [key: string]: string;
 };
@@ -55,7 +57,7 @@ export function AdminTournamentDialogs({
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [numVagas, setNumVagas] = useState<number | "">(4);
-  const [turno, setTurno] = useState<"MANHA" | "TARDE" | "NOITE" | "">("");
+  const [turno, setTurno] = useState<Turno | "">("");
 
   const [loading, setLoading] = useState(false);
 
@@ -146,6 +148,11 @@ export function AdminTournamentDialogs({
   const handleCriar = async () => {
     if (!validarFormulario()) {
       toast.error("Verifique os campos do formulário");
+      return;
+    }
+
+    if (!turno) {
+      toast.error("Selecione o turno do torneio.");
       return;
     }
 
@@ -474,7 +481,7 @@ export function AdminTournamentDialogs({
                   <select
                     value={turno}
                     onChange={(e) => {
-                      setTurno(e.target.value as "MANHA" | "TARDE" | "NOITE" | "");
+                      setTurno(e.target.value as Turno | "");
 
                       if (errors.turno) {
                         setErrors({
