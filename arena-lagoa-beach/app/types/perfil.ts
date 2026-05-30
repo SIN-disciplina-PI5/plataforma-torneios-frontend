@@ -4,6 +4,7 @@ export interface PerfilUsuario {
   email: string;
   username: string;
   patente: string;
+  foto_perfil?: string;
 }
 
 export interface UpdatePerfilRequest {
@@ -11,4 +12,5 @@ export interface UpdatePerfilRequest {
   email?: string;
   username?: string;
   senha?: string;
+  foto_perfil?: string;
 }

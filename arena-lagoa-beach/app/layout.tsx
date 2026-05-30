@@ -1,7 +1,6 @@
 import { Geist, Inter, Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClientProvider } from "@/components/ui/ClientProvider";
-import { ToastNotificacao } from "@/components/ui/ToastNotificacao";
 
 import "./globals.css";
 
@@ -43,7 +42,6 @@ export default function RootLayout({
       <body className="font-sans">
         <ClientProvider>
           {children}
-          <ToastNotificacao />
         </ClientProvider>
       </body>
     </html>

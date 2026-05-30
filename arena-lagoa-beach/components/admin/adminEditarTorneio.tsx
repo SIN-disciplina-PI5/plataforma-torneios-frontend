@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { api } from "@/app/services/api";
 
 interface EditTournamentFormProps {
@@ -17,6 +17,8 @@ export function EditTournamentForm({
   const [categoria, setCategoria] = useState(
     tournament?.categoria || "Intermediário",
   );
+  const [turno, setTurno] = useState<"MANHA" | "TARDE" | "NOITE">
+    (tournament?.turno || "MANHA");
 
   const [dataInicio, setDataInicio] = useState(
     tournament?.data_inicio ? tournament.data_inicio.split("T")[0] : "",
@@ -27,8 +29,17 @@ export function EditTournamentForm({
 
   const [loading, setLoading] = useState(false);
 
+  // Calcula a data de hoje no formato YYYY-MM-DD para bloquear datas passadas
+  const hoje = new Date().toISOString().split("T")[0];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Trava de segurança: Garante que a Data de Fim não seja menor que a Data de Início
+    if (dataInicio && dataFim && dataFim < dataInicio) {
+      alert("A data de término não pode ser anterior à data de início.");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -47,6 +58,7 @@ export function EditTournamentForm({
       const dadosAtualizados = {
         nome,
         categoria,
+        turno,
         data_inicio: dataInicio,
         data_fim: dataFim,
       };
@@ -70,6 +82,17 @@ export function EditTournamentForm({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para lidar com a mudança da Data de Início
+  const handleDataInicioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const novaDataInicio = e.target.value;
+    setDataInicio(novaDataInicio);
+
+    // Se a data de fim atual for menor que a nova data de início escolhida, limpa a data de fim
+    if (dataFim && dataFim < novaDataInicio) {
+      setDataFim("");
     }
   };
 
@@ -113,6 +136,27 @@ export function EditTournamentForm({
         </div>
       </div>
 
+      <div>
+        <label className="block text-[15px] font-semibold text-gray-800 mb-2">
+          Turno
+        </label>
+        <div className="relative">
+          <select
+            value={turno}
+            onChange={(e) => setTurno(e.target.value as "MANHA" | "TARDE" | "NOITE")}
+            className="w-full bg-[#f9fafb] text-gray-500 border-none rounded-xl px-4 py-3 text-[15px] appearance-none focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="MANHA">Manhã</option>
+            <option value="TARDE">Tarde</option>
+            <option value="NOITE">Noite</option>
+          </select>
+          <ChevronDown
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            size={18}
+          />
+        </div>
+      </div>
+
       <div className="flex gap-4">
         <div className="flex-1">
           <label className="block text-[15px] font-semibold text-gray-800 mb-2">
@@ -121,7 +165,8 @@ export function EditTournamentForm({
           <input
             type="date"
             value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
+            min={hoje} // Bloqueia datas anteriores a hoje
+            onChange={handleDataInicioChange}
             required
             className="w-full bg-[#f9fafb] text-gray-500 border-none rounded-xl px-4 py-3 text-[15px] focus:ring-2 focus:ring-green-500 outline-none"
           />
@@ -133,6 +178,7 @@ export function EditTournamentForm({
           <input
             type="date"
             value={dataFim}
+            min={dataInicio || hoje} // O pulo do gato: o mínimo agora é a Data de Início!
             onChange={(e) => setDataFim(e.target.value)}
             required
             className="w-full bg-[#f9fafb] text-gray-500 border-none rounded-xl px-4 py-3 text-[15px] focus:ring-2 focus:ring-green-500 outline-none"
@@ -140,68 +186,10 @@ export function EditTournamentForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 opacity-70">
-        <label className="block text-[14px] font-semibold text-gray-800 -mb-2">
-          Duplas (Visualização)
-        </label>
-
-        <div className="flex items-center justify-between bg-[#f9fafb] rounded-xl px-4 py-3">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <img
-                src="https://i.pravatar.cc/150?img=11"
-                alt="Karen Den"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="text-[13px] font-bold text-black">
-                Karen Den
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <img
-                src="https://i.pravatar.cc/150?img=12"
-                alt="Julia Silva"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="text-[13px] font-bold text-black">
-                Julia Silva
-              </span>
-            </div>
-          </div>
-          <CheckCircle2 className="text-white fill-[#22c55e]" size={24} />
-        </div>
-
-        <div className="flex items-center justify-between bg-[#f9fafb] rounded-xl px-4 py-3">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <img
-                src="https://i.pravatar.cc/150?img=13"
-                alt="Márcio lima"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="text-[13px] font-bold text-black">
-                Márcio lima
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <img
-                src="https://i.pravatar.cc/150?img=14"
-                alt="Hormer Cídio"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span className="text-[13px] font-bold text-black">
-                Hormer Cídio
-              </span>
-            </div>
-          </div>
-          <CheckCircle2 className="text-white fill-[#22c55e]" size={24} />
-        </div>
-      </div>
-
       <button
         type="submit"
         disabled={loading}
-        className={`w-full font-semibold py-3 rounded-lg mt-2 transition-colors ${
+        className={`w-full font-semibold py-3 rounded-lg mt-4 transition-colors ${
           loading
             ? "bg-gray-400 text-white cursor-not-allowed"
             : "bg-[#34a853] hover:bg-green-700 text-white"

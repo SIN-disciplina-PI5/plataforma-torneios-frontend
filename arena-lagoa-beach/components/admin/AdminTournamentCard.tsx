@@ -6,10 +6,10 @@ import type { Tournament } from "@/app/types/torneios";
 import styles from "./AdminTournamentCard.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
-  Avançado: "/avancado2.png",
-  Intermediário: "/intermediario2.png",
-  Básico: "/iniciante.png",
-  Iniciante: "/iniciante.png",
+  Avançado: "/avancado3.png",
+  Intermediário: "/intermediario3.png",
+  Básico: "/iniciante3.png",
+  Iniciante: "/iniciante3.png",
   default: "/cup.png",
 };
 
@@ -18,6 +18,12 @@ const LEVEL_COLORS: Record<string, string> = {
   Intermediário: "text-green-400",
   Iniciante: "text-sky-400",
   Básico: "text-sky-400",
+};
+
+const TURNO_LABELS: Record<string, string> = {
+  MANHA: "Manhã",
+  TARDE: "Tarde",
+  NOITE: "Noite",
 };
 
 interface AdminTournamentCardProps {
@@ -87,6 +93,8 @@ export function AdminTournamentCard({
         {/* Meta info */}
         <p className="text-xs text-gray-500 flex flex-wrap items-center gap-1">
           <span>{tournament.vagas} vagas</span>
+          <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
+          <span>{TURNO_LABELS[tournament.turno] || tournament.turno}</span>
           <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
           <span className={clsx("font-medium", isEsgotado ? "text-red-500" : "text-green-600")}>
             {isEsgotado ? "Esgotado" : "Ativo"}

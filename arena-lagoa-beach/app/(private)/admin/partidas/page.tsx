@@ -1,56 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { CheckCircle2, X } from 'lucide-react';
+import { CheckCircle2, Info, Pencil, Plus, Trash2, X } from 'lucide-react';
 
-type Placar = {
-  a: number;
-  b: number;
-};
+/* ------------------------------------------------------------------ */
+/*  CONFIG                                                            */
+/* ------------------------------------------------------------------ */
 
-type PartidaListItem = {
-  id_partida: string;
-  torneio: string | null;
-  fase: string;
-  status: string;
-  horario: string | null;
-  placar: string | Placar | null;
-};
+/* Base da API. Para testar contra o back end LOCAL, cr*/
+const API =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://plataforma-torneios-backend-mocha.vercel.app';
+const FINALIZADA = 'FINALIZADA';
 
-type PartidaDetalhe = PartidaListItem & {
-  id_torneio: string;
-  vencedor_id: string | null;
-  resultado: string | null;
-};
-
-type ApiListResponse = {
-  data?: PartidaListItem[];
-  error?: string;
-};
-
-type ApiPartidaResponse = {
-  data?: PartidaDetalhe;
-  error?: string;
-};
-
-const fases = [
-  { label: 'Oitavas de Finais', value: 'OITAVAS_DE_FINAL' },
-  { label: 'Quartas de Finais', value: 'QUARTAS_DE_FINAL' },
-  { label: 'Semifinais', value: 'SEMI_FINAL' },
-  { label: 'Finais', value: 'FINAL' },
-];
-
-const fasePorLabel = new Map([
-  ...fases.map((fase) => [fase.label, fase.value] as const),
-  ['Oitavas', 'OITAVAS_DE_FINAL'],
-  ['Quartas', 'QUARTAS_DE_FINAL'],
-  ['Semifinal', 'SEMI_FINAL'],
-  ['Final', 'FINAL'],
-]);
-
+/* Duplas mockadas: o back end ainda não retorna as equipes da partida. */
 const duplas = [
   {
     id: 1,
@@ -64,429 +29,832 @@ const duplas = [
     id: 2,
     titulo: 'Dupla 2',
     jogadores: [
-      { nome: 'Marcio lima', avatar: 'https://i.pravatar.cc/100?img=47' },
+      { nome: 'Marcio Lima', avatar: 'https://i.pravatar.cc/100?img=47' },
       { nome: 'Homer Cidio', avatar: 'https://i.pravatar.cc/100?img=20' },
     ],
   },
 ];
+type Dupla = (typeof duplas)[number];
 
-const apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
+const fases: [string, string][] = [
+  ['OITAVAS_DE_FINAL', 'Oitavas de Finais'],
+  ['QUARTAS_DE_FINAL', 'Quartas de Finais'],
+  ['SEMI_FINAL', 'Semifinais'],
+  ['FINAL', 'Finais'],
+];
+const abas: [string, string][] = [
+  ['TODOS', 'Todos'],
+  ...fases,
+  ['FINALIZADAS', 'Finalizadas'],
+];
+const labelFase = (v: string) => fases.find((f) => f[0] === v)?.[1] ?? v;
 
-const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || apiUrlPadrao;
+type Partida = {
+  id: string;
+  torneio: string | null;
+  fase: string;
+  status: string;
+  horario: string | null;
+  placarA: number | null;
+  placarB: number | null;
+  vencedorId: string | null;
+  resultado: string | null;
+};
 
-function normalizeFase(fase: string | null | undefined) {
-  if (!fase) return fases[0].value;
-  if (fasePorLabel.has(fase)) return fasePorLabel.get(fase) as string;
-  if (fases.some((item) => item.value === fase)) return fase;
-  return fases[0].value;
+/* ------------------------------------------------------------------ */
+/*  HELPERS                                                           */
+/* ------------------------------------------------------------------ */
+
+const getToken = () =>
+  typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+const auth = (json = false): HeadersInit => {
+  const t = getToken();
+  return {
+    ...(t ? { Authorization: `Bearer ${t}` } : {}),
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
+  };
+};
+
+function parsePlacar(p: unknown): [number | null, number | null] {
+  if (p == null || p === '') return [null, null];
+  if (typeof p === 'string') {
+    const [a, b] = p.split(/[xX-]/);
+    return [Number(a) || 0, Number(b) || 0];
+  }
+  const o = p as { a?: number; b?: number };
+  return [Number(o.a) || 0, Number(o.b) || 0];
 }
 
-function parsePlacar(placar: PartidaListItem['placar']): Placar {
-  if (!placar) return { a: 0, b: 0 };
-
-  if (typeof placar === 'string') {
-    const [a = '0', b = '0'] = placar.split(/[xX-]/);
-    return {
-      a: Number(a.trim() || 0),
-      b: Number(b.trim() || 0),
-    };
-  }
-
+function toPartida(r: Record<string, unknown>): Partida {
+  const [a, b] = parsePlacar(r.placar);
   return {
-    a: Number(placar.a || 0),
-    b: Number(placar.b || 0),
+    id: (r.id_partida ?? r.id) as string,
+    torneio: (r.torneio as string) ?? null,
+    fase: r.fase as string,
+    status: (r.status as string) ?? '',
+    horario: (r.horario as string) ?? null,
+    placarA: a,
+    placarB: b,
+    vencedorId: (r.vencedor_id as string) ?? null,
+    resultado: (r.resultado as string) ?? null,
   };
 }
 
-function getDateTimeParts(horario: string | null) {
-  if (!horario) return { data: '', hora: '' };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  const date = new Date(horario);
+/* Agrupa partidas por dia, com rótulo Hoje / Amanhã / Ontem / dia da semana. */
+function grupoDe(iso: string | null) {
+  if (!iso) return { ordem: Infinity, label: 'Sem data definida' };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime()))
+    return { ordem: Infinity, label: 'Sem data definida' };
 
-  if (Number.isNaN(date.getTime())) {
-    return { data: '', hora: '' };
-  }
+  const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const hoje = new Date();
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const diff = Math.round((+dia - +base) / 864e5);
+  const dm = dia.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+  });
 
-  return {
-    data: date.toISOString().split('T')[0],
-    hora: date.toTimeString().slice(0, 5),
-  };
+  const label =
+    diff === 0
+      ? 'Hoje'
+      : diff === 1
+      ? `Amanhã, ${dm}`
+      : diff === -1
+      ? `Ontem, ${dm}`
+      : `${cap(dia.toLocaleDateString('pt-BR', { weekday: 'long' }))}, ${dm}`;
+
+  return { ordem: +dia, label };
 }
+
+function horaDe(iso: string | null) {
+  if (!iso) return '--:--';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? '--:--'
+    : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* Decodifica o payload do JWT (lida com acentos). */
+function decodeJwt(t: string): Record<string, unknown> | null {
+  try {
+    const b = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+    const json = new TextDecoder().decode(
+      Uint8Array.from(b, (c) => c.charCodeAt(0)),
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/* Busca o NOME do admin logado (campo `nome`, nunca o e-mail). */
+function useAdminNome() {
+  const [nome, setNome] = useState('Administrador');
+
+  useEffect(() => {
+    const t = getToken();
+    if (!t) return;
+    const p = decodeJwt(t) || {};
+    const id = (p.id_usuario || p.id || p.sub || p.userId) as string | undefined;
+
+    (async () => {
+      const urls = [
+        id && `${API}/api/users/${id}`,
+        `${API}/api/users/me`,
+      ].filter(Boolean) as string[];
+
+      for (const url of urls) {
+        try {
+          const r = await fetch(url, { headers: auth() });
+          if (!r.ok) continue;
+          const j = await r.json();
+          const n = j?.data?.nome ?? j?.nome;
+          if (n) return setNome(n);
+        } catch {
+          /* tenta a próxima */
+        }
+      }
+      // Fallback: nome dentro do token (se houver). Nunca usa o e-mail.
+      const tokenNome = (p.nome || p.name) as string | undefined;
+      if (tokenNome) setNome(tokenNome);
+    })();
+  }, []);
+
+  return nome;
+}
+
+/* ================================================================== */
+/*  PÁGINA                                                            */
+/* ================================================================== */
 
 export default function PartidasPage() {
-  const [partidas, setPartidas] = useState<PartidaListItem[]>([]);
-  const [selected, setSelected] = useState<PartidaListItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const nome = useAdminNome();
+  const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [aba, setAba] = useState('TODOS');
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [infoId, setInfoId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [excluir, setExcluir] = useState<Partida | null>(null);
 
-  const fetchPartidas = useCallback(async () => {
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    setErro('');
     try {
-      setError('');
-
-      const res = await fetch(`${getApiUrl()}/api/partidas`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      const json = (await res.json()) as ApiListResponse;
-
-      if (!res.ok) {
-        throw new Error(json.error || 'Erro ao buscar partidas');
-      }
-
-      setPartidas(json.data || []);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao buscar partidas';
-      setError(message);
+      const r = await fetch(`${API}/api/partidas`, { headers: auth() });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Erro ao buscar partidas');
+      setPartidas((j.data || []).map(toPartida));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao buscar partidas');
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchPartidas();
-  }, [fetchPartidas]);
+    carregar();
+  }, [carregar]);
 
-  function handleEditClick(partida: PartidaListItem) {
-    setSelected(partida);
+  const grupos = useMemo(() => {
+    const fim = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
+    const lista = partidas.filter((p) => {
+      if (aba === 'FINALIZADAS') return fim(p);
+      if (fim(p)) return false;
+      return aba === 'TODOS' || p.fase === aba;
+    });
+
+    const mapa = new Map<string, { ordem: number; itens: Partida[] }>();
+    for (const p of lista) {
+      const g = grupoDe(p.horario);
+      const atual = mapa.get(g.label) ?? { ordem: g.ordem, itens: [] };
+      atual.itens.push(p);
+      mapa.set(g.label, atual);
+    }
+    return [...mapa.entries()]
+      .sort((a, b) => a[1].ordem - b[1].ordem)
+      .map(([label, v]) => ({ label, itens: v.itens }));
+  }, [partidas, aba]);
+
+  async function confirmarExclusao() {
+    if (!excluir) return;
+    const id = excluir.id;
+    setExcluir(null);
+    try {
+      const r = await fetch(`${API}/api/partidas/delete/${id}`, {
+        method: 'DELETE', 
+        headers: auth(),
+      });
+      if (!r.ok)
+        throw new Error(`Falha ao excluir partida (HTTP ${r.status})`);
+      setPartidas((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao excluir partida');
+    }
   }
 
-  async function handleSaved() {
-    setSelected(null);
-    setLoading(true);
-    await fetchPartidas();
-  }
-
-  if (loading) return <p className="p-8">Carregando partidas...</p>;
+  const partidaInfo = partidas.find((p) => p.id === infoId) || null;
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Partidas</h1>
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8">
+        {/* Cabeçalho: nome + botão criar na mesma linha */}
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">
+              ⚽
+            </span>
+            Olá, {nome}
+          </h1>
+          <Link
+            href="/admin/criarPartida"
+            className="flex items-center gap-1.5 rounded-lg bg-[#25a51f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#208d1b]"
+          >
+            <Plus size={16} /> Criar Partida
+          </Link>
+        </header>
 
-        <Link
-          href="/admin/criarPartida"
-          className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-        >
-          Criar
-        </Link>
+        {/* Abas */}
+        <nav className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
+          {abas.map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setAba(v)}
+              className={`relative whitespace-nowrap pb-3 text-sm transition ${
+                aba === v
+                  ? 'font-semibold text-black'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {label}
+              {aba === v && (
+                <span className="absolute -bottom-px left-0 h-[3px] w-full rounded-full bg-[#25a51f]" />
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {erro && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <span>{erro}</span>
+            <button
+              type="button"
+              onClick={carregar}
+              className="shrink-0 font-semibold underline"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {editId && (
+          <EditarPartida
+            id={editId}
+            onClose={() => setEditId(null)}
+            onSalvo={() => {
+              setEditId(null);
+              carregar();
+            }}
+          />
+        )}
+
+        {carregando ? (
+          <p className="py-16 text-center text-sm text-gray-500">
+            Carregando partidas...
+          </p>
+        ) : grupos.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500">
+            Nenhuma partida encontrada.
+          </p>
+        ) : (
+          <div className="space-y-7">
+            {grupos.map((g) => (
+              <section key={g.label}>
+                <h2 className="mb-2 text-sm text-gray-500">{g.label}</h2>
+                <ul className="space-y-2">
+                  {g.itens.map((p) => (
+                    <Linha
+                      key={p.id}
+                      partida={p}
+                      onInfo={() => setInfoId(p.id)}
+                      onEditar={() => setEditId(p.id)}
+                      onExcluir={() => setExcluir(p)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
 
-      {error && (
-        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </p>
+      {/* Modal de detalhes (ícone de informação) */}
+      {partidaInfo && (
+        <Modal titulo="Detalhes da Partida" onClose={() => setInfoId(null)}>
+          <DetalhesPartida partida={partidaInfo} />
+        </Modal>
       )}
 
-      {selected && (
-        <EditPartidaCard
-          partidaId={selected.id_partida}
-          onClose={() => setSelected(null)}
-          onSaved={handleSaved}
-        />
-      )}
-
-      {partidas.length === 0 ? (
-        <p>Nenhuma partida encontrada.</p>
-      ) : (
-        <div className="space-y-4">
-          {partidas.map((partida) => (
-            <div
-              key={partida.id_partida}
-              className="flex items-center justify-between rounded-xl border p-4 shadow-sm"
+      {/* Modal de exclusão (ícone de lixeira) */}
+      {excluir && (
+        <Modal titulo="Excluir partida" onClose={() => setExcluir(null)}>
+          <p className="text-sm text-gray-600">
+            Tem certeza que deseja excluir esta partida
+            {excluir.torneio ? ` de ${excluir.torneio}` : ''} (
+            {labelFase(excluir.fase)})? Esta ação não pode ser desfeita.
+          </p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setExcluir(null)}
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
             >
-              <div>
-                <p className="font-semibold">{partida.torneio || 'Torneio não informado'}</p>
-                <p className="text-sm text-gray-500">{partida.fase}</p>
-                <p className="text-sm">{partida.status}</p>
-
-                {partida.horario && (
-                  <p className="text-sm text-gray-400">
-                    {new Date(partida.horario).toLocaleString()}
-                  </p>
-                )}
-
-                {partida.placar && (
-                  <p className="mt-1 font-medium">
-                    {parsePlacar(partida.placar).a} x {parsePlacar(partida.placar).b}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleEditClick(partida)}
-                className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-              >
-                Editar
-              </button>
-            </div>
-          ))}
-        </div>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmarExclusao}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Excluir
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );
 }
 
-function EditPartidaCard({
-  partidaId,
-  onClose,
-  onSaved,
+/* ================================================================== */
+/*  COMPONENTES                                                       */
+/* ================================================================== */
+
+function Linha({
+  partida,
+  onInfo,
+  onEditar,
+  onExcluir,
 }: {
-  partidaId: string;
-  onClose: () => void;
-  onSaved: () => Promise<void>;
+  partida: Partida;
+  onInfo: () => void;
+  onEditar: () => void;
+  onExcluir: () => void;
 }) {
-  const [partida, setPartida] = useState<PartidaDetalhe | null>(null);
-  const [faseAtiva, setFaseAtiva] = useState(fases[0].value);
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:px-4">
+      <div className="flex min-w-[230px] flex-1 items-center justify-center gap-3 sm:gap-5">
+        <Time dupla={duplas[0]} lado="dir" />
+        <Placar a={partida.placarA} b={partida.placarB} />
+        <Time dupla={duplas[1]} lado="esq" />
+      </div>
+
+      <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+        {horaDe(partida.horario)}
+      </span>
+
+      <div className="flex shrink-0 items-center gap-0.5">
+        <BotaoIcone titulo="Detalhes" onClick={onInfo} cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600">
+          <Info size={17} />
+        </BotaoIcone>
+        <BotaoIcone titulo="Editar" onClick={onEditar} cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700">
+          <Pencil size={16} />
+        </BotaoIcone>
+        <BotaoIcone titulo="Excluir" onClick={onExcluir} cor="text-red-400 hover:bg-red-50 hover:text-red-600">
+          <Trash2 size={16} />
+        </BotaoIcone>
+      </div>
+    </li>
+  );
+}
+
+function Time({ dupla, lado }: { dupla: Dupla; lado: 'esq' | 'dir' }) {
+  return (
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-2 ${
+        lado === 'esq' ? 'justify-start' : 'flex-row-reverse justify-end'
+      }`}
+    >
+      <Avatar src={dupla.jogadores[0].avatar} nome={dupla.titulo} />
+      <span className="truncate text-sm font-medium text-gray-800">
+        {dupla.titulo}
+      </span>
+    </div>
+  );
+}
+
+function Placar({ a, b }: { a: number | null; b: number | null }) {
+  if (a == null || b == null) {
+    return (
+      <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-400">
+        vs
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
+      {a} - {b}
+    </span>
+  );
+}
+
+function BotaoIcone({
+  titulo,
+  onClick,
+  cor,
+  children,
+}: {
+  titulo: string;
+  onClick: () => void;
+  cor: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={titulo}
+      title={titulo}
+      className={`rounded-md p-2 transition ${cor}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Avatar({
+  src,
+  nome,
+  size = 30,
+}: {
+  src: string;
+  nome: string;
+  size?: number;
+}) {
+  return (
+    <span
+      role="img"
+      aria-label={nome}
+      className="shrink-0 rounded-full bg-gray-200 bg-cover bg-center"
+      style={{ width: size, height: size, backgroundImage: `url(${src})` }}
+    />
+  );
+}
+
+function DetalhesPartida({ partida }: { partida: Partida }) {
+  return (
+    <>
+      <p className="mb-1 text-sm font-medium text-gray-700">
+        {partida.torneio || 'Torneio não informado'}
+      </p>
+      <p className="mb-5 text-xs text-gray-400">
+        {labelFase(partida.fase)} · {partida.status}
+      </p>
+
+      <div className="flex items-stretch gap-3">
+        <ColunaDupla dupla={duplas[0]} />
+        <div className="flex flex-col items-center justify-center px-1">
+          <span className="text-2xl font-bold text-gray-800">
+            {partida.placarA != null
+              ? `${partida.placarA} - ${partida.placarB}`
+              : '—:—'}
+          </span>
+          <span className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">
+            Placar
+          </span>
+        </div>
+        <ColunaDupla dupla={duplas[1]} />
+      </div>
+
+      {partida.resultado && (
+        <p className="mt-5 rounded-md bg-green-50 px-3 py-2 text-center text-xs font-medium text-green-700">
+          {partida.resultado}
+        </p>
+      )}
+    </>
+  );
+}
+
+function ColunaDupla({ dupla }: { dupla: Dupla }) {
+  return (
+    <div className="flex-1 rounded-lg bg-gray-50 p-3">
+      <p className="mb-3 text-center text-sm font-semibold text-gray-800">
+        {dupla.titulo}
+      </p>
+      <ul className="space-y-2">
+        {dupla.jogadores.map((j) => (
+          <li key={j.nome} className="flex items-center gap-2">
+            <Avatar src={j.avatar} nome={j.nome} size={24} />
+            <span className="truncate text-xs text-gray-700">{j.nome}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Modal({
+  titulo,
+  onClose,
+  children,
+}: {
+  titulo: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={titulo}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl sm:p-6"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-bold">{titulo}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  CARD DE EDIÇÃO — mantém o rascunho                                */
+/* ------------------------------------------------------------------ */
+
+function EditarPartida({
+  id,
+  onClose,
+  onSalvo,
+}: {
+  id: string;
+  onClose: () => void;
+  onSalvo: () => void;
+}) {
+  const [partida, setPartida] = useState<Partida | null>(null);
+  const [fase, setFase] = useState(fases[0][0]);
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
-  const [placar, setPlacar] = useState<Placar>({ a: 0, b: 0 });
+  const [a, setA] = useState(0);
+  const [b, setB] = useState(0);
   const [vencedor, setVencedor] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
-    async function fetchPartida() {
+    let ativo = true;
+    (async () => {
       try {
-        setError('');
-        setLoading(true);
-
-        const res = await fetch(`${getApiUrl()}/api/partidas/${partidaId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+        const r = await fetch(`${API}/api/partidas/${id}`, {
+          headers: auth(),
         });
+        const j = await r.json();
+        if (!r.ok || !j.data)
+          throw new Error(j.error || 'Erro ao buscar partida');
+        if (!ativo) return;
 
-        const json = (await res.json()) as ApiPartidaResponse;
-
-        if (!res.ok || !json.data) {
-          throw new Error(json.error || 'Erro ao buscar partida');
+        const p = toPartida(j.data);
+        setPartida(p);
+        setFase(p.fase);
+        setA(p.placarA ?? 0);
+        setB(p.placarB ?? 0);
+        if (p.horario) {
+          const d = new Date(p.horario);
+          const z = (n: number) => String(n).padStart(2, '0');
+          setData(`${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`);
+          setHora(`${z(d.getHours())}:${z(d.getMinutes())}`);
         }
-
-        const dadosPartida = json.data;
-        const horario = getDateTimeParts(dadosPartida.horario);
-
-        setPartida(dadosPartida);
-        setFaseAtiva(normalizeFase(dadosPartida.fase));
-        setData(horario.data);
-        setHora(horario.hora);
-        setPlacar(parsePlacar(dadosPartida.placar));
-        setVencedor(null);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Erro ao buscar partida';
-        setError(message);
+      } catch (e) {
+        if (ativo)
+          setErro(e instanceof Error ? e.message : 'Erro ao buscar partida');
       } finally {
-        setLoading(false);
+        if (ativo) setCarregando(false);
       }
-    }
+    })();
+    return () => {
+      ativo = false;
+    };
+  }, [id]);
 
-    fetchPartida();
-  }, [partidaId]);
-
-  async function handleSalvar() {
+  async function salvar() {
     if (!partida) return;
-
+    setSalvando(true);
+    setErro('');
     try {
-      setSaving(true);
-      setError('');
-
-      const horario = data && hora ? `${data}T${hora}:00` : null;
-      const res = await fetch(`${getApiUrl()}/api/partidas/${partidaId}`, {
+      const r = await fetch(`${API}/api/partidas/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+        headers: auth(true),
         body: JSON.stringify({
-          fase: faseAtiva,
-          horario,
-          placar: `${placar.a}x${placar.b}`,
-          vencedor_id: vencedor ? String(vencedor) : partida.vencedor_id,
-          resultado: vencedor ? `${duplas.find((dupla) => dupla.id === vencedor)?.titulo} vencedora` : partida.resultado,
-          status: vencedor ? 'FINALIZADA' : partida.status,
+          fase,
+          // Converte a data/hora LOCAL dos inputs para ISO UTC
+          horario:
+            data && hora ? new Date(`${data}T${hora}`).toISOString() : null,
+          placar: `${a}x${b}`,
+          vencedor_id: vencedor ? String(vencedor) : partida.vencedorId,
+          resultado: vencedor
+            ? `${duplas.find((d) => d.id === vencedor)?.titulo} vencedora`
+            : partida.resultado,
+          status: vencedor ? FINALIZADA : partida.status,
         }),
       });
-
-      const json = (await res.json()) as ApiPartidaResponse;
-
-      if (!res.ok) {
-        throw new Error(json.error || 'Erro ao salvar partida');
-      }
-
-      await onSaved();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao salvar partida';
-      setError(message);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok)
+        throw new Error(j.error || `Falha ao salvar (HTTP ${r.status})`);
+      onSalvo();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao salvar partida');
     } finally {
-      setSaving(false);
+      setSalvando(false);
     }
   }
 
   return (
-    <article className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-7 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/variante-de-bola-de-futebol.png"
-            alt="Bola de futebol"
-            width={18}
-            height={18}
-          />
-          <h2 className="text-[20px] font-bold leading-none">Editar Partida</h2>
-        </div>
-
+    <article className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+      <header className="mb-6 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          ⚽ Editar Partida
+        </h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
           aria-label="Fechar edição"
+          className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           <X size={18} />
         </button>
-      </div>
+      </header>
 
-      {loading ? (
-        <p className="text-sm text-gray-500">Carregando partida...</p>
+      {carregando ? (
+        <p className="py-6 text-sm text-gray-500">Carregando partida...</p>
+      ) : !partida ? (
+        <p className="py-4 text-sm text-red-600">
+          {erro || 'Não foi possível carregar a partida.'}
+        </p>
       ) : (
         <>
-          <section className="mb-5">
-            <div className="flex items-end gap-8 overflow-x-auto border-b border-[#dddddd]">
-              {fases.map((fase) => {
-                const ativa = faseAtiva === fase.value;
+          {/* Abas de fase */}
+          <div className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
+            {fases.map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setFase(v)}
+                className={`relative whitespace-nowrap pb-3 text-xs transition ${
+                  fase === v ? 'font-semibold text-black' : 'text-gray-400'
+                }`}
+              >
+                {label}
+                {fase === v && (
+                  <span className="absolute -bottom-px left-0 h-[3px] w-full bg-[#25a51f]" />
+                )}
+              </button>
+            ))}
+          </div>
 
-                return (
-                  <button
-                    key={fase.value}
-                    type="button"
-                    onClick={() => setFaseAtiva(fase.value)}
-                    className={`relative pb-3 text-[11px] whitespace-nowrap transition ${
-                      ativa ? 'text-black' : 'text-[#a8a8a8]'
-                    }`}
-                  >
-                    {fase.label}
-                    {ativa && (
-                      <span className="absolute bottom-[-1px] left-0 h-[3px] w-full bg-[#25a51f]" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+          {erro && (
+            <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {erro}
+            </p>
+          )}
 
-          <section className="space-y-6">
-            <p className="text-[12px] font-semibold">Hoje</p>
+          {/* Data e horário */}
+          <div className="mb-6 grid gap-4 sm:max-w-md sm:grid-cols-2">
+            <Campo label="Data da Partida">
+              <input
+                type="date"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                className="h-10 w-full rounded-md bg-gray-50 px-3 text-sm text-gray-600 outline-none focus:ring-1 focus:ring-[#25a51f]"
+              />
+            </Campo>
+            <Campo label="Horário">
+              <input
+                type="time"
+                value={hora}
+                onChange={(e) => setHora(e.target.value)}
+                className="h-10 w-full rounded-md bg-gray-50 px-3 text-sm text-gray-600 outline-none focus:ring-1 focus:ring-[#25a51f]"
+              />
+            </Campo>
+          </div>
 
-            {error && (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">
-                {error}
-              </p>
-            )}
+          {/* Placar */}
+          <p className="mb-3 text-sm font-medium text-gray-700">
+            Resultado Final da Partida
+          </p>
+          <div className="mb-6 flex items-end gap-4">
+            <NumeroPlacar label={duplas[0].titulo} valor={a} onChange={setA} />
+            <span className="pb-3 text-lg font-semibold text-gray-400">-</span>
+            <NumeroPlacar label={duplas[1].titulo} valor={b} onChange={setB} />
+          </div>
 
-            <div className="w-[272px] max-w-full space-y-6">
-              <FormField label="Data da Partida">
-                <input
-                  type="date"
-                  value={data}
-                  onChange={(e) => setData(e.target.value)}
-                  className="h-9 w-full rounded-md border border-transparent bg-[#f8f8f8] px-3 text-[12px] text-[#8b8b8b] outline-none focus:border-[#25a51f]"
-                />
-              </FormField>
-
-              <FormField label="Horário">
-                <input
-                  type="time"
-                  value={hora}
-                  onChange={(e) => setHora(e.target.value)}
-                  className="h-9 w-full rounded-md border border-transparent bg-[#f8f8f8] px-3 text-[12px] text-[#8b8b8b] outline-none focus:border-[#25a51f]"
-                />
-              </FormField>
-            </div>
-
-            <div>
-              <p className="mb-3 text-[12px] font-medium">Resultado Final da Partida</p>
-
-              <div className="mb-2 grid w-[120px] grid-cols-2 gap-5 text-[11px]">
-                <span>Dupla 1</span>
-                <span>Dupla 2</span>
-              </div>
-
-              <div className="flex items-center gap-5">
-                <input
-                  type="number"
-                  value={placar.a}
-                  onChange={(e) => setPlacar((prev) => ({ ...prev, a: Number(e.target.value) }))}
-                  className="h-10 w-10 rounded-md border-0 bg-[#f8f8f8] text-center text-[18px] outline-none focus:ring-1 focus:ring-[#25a51f]"
-                />
-                <span className="text-[18px] font-semibold">-</span>
-                <input
-                  type="number"
-                  value={placar.b}
-                  onChange={(e) => setPlacar((prev) => ({ ...prev, b: Number(e.target.value) }))}
-                  className="h-10 w-10 rounded-md border-0 bg-[#f8f8f8] text-center text-[18px] outline-none focus:ring-1 focus:ring-[#25a51f]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-4 text-[12px] font-medium">Dupla Vencedora</p>
-
-              <div className="space-y-2">
-                {duplas.map((dupla) => (
-                  <div key={dupla.id}>
-                    <p className="mb-2 text-[11px]">{dupla.titulo}</p>
-
-                    <button
-                      type="button"
-                      onClick={() => setVencedor(dupla.id)}
-                      className="flex h-8 w-[236px] items-center justify-between rounded-md bg-[#f8f8f8] px-3 text-left"
-                    >
-                      <span className="flex items-center gap-4">
-                        {dupla.jogadores.map((jogador) => (
-                          <span key={jogador.nome} className="flex items-center gap-2">
-                            <span
-                              className="h-6 w-6 rounded-full bg-cover bg-center"
-                              style={{ backgroundImage: `url(${jogador.avatar})` }}
-                              aria-hidden="true"
-                            />
-                            <span className="text-[8px] font-bold">{jogador.nome}</span>
-                          </span>
-                        ))}
+          {/* Dupla vencedora */}
+          <p className="mb-3 text-sm font-medium text-gray-700">
+            Dupla Vencedora
+          </p>
+          <div className="mb-7 space-y-2">
+            {duplas.map((d) => {
+              const sel = vencedor === d.id;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setVencedor(d.id)}
+                  className={`flex w-full max-w-sm items-center justify-between rounded-md border px-3 py-2.5 transition ${
+                    sel
+                      ? 'border-[#25a51f] bg-green-50'
+                      : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {d.jogadores.map((j) => (
+                      <span key={j.nome} className="flex items-center gap-2">
+                        <Avatar src={j.avatar} nome={j.nome} size={24} />
+                        <span className="text-xs font-medium text-gray-700">
+                          {j.nome}
+                        </span>
                       </span>
+                    ))}
+                  </span>
+                  <CheckCircle2
+                    size={16}
+                    className={sel ? 'text-[#25a51f]' : 'text-gray-300'}
+                    fill={sel ? '#25a51f' : 'transparent'}
+                  />
+                </button>
+              );
+            })}
+          </div>
 
-                      <CheckCircle2
-                        size={11}
-                        className={vencedor === dupla.id ? 'text-[#25a51f]' : 'text-transparent'}
-                        fill={vencedor === dupla.id ? '#25a51f' : 'transparent'}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSalvar}
-              disabled={saving}
-              className="h-9 w-[282px] max-w-full rounded-[3px] bg-[#25a51f] text-[11px] font-bold text-white transition hover:bg-[#208d1b] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
-          </section>
+          <button
+            type="button"
+            onClick={salvar}
+            disabled={salvando}
+            className="h-11 w-full max-w-sm rounded-lg bg-[#25a51f] text-sm font-bold text-white transition hover:bg-[#208d1b] disabled:opacity-60"
+          >
+            {salvando ? 'Salvando...' : 'Salvar'}
+          </button>
         </>
       )}
     </article>
   );
 }
 
-function FormField({ label, children }: { label: string; children: ReactNode }) {
+function Campo({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="mb-2 block text-[11px] font-medium">{label}</label>
+      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+        {label}
+      </label>
       {children}
+    </div>
+  );
+}
+
+function NumeroPlacar({
+  label,
+  valor,
+  onChange,
+}: {
+  label: string;
+  valor: number;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div className="text-center">
+      <p className="mb-1 text-xs text-gray-500">{label}</p>
+      <input
+        type="number"
+        min={0}
+        value={valor}
+        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        className="h-12 w-14 rounded-md bg-gray-50 text-center text-lg outline-none focus:ring-1 focus:ring-[#25a51f]"
+      />
     </div>
   );
 }
