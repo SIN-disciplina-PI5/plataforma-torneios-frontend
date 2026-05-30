@@ -4,10 +4,10 @@ import { EsqueceuSenhaForm } from "@/components/auth/EsqueceuSenhaForm";
 
 export default function EsqueceuSenha() {
   return (
-    <div className="flex flex-col lg:flex-row items-start justify-center bg-white h-screen overflow-hidden gap-10 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 overflow-x-hidden bg-white px-4 py-8 sm:px-6 lg:flex-row lg:items-start lg:gap-10 lg:py-0">
 
       {/* FORM */}
-      <div className="font-inter flex flex-col w-full max-w-md mt-[204px]">
+      <div className="font-inter flex w-full max-w-md flex-col lg:mt-[204px]">
         <p className="text-[#313131] mb-6">
           <Link href="/login" className="hover:underline">
             <span className="mr-2 text-current">❮</span>
@@ -19,7 +19,7 @@ export default function EsqueceuSenha() {
           Esqueceu a senha?
         </h1>
 
-        <p className="text-[#666666] mb-10 text-[11px] lg:text-[14.3px] font-poppins whitespace-nowrap">
+        <p className="text-[#666666] mb-10 text-[11px] lg:text-[14.3px] font-poppins lg:whitespace-nowrap">
   Insira seu email abaixo para recuperar a sua senha
 </p>
 
@@ -33,7 +33,7 @@ export default function EsqueceuSenha() {
       </div>
 
       {/* IMAGEM */}
-      <div className="flex flex-col items-center w-full max-w-[700px] mt-[104px]">
+      <div className="flex w-full max-w-[700px] flex-col items-center lg:mt-[104px]">
         <Image
           src="/RecuperarSenhaImage.png"
           alt="Imagem da tela de login"

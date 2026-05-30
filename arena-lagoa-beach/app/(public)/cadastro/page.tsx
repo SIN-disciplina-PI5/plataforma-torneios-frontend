@@ -3,9 +3,9 @@ import { CadastroForm } from "@/components/auth/CadastroForm";
 
 export default function Cadastro() {
   return (
-    <div className="flex flex-col lg:flex-row items-center justify-center bg-white min-h-screen gap-10 px-4 py-10 lg:py-0">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 overflow-x-hidden bg-white px-4 py-8 sm:px-6 lg:flex-row lg:gap-10 lg:py-0">
       {/* IMAGEM */}
-      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0 min-h-600px">
+      <div className="flex w-full max-w-md flex-col items-center justify-center rounded-lg border border-[#AEC3CB] bg-[#F9F9F9] p-6 lg:mb-0 lg:min-h-[600px] lg:p-12">
         <Image
           src="/CadastroImage.png"
           alt="Imagem da tela de cadastro"

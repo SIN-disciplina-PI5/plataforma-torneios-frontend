@@ -175,7 +175,7 @@ export function CadastroForm() {
             </button>
           </div>
 
-          <div className="mt-2 text-xs grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
             <span
               className={
                 senhaTem8Caracteres ? "text-green-600" : "text-red-500"
@@ -234,7 +234,7 @@ export function CadastroForm() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
+        <div className="mb-4 flex items-start gap-2 sm:items-center">
           <input
             type="checkbox"
             checked={termosAceitos}
@@ -251,7 +251,7 @@ export function CadastroForm() {
         </div>
 
         {/*  RECAPTCHA */}
-        <div className="flex justify-center mb-4">
+        <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
           <Recaptcha onChange={setCaptchaToken} />
         </div>
 
@@ -259,7 +259,7 @@ export function CadastroForm() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-[#2FA026] hover:bg-[#25801E] text-white font-bold py-2 px-4 rounded w-96 disabled:opacity-50 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
+            className="w-full cursor-pointer rounded bg-[#2FA026] px-4 py-2 font-bold text-white transition-all duration-300 hover:scale-105 hover:bg-[#25801E] hover:shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none sm:w-96"
           >
             {loading ? "Cadastrando..." : "Cadastrar"}
           </button>
