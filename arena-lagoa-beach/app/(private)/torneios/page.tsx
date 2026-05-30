@@ -15,6 +15,7 @@ import {
   sairDaEquipe,
 } from "@/app/services/torneioService";
 
+import { useNotificacao } from "@/lib/NotificacaoContext";
 import { TournamentCard } from "@/components/inscricao/TournamentCard";
 import { DuplasModal } from "@/components/ui/DuplasModal";
 
@@ -42,6 +43,7 @@ export default function TorneiosPage() {
   const [token, setToken] = useState<string | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
+  const { mostrarToast } = useNotificacao();
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [indicatorStyle, setIndicatorStyle] = useState({});
 
@@ -120,6 +122,18 @@ export default function TorneiosPage() {
   }
 
   function handleVerDuplas(tournament: TournamentUI) {
+    if (!tournament.jaInscrito) {
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Acesso negado",
+        mensagem: "É necessário estar inscrito no torneio para visualizar ou participar de equipes.",
+        tipo: "error",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+      return;
+    }
+
     setSelected(tournament);
     setDuplasTorneioId(tournament.id_torneio);
     setDuplaModalOpen(true);
