@@ -3,6 +3,7 @@ import { Pencil, Trash2, Users } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { Tournament } from "@/app/types/torneios";
+import { formatDate } from "@/lib/utils";
 import styles from "./AdminTournamentCard.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
@@ -89,6 +90,14 @@ export function AdminTournamentCard({
 
         {/* Título */}
         <p className="font-bold text-gray-900 text-sm leading-tight">{tournament.nome}</p>
+
+        <p className="text-xs text-gray-500">
+          <span className="font-medium text-gray-700">Início:</span>{" "}
+          {formatDate(tournament.data_inicio) ?? "Não informado"}
+          <span className="mx-2 text-gray-200">|</span>
+          <span className="font-medium text-gray-700">Fim:</span>{" "}
+          {formatDate(tournament.data_fim) ?? "Não informado"}
+        </p>
 
         {/* Meta info */}
         <p className="text-xs text-gray-500 flex flex-wrap items-center gap-1">
