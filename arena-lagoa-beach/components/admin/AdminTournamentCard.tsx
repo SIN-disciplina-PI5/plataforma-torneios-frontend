@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { CalendarPlus, Pencil, Trash2, Users } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { Tournament } from "@/app/types/torneios";
@@ -31,6 +31,7 @@ interface AdminTournamentCardProps {
   onEdit: (tournament: Tournament) => void;
   onDelete: (tournament: Tournament) => void;
   onViewRegistrations: (tournament: Tournament) => void;
+  onGenerateMatches: (tournament: Tournament) => void;
 }
 
 export function AdminTournamentCard({
@@ -38,6 +39,7 @@ export function AdminTournamentCard({
   onEdit,
   onDelete,
   onViewRegistrations,
+  onGenerateMatches,
 }: AdminTournamentCardProps) {
   const isEsgotado = !tournament.status || tournament.vagas <= 0;
 
@@ -83,6 +85,14 @@ export function AdminTournamentCard({
               aria-label="Ver inscrições"
             >
               <Users size={14} />
+            </button>
+
+            <button
+              onClick={() => onGenerateMatches(tournament)}
+              className={styles.actionBtn}
+              aria-label="Gerar partidas"
+            >
+              <CalendarPlus size={14} />
             </button>
           </div>
         </div>

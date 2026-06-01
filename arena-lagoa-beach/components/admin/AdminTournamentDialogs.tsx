@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown } from "lucide-react";
-import axios from "axios";
 
 import {
   Dialog,
@@ -21,7 +20,6 @@ import {
   CheckCircle2,
   XCircle,
   Trash2,
-  Pencil,
   Users,
   Plus,
   AlertCircle,
@@ -36,6 +34,7 @@ interface AdminTournamentDialogsProps {
   tournament: Tournament | null;
   onClose: () => void;
   onConfirmDelete: () => void;
+  generateMatchesMessage?: string;
   onTournamentCreated?: (newTournament: Tournament) => void;
 }
 
@@ -50,6 +49,7 @@ export function AdminTournamentDialogs({
   tournament,
   onClose,
   onConfirmDelete,
+  generateMatchesMessage,
   onTournamentCreated,
 }: AdminTournamentDialogsProps) {
   const [nome, setNome] = useState("");
@@ -647,6 +647,82 @@ export function AdminTournamentDialogs({
         )}
 
         {/* REGISTRATIONS */}
+        {state === "generatingMatches" && (
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Loader2 className="animate-spin text-green-600" size={40} />
+
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              Gerando partidas...
+            </DialogTitle>
+
+            <p className="text-sm text-gray-500 text-center">
+              Estamos criando a chave do torneio{" "}
+              <span className="font-medium text-gray-700">
+                {tournament?.nome}
+              </span>
+              .
+            </p>
+          </div>
+        )}
+
+        {state === "generateMatches" && (
+          <>
+            <div className="flex flex-col items-center justify-center py-6 gap-3">
+              <CheckCircle2 className="text-green-600" size={48} />
+
+              <DialogTitle className="text-lg font-bold text-gray-900">
+                Partidas geradas!
+              </DialogTitle>
+
+              <p className="text-sm text-gray-500 text-center">
+                {generateMatchesMessage && (
+                  <>
+                    <span>{generateMatchesMessage}</span>
+                    <br />
+                  </>
+                )}
+                As partidas do torneio{" "}
+                <span className="font-medium text-gray-700">
+                  {tournament?.nome}
+                </span>{" "}
+                foram geradas. Confira as partidas geradas em Partidas.
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                onClick={handleClose}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                Entendi
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {state === "errorGenerateMatches" && (
+          <>
+            <div className="flex flex-col items-center justify-center py-6 gap-3">
+              <XCircle className="text-red-500" size={48} />
+
+              <DialogTitle className="text-lg font-bold text-gray-900">
+                Erro ao gerar partidas
+              </DialogTitle>
+
+              <p className="text-sm text-gray-500 text-center">
+                {generateMatchesMessage ||
+                  "Não foi possível gerar as partidas deste torneio. Tente novamente."}
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={handleClose} className="w-full">
+                Fechar
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
         {state === "registrations" && (
           <>
             <DialogHeader>
