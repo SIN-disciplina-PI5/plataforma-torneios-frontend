@@ -3,6 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Plus } from "lucide-react";
 import { api } from "@/app/services/api";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AdminDuplasModalProps {
   onClose: () => void;
@@ -54,8 +66,6 @@ export function AdminDuplasModal({
         ? resInscricoes.data
         : resInscricoes.data.data || [];
 
-      console.log("Lista de inscritos recebida do back-end:", listaInscritos);
-
       setInscricoes(listaInscritos);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -75,7 +85,9 @@ export function AdminDuplasModal({
 
   const handleCriarDupla = async () => {
     if (!jogadorSelecionado) {
-      alert("Por favor, pesquise e selecione um jogador inscrito primeiro!");
+      toast.warning(
+        "Por favor, pesquise e selecione um jogador inscrito primeiro!",
+      );
       return;
     }
 
@@ -98,13 +110,13 @@ export function AdminDuplasModal({
         config,
       );
 
-      alert("Dupla criada com sucesso!");
+      toast.success("Dupla criada com sucesso!");
       setBusca("");
       setJogadorSelecionado(null);
       fetchData();
     } catch (error: any) {
       console.error("Erro ao criar dupla:", error);
-      alert(error.response?.data?.error || "Erro ao criar dupla.");
+      toast.error(error.response?.data?.error || "Erro ao criar dupla.");
     } finally {
       setLoading(false);
     }
@@ -112,7 +124,9 @@ export function AdminDuplasModal({
 
   const handleAdicionarNaDuplaExistente = async (idEquipe: string | number) => {
     if (!jogadorSelecionado) {
-      alert("Por favor, pesquise e selecione um jogador inscrito primeiro!");
+      toast.warning(
+        "Por favor, pesquise e selecione um jogador inscrito primeiro!",
+      );
       return;
     }
 
@@ -132,27 +146,22 @@ export function AdminDuplasModal({
         config,
       );
 
-      alert("Jogador adicionado à dupla!");
+      toast.success("Jogador adicionado à dupla!");
       setBusca("");
       setJogadorSelecionado(null);
       fetchData();
     } catch (error: any) {
       console.error("Erro ao adicionar membro:", error);
-      alert(error.response?.data?.error || "Erro ao adicionar jogador.");
+      toast.error(error.response?.data?.error || "Erro ao adicionar jogador.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRemoverJogador = async (
-    e: React.MouseEvent,
+  const executarRemocaoJogador = async (
     idEquipe: string | number,
     idUsuario: string | number,
   ) => {
-    e.stopPropagation();
-    const confirmar = window.confirm("Remover este jogador da dupla?");
-    if (!confirmar) return;
-
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -162,25 +171,18 @@ export function AdminDuplasModal({
         `/equipe/admin/${idEquipe}/membros/${idUsuario}`,
         config,
       );
+      toast.success("Jogador removido com sucesso!");
       fetchData();
     } catch (error: any) {
       console.error("Erro ao remover jogador:", error);
-      alert(error.response?.data?.error || "Erro ao remover o jogador.");
+      toast.error(error.response?.data?.error || "Erro ao remover o jogador.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExcluirDuplaSelecionada = async () => {
-    if (!duplaSelecionadaId) {
-      alert("Selecione uma equipe clicando nela primeiro.");
-      return;
-    }
-
-    const confirmar = window.confirm(
-      "Tem certeza que deseja excluir esta equipe?",
-    );
-    if (!confirmar) return;
+  const executarExclusaoDupla = async () => {
+    if (!duplaSelecionadaId) return;
 
     try {
       setLoading(true);
@@ -188,11 +190,12 @@ export function AdminDuplasModal({
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       await api.delete(`/equipe/${duplaSelecionadaId}`, config);
+      toast.success("Equipe excluída com sucesso!");
       setDuplaSelecionadaId(null);
       fetchData();
     } catch (error: any) {
       console.error("Erro ao excluir dupla:", error);
-      alert(error.response?.data?.error || "Erro ao excluir a equipe.");
+      toast.error(error.response?.data?.error || "Erro ao excluir a equipe.");
     } finally {
       setLoading(false);
     }
@@ -293,18 +296,44 @@ export function AdminDuplasModal({
                         <span className="text-[14px] font-semibold text-gray-800 truncate">
                           {jogador1.nome}
                         </span>
-                        <button
-                          onClick={(e) =>
-                            handleRemoverJogador(
-                              e,
-                              idEquipe,
-                              jogador1.id_usuario || jogador1.id,
-                            )
-                          }
-                          className="text-red-400 hover:text-red-600 transition-colors ml-auto"
-                        >
-                          <Trash2 size={16} strokeWidth={2} />
-                        </button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-red-400 hover:text-red-600 transition-colors ml-auto"
+                            >
+                              <Trash2 size={16} strokeWidth={2} />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remover Jogador
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover{" "}
+                                <b>{jogador1.nome}</b> desta dupla?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  executarRemocaoJogador(
+                                    idEquipe,
+                                    jogador1.id_usuario || jogador1.id,
+                                  )
+                                }
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Sim, remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </>
                     ) : (
                       <span className="text-[14px] text-gray-400 italic">
@@ -328,18 +357,44 @@ export function AdminDuplasModal({
                         <span className="text-[14px] font-semibold text-gray-800 truncate">
                           {jogador2.nome}
                         </span>
-                        <button
-                          onClick={(e) =>
-                            handleRemoverJogador(
-                              e,
-                              idEquipe,
-                              jogador2.id_usuario || jogador2.id,
-                            )
-                          }
-                          className="text-red-400 hover:text-red-600 transition-colors ml-auto"
-                        >
-                          <Trash2 size={16} strokeWidth={2} />
-                        </button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-red-400 hover:text-red-600 transition-colors ml-auto"
+                            >
+                              <Trash2 size={16} strokeWidth={2} />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remover Jogador
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover{" "}
+                                <b>{jogador2.nome}</b> desta dupla?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  executarRemocaoJogador(
+                                    idEquipe,
+                                    jogador2.id_usuario || jogador2.id,
+                                  )
+                                }
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Sim, remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </>
                     ) : (
                       <div className="flex-1 flex justify-center">
@@ -362,17 +417,38 @@ export function AdminDuplasModal({
           )}
         </div>
 
-        <button
-          onClick={handleExcluirDuplaSelecionada}
-          disabled={!duplaSelecionadaId || loading}
-          className={`w-full font-semibold text-[15px] py-3 rounded-lg transition-colors ${
-            !duplaSelecionadaId
-              ? "bg-red-300 text-white cursor-not-allowed"
-              : "bg-[#ef4444] hover:bg-red-600 text-white"
-          }`}
-        >
-          {loading ? "Processando..." : "Excluir dupla"}
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              disabled={!duplaSelecionadaId || loading}
+              className={`w-full font-semibold text-[15px] py-3 rounded-lg transition-colors ${
+                !duplaSelecionadaId
+                  ? "bg-red-300 text-white cursor-not-allowed"
+                  : "bg-[#ef4444] hover:bg-red-600 text-white"
+              }`}
+            >
+              {loading ? "Processando..." : "Excluir dupla"}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Dupla</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza absoluta que deseja excluir esta equipe do torneio?
+                Essa ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={executarExclusaoDupla}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Sim, excluir dupla
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
