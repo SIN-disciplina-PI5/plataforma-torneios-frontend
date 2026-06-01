@@ -8,8 +8,7 @@ export default function Home() {
 
       <header className="flex flex-col gap-6 px-6 py-6 sm:flex-row sm:items-center sm:justify-between lg:px-24 lg:py-8">
         <div className="flex flex-col leading-none">
-          <span className="text-2xl font-extrabold tracking-tight text-[#1B5E42] sm:text-3xl">ARENA</span>
-          <span className="text-xs font-semibold tracking-[0.3em] text-[#1B5E42]">LAGOA BEACH</span>
+        
         </div>
 
         <nav className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
