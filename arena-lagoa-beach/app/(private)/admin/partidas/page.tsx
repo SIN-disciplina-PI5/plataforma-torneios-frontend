@@ -95,7 +95,6 @@ function toPartida(r: Record<string, unknown>): Partida {
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** A match is "finalizada" only when its status says so — date is irrelevant. */
 const isFinalizada = (p: Partida) =>
   p.status.toUpperCase() === FINALIZADA;
 
@@ -213,15 +212,12 @@ export default function PartidasPage() {
 
   useEffect(() => {
     carregar();
-    // Auto-refresh every 30 s so finished tournaments disappear automatically
+
     const id = setInterval(carregar, 30_000);
     return () => clearInterval(id);
   }, [carregar]);
 
-  /**
-   * A tournament tab is shown only while it has at least one non-FINALIZADA match.
-   * When every match in a tournament is finalised the tab disappears automatically.
-   */
+
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
     const lista: string[] = [];
@@ -246,7 +242,7 @@ export default function PartidasPage() {
     [torneiosAtivos],
   );
 
-  // If the active tab disappears, fall back to TODOS
+
   useEffect(() => {
     const validos = abas.map(([v]) => v);
     if (!validos.includes(aba)) setAba('TODOS');
@@ -254,9 +250,9 @@ export default function PartidasPage() {
 
   const grupos = useMemo(() => {
     const lista = partidas.filter((p) => {
-      // "Finalizadas" tab — only status FINALIZADA
+      // "Finalizadas" tab — apenas status FINALIZADA
       if (aba === 'FINALIZADAS') return isFinalizada(p);
-      // All other tabs — exclude FINALIZADA matches
+      // All other tabs — excluir FINALIZADA
       if (isFinalizada(p)) return false;
       return aba === 'TODOS' || p.torneio === aba;
     });
@@ -478,10 +474,7 @@ function Linha({
   );
 }
 
-/**
- * Each team is displayed as a centered column: avatar on top, name below.
- * This naturally centres both teams relative to the score in the middle.
- */
+
 function Time({ equipe }: { equipe: Equipe | undefined }) {
   if (!equipe) {
     return (
