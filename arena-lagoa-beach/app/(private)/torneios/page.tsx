@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Trophy, AlertCircle } from "lucide-react";
+import { Trophy, AlertCircle, X } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { TournamentUI } from "@/app/types/torneios";
@@ -38,8 +38,19 @@ export default function TorneiosPage() {
   const [selected, setSelected] = useState<TournamentUI | null>(null);
   const [duplaModalOpen, setDuplaModalOpen] = useState(false);
   const [duplasTorneioId, setDuplasTorneioId] = useState<string>("");
+
+  // Popup: inscrição realizada com sucesso
   const [confirmacaoOpen, setConfirmacaoOpen] = useState(false);
+  // Popup: cancelamento realizado com sucesso
   const [cancelacaoOpen, setCancelacaoOpen] = useState(false);
+  // Popup: confirmação antes de cancelar (com botões Cancelar / Ok)
+  const [confirmarCancelamentoOpen, setConfirmarCancelamentoOpen] = useState(false);
+  const [tournamentParaCancelar, setTournamentParaCancelar] = useState<TournamentUI | null>(null);
+  const [cancelandoInscricao, setCancelandoInscricao] = useState(false);
+  // Popup: erro
+  const [erroOpen, setErroOpen] = useState(false);
+  const [erroMensagem, setErroMensagem] = useState("");
+
   const [token, setToken] = useState<string | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
@@ -141,13 +152,15 @@ export default function TorneiosPage() {
 
   async function handleRegisterClick(tournament: TournamentUI) {
     if (!usuarioId) {
-      alert("Usuário não autenticado");
+      setErroMensagem("Usuário não autenticado. Faça login novamente.");
+      setErroOpen(true);
       return;
     }
     setSelected(tournament);
     const response = await registerUserInTournament(tournament.id_torneio, usuarioId.toString());
     if (!response.sucesso) {
-      alert(response.mensagem || "Erro ao se inscrever");
+      setErroMensagem(response.mensagem || "Erro ao se inscrever no torneio.");
+      setErroOpen(true);
       return;
     }
     const id_inscricao = await getInscricaoDoUsuario(tournament.id_torneio, usuarioId.toString());
@@ -161,12 +174,27 @@ export default function TorneiosPage() {
     setConfirmacaoOpen(true);
   }
 
-  async function handleUnregister(tournament: TournamentUI) {
-    if (!tournament.id_inscricao || !usuarioId) return;
+  // Abre popup de confirmação antes de cancelar
+  function handleUnregisterClick(tournament: TournamentUI) {
+    setTournamentParaCancelar(tournament);
+    setConfirmarCancelamentoOpen(true);
+  }
+
+  // Executado após usuário confirmar o cancelamento
+  async function handleConfirmarCancelamento() {
+    const tournament = tournamentParaCancelar;
+    if (!tournament?.id_inscricao || !usuarioId) return;
+
+    setCancelandoInscricao(true);
     await sairDaEquipe(tournament.id_torneio);
     const response = await cancelarInscricao(tournament.id_inscricao);
+    setCancelandoInscricao(false);
+    setConfirmarCancelamentoOpen(false);
+    setTournamentParaCancelar(null);
+
     if (!response.sucesso) {
-      alert(response.mensagem);
+      setErroMensagem(response.mensagem || "Erro ao cancelar inscrição.");
+      setErroOpen(true);
       return;
     }
     setTournaments((prev) =>
@@ -176,7 +204,6 @@ export default function TorneiosPage() {
           : t
       )
     );
-    // Abrir popup de confirmação de cancelamento
     setCancelacaoOpen(true);
   }
 
@@ -257,7 +284,7 @@ export default function TorneiosPage() {
           </div>
         </div>
 
-        {/* ERRO */}
+        {/* ERRO DE CARREGAMENTO */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
             <AlertCircle className="text-red-600" size={20} />
@@ -274,7 +301,7 @@ export default function TorneiosPage() {
                 tournament={t}
                 onToggleFavorite={handleToggleFavorite}
                 onRegister={handleRegisterClick}
-                onUnregister={handleUnregister}
+                onUnregister={handleUnregisterClick}
                 onVerDuplas={handleVerDuplas}
               />
             ))}
@@ -293,7 +320,7 @@ export default function TorneiosPage() {
         )}
       </main>
 
-      {/* POPUP CONFIRMAÇÃO */}
+      {/* POPUP CONFIRMAÇÃO DE INSCRIÇÃO */}
       {confirmacaoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
@@ -315,17 +342,82 @@ export default function TorneiosPage() {
         </div>
       )}
 
-      {/* POPUP CANCELAMENTO */}
+      {/* POPUP CONFIRMAÇÃO ANTES DE CANCELAR */}
+      {confirmarCancelamentoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
+                  <X size={18} className="text-red-600" />
+                </div>
+                <h2 className="text-lg font-bold">Cancelar inscrição no torneio?</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setConfirmarCancelamentoOpen(false);
+                  setTournamentParaCancelar(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-500 text-sm mb-6">
+              Ao confirmar, sua inscrição será removida e você poderá perder sua vaga no torneio.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setConfirmarCancelamentoOpen(false);
+                  setTournamentParaCancelar(null);
+                }}
+                disabled={cancelandoInscricao}
+                className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl py-3 font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarCancelamento}
+                disabled={cancelandoInscricao}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-60"
+              >
+                {cancelandoInscricao ? "Cancelando..." : "Ok"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP CANCELAMENTO REALIZADO COM SUCESSO */}
       {cancelacaoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
             <h2 className="text-xl font-bold mb-4">Inscrição cancelada</h2>
             <p className="text-gray-600 mb-6">Inscrição cancelada com sucesso.</p>
             <button
-              onClick={() => {
-                setCancelacaoOpen(false);
-              }}
+              onClick={() => setCancelacaoOpen(false)}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP ERRO */}
+      {erroOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <X size={24} className="text-red-600" />
+              </div>
+            </div>
+            <p className="text-center text-gray-800 font-medium mb-6">{erroMensagem}</p>
+            <button
+              onClick={() => setErroOpen(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold"
             >
               OK
             </button>

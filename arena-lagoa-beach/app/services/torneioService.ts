@@ -142,6 +142,7 @@ export const registerUserInTournament = async (
   } catch (error: unknown) {
     let mensagem = "Erro ao inscrever no torneio.";
     if (axios.isAxiosError(error)) {
+      // Backend retorna sempre { error: "mensagem" }
       mensagem = error.response?.data?.error || error.response?.data?.message || mensagem;
       console.error("Erro na inscrição individual:", error.response?.data || error.message);
     } else {
@@ -189,17 +190,10 @@ export const cancelarInscricao = async (
   } catch (error: unknown) {
     let mensagem = "Erro ao cancelar inscrição.";
     if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const data = error.response?.data;
-      mensagem = data?.error || data?.message || mensagem;
-      console.error("Erro ao cancelar inscrição:", {
-        status,
-        data: JSON.stringify(data),
-        message: error.message,
-        url: error.config?.url,
-      });
-    } else {
-      console.error("Erro inesperado ao cancelar inscrição:", error);
+      const erroBackend = error.response?.data?.error;
+      if (erroBackend) {
+        mensagem = erroBackend;
+      }
     }
     return { sucesso: false, mensagem };
   }
