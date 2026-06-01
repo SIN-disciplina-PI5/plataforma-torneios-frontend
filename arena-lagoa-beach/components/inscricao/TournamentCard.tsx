@@ -3,6 +3,7 @@ import { Star, Users } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { TournamentUI } from "@/app/types/torneios";
+import { formatDate } from "@/lib/utils";
 import styles from "@/app/(private)/torneios/_styles/tournaments.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
@@ -97,6 +98,14 @@ export function TournamentCard({
 
         <p className="font-bold text-gray-900 text-sm leading-tight">
           {tournament.nome}
+        </p>
+
+        <p className="text-xs text-gray-500">
+          <span className="font-medium text-gray-700">Início:</span>{" "}
+          {formatDate(tournament.data_inicio) ?? "Não informado"}
+          <span className="mx-2 text-gray-200">|</span>
+          <span className="font-medium text-gray-700">Fim:</span>{" "}
+          {formatDate(tournament.data_fim) ?? "Não informado"}
         </p>
 
         <p className="text-xs text-gray-500">
