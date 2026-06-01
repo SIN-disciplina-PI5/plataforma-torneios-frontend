@@ -211,10 +211,15 @@ export default function PartidasPage() {
   }, []);
 
   useEffect(() => {
-    carregar();
+    const timeoutId = window.setTimeout(() => {
+      void carregar();
+    }, 0);
 
     const id = setInterval(carregar, 30_000);
-    return () => clearInterval(id);
+    return () => {
+      window.clearTimeout(timeoutId);
+      clearInterval(id);
+    };
   }, [carregar]);
 
 
@@ -243,18 +248,18 @@ export default function PartidasPage() {
   );
 
 
-  useEffect(() => {
-    const validos = abas.map(([v]) => v);
-    if (!validos.includes(aba)) setAba('TODOS');
-  }, [abas, aba]);
+  const abaAtual = useMemo(
+    () => (abas.some(([v]) => v === aba) ? aba : 'TODOS'),
+    [abas, aba],
+  );
 
   const grupos = useMemo(() => {
     const lista = partidas.filter((p) => {
       // "Finalizadas" tab — apenas status FINALIZADA
-      if (aba === 'FINALIZADAS') return isFinalizada(p);
+      if (abaAtual === 'FINALIZADAS') return isFinalizada(p);
       // All other tabs — excluir FINALIZADA
       if (isFinalizada(p)) return false;
-      return aba === 'TODOS' || p.torneio === aba;
+      return abaAtual === 'TODOS' || p.torneio === abaAtual;
     });
 
     const mapa = new Map<string, { ordem: number; itens: Partida[] }>();
@@ -267,7 +272,7 @@ export default function PartidasPage() {
     return [...mapa.entries()]
       .sort((a, b) => a[1].ordem - b[1].ordem)
       .map(([label, v]) => ({ label, itens: v.itens }));
-  }, [partidas, aba]);
+  }, [partidas, abaAtual]);
 
   async function confirmarExclusao() {
     if (!excluir) return;
@@ -310,13 +315,13 @@ export default function PartidasPage() {
               type="button"
               onClick={() => setAba(v)}
               className={`relative whitespace-nowrap pb-3 text-sm transition ${
-                aba === v
+                abaAtual === v
                   ? 'font-semibold text-black'
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {label}
-              {aba === v && (
+              {abaAtual === v && (
                 <span className="absolute -bottom-px left-0 h-[3px] w-full rounded-full bg-[#25a51f]" />
               )}
             </button>
@@ -754,27 +759,51 @@ function EditarPartida({
     setSalvando(true);
     setErro('');
     try {
+      const requestJson = async (url: string, init: RequestInit) => {
+        const r = await fetch(url, init);
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok)
+          throw new Error(j.error || `Falha ao salvar (HTTP ${r.status})`);
+        return j;
+      };
       const equipeVencedora = partida.equipes.find(
         (e) => e.id_equipe === vencedorId,
       );
-      const r = await fetch(`${API}/api/partidas/${id}`, {
+      const horario =
+        data && hora ? new Date(`${data}T${hora}`).toISOString() : null;
+      const placar = `${a}-${b}`;
+
+      await requestJson(`${API}/api/partidas/${id}`, {
         method: 'PATCH',
         headers: auth(true),
         body: JSON.stringify({
-          fase,
-          horario:
-            data && hora ? new Date(`${data}T${hora}`).toISOString() : null,
-          placar: `${a}x${b}`,
-          vencedor_id: vencedorId ?? partida.vencedorId,
-          resultado: equipeVencedora
-            ? `${equipeVencedora.nome} vencedora`
-            : partida.resultado,
-          status: vencedorId ? FINALIZADA : partida.status,
+          ...(fase === partida.fase ? { fase } : {}),
+          horario,
+          placar,
         }),
       });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok)
-        throw new Error(j.error || `Falha ao salvar (HTTP ${r.status})`);
+
+      if (vencedorId) {
+        if (partida.status !== 'EM_ANDAMENTO') {
+          await requestJson(`${API}/api/partidas/iniciar/${id}`, {
+            method: 'PATCH',
+            headers: auth(true),
+          });
+        }
+
+        await requestJson(`${API}/api/partidas/finalizar/${id}`, {
+          method: 'PATCH',
+          headers: auth(true),
+          body: JSON.stringify({
+            placar,
+            vencedor_id: vencedorId,
+            resultado: equipeVencedora
+              ? `${equipeVencedora.nome} vencedora`
+              : partida.resultado,
+          }),
+        });
+      }
+
       onSalvo();
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao salvar partida');

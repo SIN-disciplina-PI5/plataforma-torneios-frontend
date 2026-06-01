@@ -5,6 +5,7 @@ import type {
   CreateInscricaoResponse,
   TorneioCriacaoError,
   TorneioCriacaoResponse,
+  GerarChaveResponse,
   UserInscriptionResponse,
 } from "@/app/types/torneios";
 import axios from "axios";
@@ -119,6 +120,49 @@ export const deleteTorneio = async (id_torneio: string): Promise<boolean> => {
       console.error("Erro inesperado:", error);
     }
     return false;
+  }
+};
+
+export const gerarChaveTorneio = async (
+  id_torneio: string
+): Promise<GerarChaveResponse> => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return {
+      sucesso: false,
+      mensagem: "Sessão expirada. Faça login novamente.",
+    };
+  }
+
+  try {
+    const response = await api.post<{ message: string; data: unknown[] }>(
+      `/torneio/${id_torneio}/gerar-chave`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return {
+      sucesso: true,
+      mensagem: response.data.message,
+      totalPartidas: Array.isArray(response.data.data)
+        ? response.data.data.length
+        : undefined,
+    };
+  } catch (error: unknown) {
+    let mensagem = "Erro ao gerar partidas. Tente novamente.";
+
+    if (axios.isAxiosError(error)) {
+      mensagem =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        mensagem;
+      console.error("Erro ao gerar chave do torneio:", error.response?.data || error.message);
+    } else {
+      console.error("Erro inesperado ao gerar chave do torneio:", error);
+    }
+
+    return { sucesso: false, mensagem };
   }
 };
 

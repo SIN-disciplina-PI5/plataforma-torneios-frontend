@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Trophy, AlertCircle, Plus, X, Pencil } from "lucide-react";
-import { clsx } from "clsx";
 
 import type { Tournament, AdminDialogState } from "@/app/types/torneios";
-import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
+import { getTorneios, deleteTorneio, gerarChaveTorneio } from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
@@ -18,6 +16,7 @@ export default function AdminTorneiosPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<AdminDialogState>("idle");
   const [selected, setSelected] = useState<Tournament | null>(null);
+  const [generateMatchesMessage, setGenerateMatchesMessage] = useState("");
 
   useEffect(() => {
     const fetchTorneios = async () => {
@@ -61,6 +60,28 @@ export default function AdminTorneiosPage() {
     setDialogState("registrations");
   }
 
+  async function handleGenerateMatches(tournament: Tournament) {
+    setSelected(tournament);
+    setGenerateMatchesMessage("");
+    setDialogState("generatingMatches");
+
+    const result = await gerarChaveTorneio(tournament.id_torneio);
+
+    if (!result.sucesso) {
+      setGenerateMatchesMessage(result.mensagem || "Erro ao gerar partidas.");
+      setDialogState("errorGenerateMatches");
+      return;
+    }
+
+    const totalText =
+      typeof result.totalPartidas === "number"
+        ? `${result.totalPartidas} partida(s) gerada(s). `
+        : "";
+
+    setGenerateMatchesMessage(`${totalText}${result.mensagem || "Chave do torneio gerada."}`);
+    setDialogState("generateMatches");
+  }
+
   async function handleConfirmDelete() {
     if (!selected) return;
     setDialogState("loadingDelete");
@@ -81,6 +102,7 @@ export default function AdminTorneiosPage() {
   function handleClose() {
     setDialogState("idle");
     setSelected(null);
+    setGenerateMatchesMessage("");
   }
 
   if (loading) {
@@ -136,6 +158,7 @@ export default function AdminTorneiosPage() {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
                 onViewRegistrations={handleViewRegistrations}
+                onGenerateMatches={handleGenerateMatches}
               />
             ))}
           </div>
@@ -151,6 +174,7 @@ export default function AdminTorneiosPage() {
         tournament={selected}
         onClose={handleClose}
         onConfirmDelete={handleConfirmDelete}
+        generateMatchesMessage={generateMatchesMessage}
         onTournamentCreated={(newTournament) => {
           setTournaments((prev) => [...prev, newTournament]);
         }}

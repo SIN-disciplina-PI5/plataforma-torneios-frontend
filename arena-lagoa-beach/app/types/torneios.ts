@@ -53,7 +53,10 @@ export type AdminDialogState =
   | "errorDelete"
   | "edit"
   | "create"
-  | "registrations";
+  | "registrations"
+  | "generatingMatches"
+  | "generateMatches"
+  | "errorGenerateMatches";
 
 export type TorneioCriacaoErrorType =
   | "duplicate-name"
@@ -73,6 +76,12 @@ export interface TorneioCriacaoResponse {
   sucesso: boolean;
   erro?: TorneioCriacaoError;
   dados?: Tournament;
+}
+
+export interface GerarChaveResponse {
+  sucesso: boolean;
+  mensagem?: string;
+  totalPartidas?: number;
 }
 
 export type UserInscriptionResponse =
