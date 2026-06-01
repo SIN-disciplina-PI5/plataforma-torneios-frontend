@@ -2,39 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { CheckCircle2, Info, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { CheckCircle2, Info, Pencil, Trash2, X } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
-/*  CONFIG                                                            */
+/*  CONFIG                                                             */
 /* ------------------------------------------------------------------ */
 
-/* Base da API. Para testar contra o back end LOCAL, cr*/
 const API =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://plataforma-torneios-backend-mocha.vercel.app';
 const FINALIZADA = 'FINALIZADA';
-
-/* Duplas mockadas: o back end ainda não retorna as equipes da partida. */
-const duplas = [
-  {
-    id: 1,
-    titulo: 'Dupla 1',
-    jogadores: [
-      { nome: 'Karen Den', avatar: 'https://i.pravatar.cc/100?img=12' },
-      { nome: 'Julia Silva', avatar: 'https://i.pravatar.cc/100?img=32' },
-    ],
-  },
-  {
-    id: 2,
-    titulo: 'Dupla 2',
-    jogadores: [
-      { nome: 'Marcio Lima', avatar: 'https://i.pravatar.cc/100?img=47' },
-      { nome: 'Homer Cidio', avatar: 'https://i.pravatar.cc/100?img=20' },
-    ],
-  },
-];
-type Dupla = (typeof duplas)[number];
 
 const fases: [string, string][] = [
   ['OITAVAS_DE_FINAL', 'Oitavas de Finais'],
@@ -42,12 +19,19 @@ const fases: [string, string][] = [
   ['SEMI_FINAL', 'Semifinais'],
   ['FINAL', 'Finais'],
 ];
-const abas: [string, string][] = [
-  ['TODOS', 'Todos'],
-  ...fases,
-  ['FINALIZADAS', 'Finalizadas'],
-];
 const labelFase = (v: string) => fases.find((f) => f[0] === v)?.[1] ?? v;
+
+type Membro = {
+  id_usuario: string;
+  nome: string;
+  foto_perfil: string | null;
+};
+
+type Equipe = {
+  id_equipe: string;
+  nome: string;
+  membros: Membro[];
+};
 
 type Partida = {
   id: string;
@@ -59,10 +43,11 @@ type Partida = {
   placarB: number | null;
   vencedorId: string | null;
   resultado: string | null;
+  equipes: Equipe[];
 };
 
 /* ------------------------------------------------------------------ */
-/*  HELPERS                                                           */
+/*  HELPERS                                                            */
 /* ------------------------------------------------------------------ */
 
 const getToken = () =>
@@ -79,8 +64,14 @@ const auth = (json = false): HeadersInit => {
 function parsePlacar(p: unknown): [number | null, number | null] {
   if (p == null || p === '') return [null, null];
   if (typeof p === 'string') {
-    const [a, b] = p.split(/[xX-]/);
-    return [Number(a) || 0, Number(b) || 0];
+    const parts = p.split(/[xX\-]/);
+    const a = parts[0];
+    const b = parts[1];
+    if (a === undefined || b === undefined) return [null, null];
+    const na = Number(a);
+    const nb = Number(b);
+    if (Number.isNaN(na) || Number.isNaN(nb)) return [null, null];
+    return [na, nb];
   }
   const o = p as { a?: number; b?: number };
   return [Number(o.a) || 0, Number(o.b) || 0];
@@ -98,12 +89,16 @@ function toPartida(r: Record<string, unknown>): Partida {
     placarB: b,
     vencedorId: (r.vencedor_id as string) ?? null,
     resultado: (r.resultado as string) ?? null,
+    equipes: (r.equipes as Equipe[]) ?? [],
   };
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/* Agrupa partidas por dia, com rótulo Hoje / Amanhã / Ontem / dia da semana. */
+/** A match is "finalizada" only when its status says so — date is irrelevant. */
+const isFinalizada = (p: Partida) =>
+  p.status.toUpperCase() === FINALIZADA;
+
 function grupoDe(iso: string | null) {
   if (!iso) return { ordem: Infinity, label: 'Sem data definida' };
   const d = new Date(iso);
@@ -139,7 +134,6 @@ function horaDe(iso: string | null) {
     : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-/* Decodifica o payload do JWT (lida com acentos). */
 function decodeJwt(t: string): Record<string, unknown> | null {
   try {
     const b = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
@@ -152,7 +146,6 @@ function decodeJwt(t: string): Record<string, unknown> | null {
   }
 }
 
-/* Busca o NOME do admin logado (campo `nome`, nunca o e-mail). */
 function useAdminNome() {
   const [nome, setNome] = useState('Administrador');
 
@@ -160,7 +153,9 @@ function useAdminNome() {
     const t = getToken();
     if (!t) return;
     const p = decodeJwt(t) || {};
-    const id = (p.id_usuario || p.id || p.sub || p.userId) as string | undefined;
+    const id = (p.id_usuario || p.id || p.sub || p.userId) as
+      | string
+      | undefined;
 
     (async () => {
       const urls = [
@@ -179,7 +174,6 @@ function useAdminNome() {
           /* tenta a próxima */
         }
       }
-      // Fallback: nome dentro do token (se houver). Nunca usa o e-mail.
       const tokenNome = (p.nome || p.name) as string | undefined;
       if (tokenNome) setNome(tokenNome);
     })();
@@ -195,7 +189,7 @@ function useAdminNome() {
 export default function PartidasPage() {
   const nome = useAdminNome();
   const [partidas, setPartidas] = useState<Partida[]>([]);
-  const [aba, setAba] = useState('TODOS');
+  const [aba, setAba] = useState<string>('TODOS');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [infoId, setInfoId] = useState<string | null>(null);
@@ -219,14 +213,52 @@ export default function PartidasPage() {
 
   useEffect(() => {
     carregar();
+    // Auto-refresh every 30 s so finished tournaments disappear automatically
+    const id = setInterval(carregar, 30_000);
+    return () => clearInterval(id);
   }, [carregar]);
 
+  /**
+   * A tournament tab is shown only while it has at least one non-FINALIZADA match.
+   * When every match in a tournament is finalised the tab disappears automatically.
+   */
+  const torneiosAtivos = useMemo(() => {
+    const seen = new Set<string>();
+    const lista: string[] = [];
+    for (const p of partidas) {
+      const t = p.torneio;
+      if (!t || seen.has(t)) continue;
+      seen.add(t);
+      const temAtivas = partidas.some(
+        (x) => x.torneio === t && !isFinalizada(x),
+      );
+      if (temAtivas) lista.push(t);
+    }
+    return lista;
+  }, [partidas]);
+
+  const abas: [string, string][] = useMemo(
+    () => [
+      ['TODOS', 'Todos'],
+      ...torneiosAtivos.map((t): [string, string] => [t, t]),
+      ['FINALIZADAS', 'Finalizadas'],
+    ],
+    [torneiosAtivos],
+  );
+
+  // If the active tab disappears, fall back to TODOS
+  useEffect(() => {
+    const validos = abas.map(([v]) => v);
+    if (!validos.includes(aba)) setAba('TODOS');
+  }, [abas, aba]);
+
   const grupos = useMemo(() => {
-    const fim = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
     const lista = partidas.filter((p) => {
-      if (aba === 'FINALIZADAS') return fim(p);
-      if (fim(p)) return false;
-      return aba === 'TODOS' || p.fase === aba;
+      // "Finalizadas" tab — only status FINALIZADA
+      if (aba === 'FINALIZADAS') return isFinalizada(p);
+      // All other tabs — exclude FINALIZADA matches
+      if (isFinalizada(p)) return false;
+      return aba === 'TODOS' || p.torneio === aba;
     });
 
     const mapa = new Map<string, { ordem: number; itens: Partida[] }>();
@@ -246,8 +278,9 @@ export default function PartidasPage() {
     const id = excluir.id;
     setExcluir(null);
     try {
-      const r = await fetch(`${API}/api/partidas/delete/${id}`, {
-        method: 'DELETE', 
+      // Correct endpoint: DELETE /api/partidas/:id
+      const r = await fetch(`${API}/api/partidas/${id}`, {
+        method: 'DELETE',
         headers: auth(),
       });
       if (!r.ok)
@@ -263,23 +296,17 @@ export default function PartidasPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8">
-        {/* Cabeçalho: nome + botão criar na mesma linha */}
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        {/* Header — no "Criar Partida" button */}
+        <header className="mb-6 flex flex-wrap items-center gap-3">
           <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">
               ⚽
             </span>
             Olá, {nome}
           </h1>
-          <Link
-            href="/admin/criarPartida"
-            className="flex items-center gap-1.5 rounded-lg bg-[#25a51f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#208d1b]"
-          >
-            <Plus size={16} /> Criar Partida
-          </Link>
         </header>
 
-        {/* Abas */}
+        {/* Tabs */}
         <nav className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
           {abas.map(([v, label]) => (
             <button
@@ -354,14 +381,14 @@ export default function PartidasPage() {
         )}
       </div>
 
-      {/* Modal de detalhes (ícone de informação) */}
+      {/* Details modal */}
       {partidaInfo && (
         <Modal titulo="Detalhes da Partida" onClose={() => setInfoId(null)}>
           <DetalhesPartida partida={partidaInfo} />
         </Modal>
       )}
 
-      {/* Modal de exclusão (ícone de lixeira) */}
+      {/* Delete confirmation modal */}
       {excluir && (
         <Modal titulo="Excluir partida" onClose={() => setExcluir(null)}>
           <p className="text-sm text-gray-600">
@@ -392,7 +419,7 @@ export default function PartidasPage() {
 }
 
 /* ================================================================== */
-/*  COMPONENTES                                                       */
+/*  COMPONENTES                                                        */
 /* ================================================================== */
 
 function Linha({
@@ -406,26 +433,44 @@ function Linha({
   onEditar: () => void;
   onExcluir: () => void;
 }) {
+  const equipeA = partida.equipes[0];
+  const equipeB = partida.equipes[1];
+
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:px-4">
-      <div className="flex min-w-[230px] flex-1 items-center justify-center gap-3 sm:gap-5">
-        <Time dupla={duplas[0]} lado="dir" />
+      {/* Match area */}
+      <div className="flex min-w-[230px] flex-1 items-center justify-center gap-2 sm:gap-4">
+        <Time equipe={equipeA} />
         <Placar a={partida.placarA} b={partida.placarB} />
-        <Time dupla={duplas[1]} lado="esq" />
+        <Time equipe={equipeB} />
       </div>
 
+      {/* Time badge */}
       <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
         {horaDe(partida.horario)}
       </span>
 
+      {/* Actions */}
       <div className="flex shrink-0 items-center gap-0.5">
-        <BotaoIcone titulo="Detalhes" onClick={onInfo} cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600">
+        <BotaoIcone
+          titulo="Detalhes"
+          onClick={onInfo}
+          cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+        >
           <Info size={17} />
         </BotaoIcone>
-        <BotaoIcone titulo="Editar" onClick={onEditar} cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700">
+        <BotaoIcone
+          titulo="Editar"
+          onClick={onEditar}
+          cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+        >
           <Pencil size={16} />
         </BotaoIcone>
-        <BotaoIcone titulo="Excluir" onClick={onExcluir} cor="text-red-400 hover:bg-red-50 hover:text-red-600">
+        <BotaoIcone
+          titulo="Excluir"
+          onClick={onExcluir}
+          cor="text-red-400 hover:bg-red-50 hover:text-red-600"
+        >
           <Trash2 size={16} />
         </BotaoIcone>
       </div>
@@ -433,16 +478,30 @@ function Linha({
   );
 }
 
-function Time({ dupla, lado }: { dupla: Dupla; lado: 'esq' | 'dir' }) {
+/**
+ * Each team is displayed as a centered column: avatar on top, name below.
+ * This naturally centres both teams relative to the score in the middle.
+ */
+function Time({ equipe }: { equipe: Equipe | undefined }) {
+  if (!equipe) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
+        <span className="text-xs text-gray-400">A definir</span>
+      </div>
+    );
+  }
+
+  const primeiroMembro = equipe.membros[0];
+
   return (
-    <div
-      className={`flex min-w-0 flex-1 items-center gap-2 ${
-        lado === 'esq' ? 'justify-start' : 'flex-row-reverse justify-end'
-      }`}
-    >
-      <Avatar src={dupla.jogadores[0].avatar} nome={dupla.titulo} />
-      <span className="truncate text-sm font-medium text-gray-800">
-        {dupla.titulo}
+    <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5">
+      <Avatar
+        src={primeiroMembro?.foto_perfil ?? null}
+        nome={equipe.nome}
+        size={42}
+      />
+      <span className="max-w-[150px] text-xs font-medium leading-tight text-gray-800 line-clamp-2">
+        {equipe.nome}
       </span>
     </div>
   );
@@ -458,7 +517,7 @@ function Placar({ a, b }: { a: number | null; b: number | null }) {
   }
   return (
     <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
-      {a} - {b}
+      {a} – {b}
     </span>
   );
 }
@@ -492,10 +551,27 @@ function Avatar({
   nome,
   size = 30,
 }: {
-  src: string;
+  src: string | null;
   nome: string;
   size?: number;
 }) {
+  if (!src) {
+    const initials = nome
+      .split(' ')
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('');
+    return (
+      <span
+        role="img"
+        aria-label={nome}
+        className="shrink-0 flex items-center justify-center rounded-full bg-gray-300 text-[10px] font-bold text-gray-600"
+        style={{ width: size, height: size }}
+      >
+        {initials}
+      </span>
+    );
+  }
   return (
     <span
       role="img"
@@ -507,6 +583,9 @@ function Avatar({
 }
 
 function DetalhesPartida({ partida }: { partida: Partida }) {
+  const equipeA = partida.equipes[0];
+  const equipeB = partida.equipes[1];
+
   return (
     <>
       <p className="mb-1 text-sm font-medium text-gray-700">
@@ -517,18 +596,30 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
       </p>
 
       <div className="flex items-stretch gap-3">
-        <ColunaDupla dupla={duplas[0]} />
+        {equipeA ? (
+          <ColunaDupla equipe={equipeA} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center rounded-lg bg-gray-50 p-3 text-xs text-gray-400">
+            A definir
+          </div>
+        )}
         <div className="flex flex-col items-center justify-center px-1">
           <span className="text-2xl font-bold text-gray-800">
             {partida.placarA != null
-              ? `${partida.placarA} - ${partida.placarB}`
-              : '—:—'}
+              ? `${partida.placarA} – ${partida.placarB}`
+              : '—'}
           </span>
           <span className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">
             Placar
           </span>
         </div>
-        <ColunaDupla dupla={duplas[1]} />
+        {equipeB ? (
+          <ColunaDupla equipe={equipeB} />
+        ) : (
+          <div className="flex flex-1 items-center justify-center rounded-lg bg-gray-50 p-3 text-xs text-gray-400">
+            A definir
+          </div>
+        )}
       </div>
 
       {partida.resultado && (
@@ -540,17 +631,17 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
   );
 }
 
-function ColunaDupla({ dupla }: { dupla: Dupla }) {
+function ColunaDupla({ equipe }: { equipe: Equipe }) {
   return (
     <div className="flex-1 rounded-lg bg-gray-50 p-3">
       <p className="mb-3 text-center text-sm font-semibold text-gray-800">
-        {dupla.titulo}
+        {equipe.nome}
       </p>
       <ul className="space-y-2">
-        {dupla.jogadores.map((j) => (
-          <li key={j.nome} className="flex items-center gap-2">
-            <Avatar src={j.avatar} nome={j.nome} size={24} />
-            <span className="truncate text-xs text-gray-700">{j.nome}</span>
+        {equipe.membros.map((m) => (
+          <li key={m.id_usuario} className="flex items-center gap-2">
+            <Avatar src={m.foto_perfil} nome={m.nome} size={24} />
+            <span className="truncate text-xs text-gray-700">{m.nome}</span>
           </li>
         ))}
       </ul>
@@ -604,7 +695,7 @@ function Modal({
 }
 
 /* ------------------------------------------------------------------ */
-/*  CARD DE EDIÇÃO — mantém o rascunho                                */
+/*  CARD DE EDIÇÃO                                                     */
 /* ------------------------------------------------------------------ */
 
 function EditarPartida({
@@ -622,7 +713,7 @@ function EditarPartida({
   const [hora, setHora] = useState('');
   const [a, setA] = useState(0);
   const [b, setB] = useState(0);
-  const [vencedor, setVencedor] = useState<number | null>(null);
+  const [vencedorId, setVencedorId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
@@ -644,10 +735,13 @@ function EditarPartida({
         setFase(p.fase);
         setA(p.placarA ?? 0);
         setB(p.placarB ?? 0);
+        setVencedorId(p.vencedorId);
         if (p.horario) {
           const d = new Date(p.horario);
           const z = (n: number) => String(n).padStart(2, '0');
-          setData(`${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`);
+          setData(
+            `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`,
+          );
           setHora(`${z(d.getHours())}:${z(d.getMinutes())}`);
         }
       } catch (e) {
@@ -667,20 +761,22 @@ function EditarPartida({
     setSalvando(true);
     setErro('');
     try {
+      const equipeVencedora = partida.equipes.find(
+        (e) => e.id_equipe === vencedorId,
+      );
       const r = await fetch(`${API}/api/partidas/${id}`, {
         method: 'PATCH',
         headers: auth(true),
         body: JSON.stringify({
           fase,
-          // Converte a data/hora LOCAL dos inputs para ISO UTC
           horario:
             data && hora ? new Date(`${data}T${hora}`).toISOString() : null,
           placar: `${a}x${b}`,
-          vencedor_id: vencedor ? String(vencedor) : partida.vencedorId,
-          resultado: vencedor
-            ? `${duplas.find((d) => d.id === vencedor)?.titulo} vencedora`
+          vencedor_id: vencedorId ?? partida.vencedorId,
+          resultado: equipeVencedora
+            ? `${equipeVencedora.nome} vencedora`
             : partida.resultado,
-          status: vencedor ? FINALIZADA : partida.status,
+          status: vencedorId ? FINALIZADA : partida.status,
         }),
       });
       const j = await r.json().catch(() => ({}));
@@ -718,7 +814,7 @@ function EditarPartida({
         </p>
       ) : (
         <>
-          {/* Abas de fase */}
+          {/* Phase tabs */}
           <div className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
             {fases.map(([v, label]) => (
               <button
@@ -743,7 +839,7 @@ function EditarPartida({
             </p>
           )}
 
-          {/* Data e horário */}
+          {/* Date & time */}
           <div className="mb-6 grid gap-4 sm:max-w-md sm:grid-cols-2">
             <Campo label="Data da Partida">
               <input
@@ -763,53 +859,72 @@ function EditarPartida({
             </Campo>
           </div>
 
-          {/* Placar */}
+          {/* Score */}
           <p className="mb-3 text-sm font-medium text-gray-700">
             Resultado Final da Partida
           </p>
           <div className="mb-6 flex items-end gap-4">
-            <NumeroPlacar label={duplas[0].titulo} valor={a} onChange={setA} />
+            <NumeroPlacar
+              label={partida.equipes[0]?.nome ?? 'Equipe A'}
+              valor={a}
+              onChange={setA}
+            />
             <span className="pb-3 text-lg font-semibold text-gray-400">-</span>
-            <NumeroPlacar label={duplas[1].titulo} valor={b} onChange={setB} />
+            <NumeroPlacar
+              label={partida.equipes[1]?.nome ?? 'Equipe B'}
+              valor={b}
+              onChange={setB}
+            />
           </div>
 
-          {/* Dupla vencedora */}
-          <p className="mb-3 text-sm font-medium text-gray-700">
-            Dupla Vencedora
-          </p>
-          <div className="mb-7 space-y-2">
-            {duplas.map((d) => {
-              const sel = vencedor === d.id;
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setVencedor(d.id)}
-                  className={`flex w-full max-w-sm items-center justify-between rounded-md border px-3 py-2.5 transition ${
-                    sel
-                      ? 'border-[#25a51f] bg-green-50'
-                      : 'border-transparent bg-gray-50 hover:bg-gray-100'
-                  }`}
-                >
-                  <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {d.jogadores.map((j) => (
-                      <span key={j.nome} className="flex items-center gap-2">
-                        <Avatar src={j.avatar} nome={j.nome} size={24} />
-                        <span className="text-xs font-medium text-gray-700">
-                          {j.nome}
-                        </span>
+          {/* Winner */}
+          {partida.equipes.length > 0 && (
+            <>
+              <p className="mb-3 text-sm font-medium text-gray-700">
+                Equipe Vencedora
+              </p>
+              <div className="mb-7 space-y-2">
+                {partida.equipes.map((equipe) => {
+                  const sel = vencedorId === equipe.id_equipe;
+                  return (
+                    <button
+                      key={equipe.id_equipe}
+                      type="button"
+                      onClick={() => setVencedorId(equipe.id_equipe)}
+                      className={`flex w-full max-w-sm items-center justify-between rounded-md border px-3 py-2.5 transition ${
+                        sel
+                          ? 'border-[#25a51f] bg-green-50'
+                          : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        {equipe.membros.map((m) => (
+                          <span
+                            key={m.id_usuario}
+                            className="flex items-center gap-2"
+                          >
+                            <Avatar
+                              src={m.foto_perfil}
+                              nome={m.nome}
+                              size={24}
+                            />
+                            <span className="text-xs font-medium text-gray-700">
+                              {m.nome}
+                            </span>
+                          </span>
+                        ))}
                       </span>
-                    ))}
-                  </span>
-                  <CheckCircle2
-                    size={16}
-                    className={sel ? 'text-[#25a51f]' : 'text-gray-300'}
-                    fill={sel ? '#25a51f' : 'transparent'}
-                  />
-                </button>
-              );
-            })}
-          </div>
+                      <CheckCircle2
+                        size={16}
+                        className={sel ? 'text-[#25a51f]' : 'text-gray-300'}
+                        fill={sel ? '#25a51f' : 'transparent'}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <button
             type="button"
