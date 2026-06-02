@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { CheckCircle2, Info, Pencil, Trash2, X } from "lucide-react";
+import { CheckCircle2, Info, Pencil, X } from "lucide-react";
 import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 /* ------------------------------------------------------------------ */
@@ -187,7 +187,6 @@ export default function PartidasPage() {
   const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [excluir, setExcluir] = useState<Partida | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -205,15 +204,9 @@ export default function PartidasPage() {
   }, []);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void carregar();
-    }, 0);
-
+    const timeoutId = window.setTimeout(() => { void carregar(); }, 0);
     const id = setInterval(carregar, 30_000);
-    return () => {
-      window.clearTimeout(timeoutId);
-      clearInterval(id);
-    };
+    return () => { window.clearTimeout(timeoutId); clearInterval(id); };
   }, [carregar]);
 
   const torneiosAtivos = useMemo(() => {
@@ -223,9 +216,7 @@ export default function PartidasPage() {
       const t = p.torneio;
       if (!t || seen.has(t)) continue;
       seen.add(t);
-      const temAtivas = partidas.some(
-        (x) => x.torneio === t && !isFinalizada(x),
-      );
+      const temAtivas = partidas.some((x) => x.torneio === t && !isFinalizada(x));
       if (temAtivas) lista.push(t);
     }
     return lista;
@@ -259,26 +250,15 @@ export default function PartidasPage() {
       atual.itens.push(p);
       mapa.set(g.label, atual);
     }
+
     return [...mapa.entries()]
-      .sort((a, b) => a[1].ordem - b[1].ordem)
+      .sort((a, b) =>
+        abaAtual === "FINALIZADAS"
+          ? b[1].ordem - a[1].ordem
+          : a[1].ordem - b[1].ordem,
+      )
       .map(([label, v]) => ({ label, itens: v.itens }));
   }, [partidas, abaAtual]);
-
-  async function confirmarExclusao() {
-    if (!excluir) return;
-    const id = excluir.id;
-    setExcluir(null);
-    try {
-      const r = await fetch(`${API}/api/partidas/${id}`, {
-        method: "DELETE",
-        headers: auth(),
-      });
-      if (!r.ok) throw new Error(`Falha ao excluir partida (HTTP ${r.status})`);
-      setPartidas((prev) => prev.filter((p) => p.id !== id));
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao excluir partida");
-    }
-  }
 
   const partidaInfo = partidas.find((p) => p.id === infoId) || null;
 
@@ -287,9 +267,7 @@ export default function PartidasPage() {
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8">
         <header className="mb-6 flex flex-wrap items-center gap-3">
           <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">
-              ⚽
-            </span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">⚽</span>
             Olá, {nome}
           </h1>
         </header>
@@ -301,9 +279,7 @@ export default function PartidasPage() {
               type="button"
               onClick={() => setAba(v)}
               className={`relative whitespace-nowrap pb-3 text-sm transition ${
-                abaAtual === v
-                  ? "font-semibold text-black"
-                  : "text-gray-400 hover:text-gray-600"
+                abaAtual === v ? "font-semibold text-black" : "text-gray-400 hover:text-gray-600"
               }`}
             >
               {label}
@@ -317,11 +293,7 @@ export default function PartidasPage() {
         {erro && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <span>{erro}</span>
-            <button
-              type="button"
-              onClick={carregar}
-              className="shrink-0 font-semibold underline"
-            >
+            <button type="button" onClick={carregar} className="shrink-0 font-semibold underline">
               Tentar novamente
             </button>
           </div>
@@ -331,17 +303,12 @@ export default function PartidasPage() {
           <EditarPartida
             id={editId}
             onClose={() => setEditId(null)}
-            onSalvo={() => {
-              setEditId(null);
-              carregar();
-            }}
+            onSalvo={() => { setEditId(null); carregar(); }}
           />
         )}
 
         {carregando ? (
-          <p className="py-16 text-center text-sm text-gray-500">
-            Carregando partidas...
-          </p>
+          <p className="py-16 text-center text-sm text-gray-500">Carregando partidas...</p>
         ) : grupos.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500">
             Nenhuma partida encontrada.
@@ -358,7 +325,6 @@ export default function PartidasPage() {
                       partida={p}
                       onInfo={() => setInfoId(p.id)}
                       onEditar={() => setEditId(p.id)}
-                      onExcluir={() => setExcluir(p)}
                     />
                   ))}
                 </ul>
@@ -373,32 +339,6 @@ export default function PartidasPage() {
           <DetalhesPartida partida={partidaInfo} />
         </Modal>
       )}
-
-      {excluir && (
-        <Modal titulo="Excluir partida" onClose={() => setExcluir(null)}>
-          <p className="text-sm text-gray-600">
-            Tem certeza que deseja excluir esta partida
-            {excluir.torneio ? ` de ${excluir.torneio}` : ""} (
-            {labelFase(excluir.fase)})? Esta ação não pode ser desfeita.
-          </p>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setExcluir(null)}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={confirmarExclusao}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-            >
-              Excluir
-            </button>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
@@ -407,74 +347,77 @@ function Linha({
   partida,
   onInfo,
   onEditar,
-  onExcluir,
 }: {
   partida: Partida;
   onInfo: () => void;
   onEditar: () => void;
-  onExcluir: () => void;
 }) {
   const equipeA = partida.equipes[0];
   const equipeB = partida.equipes[1];
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:px-4">
-      <div className="flex min-w-[230px] flex-1 items-center justify-center gap-2 sm:gap-4">
-        <Time equipe={equipeA} />
+    <li className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:flex-row sm:items-center sm:px-4">
+      <div className="flex flex-1 items-center justify-between gap-2 sm:justify-center sm:gap-4">
+        <Time equipe={equipeA} align="left" />
         <Placar a={partida.placarA} b={partida.placarB} />
-        <Time equipe={equipeB} />
+        <Time equipe={equipeB} align="right" />
       </div>
 
-      <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-        {horaDe(partida.horario)}
-      </span>
-
-      <div className="flex shrink-0 items-center gap-0.5">
-        <BotaoIcone
-          titulo="Detalhes"
-          onClick={onInfo}
-          cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-        >
-          <Info size={17} />
-        </BotaoIcone>
-        <BotaoIcone
-          titulo="Editar"
-          onClick={onEditar}
-          cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-        >
-          <Pencil size={16} />
-        </BotaoIcone>
-        <BotaoIcone
-          titulo="Excluir"
-          onClick={onExcluir}
-          cor="text-red-400 hover:bg-red-50 hover:text-red-600"
-        >
-          <Trash2 size={16} />
-        </BotaoIcone>
+      <div className="flex items-center justify-between sm:justify-end sm:gap-2">
+        <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+          {horaDe(partida.horario)}
+        </span>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <BotaoIcone titulo="Detalhes" onClick={onInfo} cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600">
+            <Info size={17} />
+          </BotaoIcone>
+          <BotaoIcone titulo="Editar" onClick={onEditar} cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700">
+            <Pencil size={16} />
+          </BotaoIcone>
+        </div>
       </div>
     </li>
   );
 }
 
-function Time({ equipe }: { equipe: Equipe | undefined }) {
+function Time({
+  equipe,
+  align = "left",
+}: {
+  equipe: Equipe | undefined;
+  align?: "left" | "right";
+}) {
   if (!equipe) {
     return (
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
+      <div className="flex min-w-0 flex-1 items-center justify-center">
         <span className="text-xs text-gray-400">A definir</span>
       </div>
     );
   }
 
-  const primeiroMembro = equipe.membros[0];
+  const [membroA, membroB] = equipe.membros;
+
+  const avatares = (
+    <div className="flex shrink-0 items-center -space-x-2">
+      {membroA && <Avatar src={membroA.foto_perfil} nome={membroA.nome} size={36} />}
+      {membroB && <Avatar src={membroB.foto_perfil} nome={membroB.nome} size={36} />}
+    </div>
+  );
 
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5">
-      <Avatar
-        src={primeiroMembro?.foto_perfil ?? null}
-        nome={equipe.nome}
-        size={42}
-      />
-      <span className="max-w-[150px] text-xs font-medium leading-tight text-gray-800 line-clamp-2">
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-2 ${
+        align === "right"
+          ? "flex-row-reverse justify-start sm:justify-center"
+          : "justify-start sm:justify-center"
+      }`}
+    >
+      {avatares}
+      <span
+        className={`max-w-[80px] text-xs font-semibold leading-tight text-gray-800 line-clamp-2 sm:max-w-[110px] sm:text-sm ${
+          align === "right" ? "text-right sm:text-left" : "text-left"
+        }`}
+      >
         {equipe.nome}
       </span>
     </div>
