@@ -7,10 +7,11 @@ import React from "react"
 export default function LogoArena() {
   const pathname = usePathname()
   const router = useRouter()
+  const isHome = pathname === "/"
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (pathname === "/") {
+    if (isHome) {
     
       if (typeof window !== "undefined") window.location.reload()
       return
@@ -19,17 +20,21 @@ export default function LogoArena() {
   }
 
   return (
-    <div style={{position: 'fixed', top: 24, left: 48, zIndex: 9999, pointerEvents: 'auto'}}>
-      <a href="/" onClick={handleClick} aria-label="Ir para página inicial">
+    <div
+      className={`fixed top-4 z-[9999] pointer-events-auto sm:left-12 sm:right-auto sm:top-6 ${
+        isHome ? "left-4" : "right-4"
+      }`}
+    >
+      <Link href="/" onClick={handleClick} aria-label="Ir para página inicial">
         <Image
           src="/logo-arena.svg"
           alt="Logo Arena"
           width={120}
           height={38}
-          style={{objectFit: 'contain', width: 'clamp(64px, 8vw, 160px)', height: 'auto', display: 'block'}}
+          className="block h-auto w-[76px] object-contain sm:w-[clamp(64px,8vw,160px)]"
           priority
         />
-      </a>
+      </Link>
     </div>
   )
 }

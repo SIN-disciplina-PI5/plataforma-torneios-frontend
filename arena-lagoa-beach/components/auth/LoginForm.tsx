@@ -124,7 +124,7 @@ export function LoginForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
@@ -138,7 +138,7 @@ export function LoginForm() {
           />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Senha
           </label>
@@ -162,7 +162,7 @@ export function LoginForm() {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -184,7 +184,7 @@ export function LoginForm() {
           </Link>
         </div>
 
-        <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
+        <div className="mb-3 flex max-w-full justify-center overflow-x-auto sm:mb-4">
           <Recaptcha
             ref={recaptchaRef}
             onChange={setCaptchaToken}

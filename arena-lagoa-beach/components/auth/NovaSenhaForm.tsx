@@ -60,7 +60,7 @@ export function NovaSenhaForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4 relative">
+        <div className="relative mb-3 sm:mb-4">
           <label
             htmlFor="password"
             className="absolute -top-2 left-3 bg-white px-1 text-gray-700 text-sm font-poppins"
@@ -80,7 +80,7 @@ focus:outline-none focus:border-[#C2E96A]"
           />
         </div>
 
-        <div className="mb-4 relative">
+        <div className="relative mb-3 sm:mb-4">
           <label
             htmlFor="confirmPassword"
             className="absolute -top-2 left-3 bg-white px-1 text-gray-700 text-sm font-poppins"
