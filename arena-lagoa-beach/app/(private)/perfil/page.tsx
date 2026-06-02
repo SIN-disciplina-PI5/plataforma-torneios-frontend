@@ -150,7 +150,6 @@ export default function MeuPerfil() {
               titulo: "Senha alterada",
               mensagem: "Sua senha foi alterada com sucesso.",
               tipo: "success",
-              lida: false,
             });
           } catch (error) {
             console.error("Erro ao registrar notificação:", error);
