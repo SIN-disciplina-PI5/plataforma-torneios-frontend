@@ -11,6 +11,8 @@ import {
   updateMeuPerfil,
   deleteMinhaConta,
 } from "@/app/services/perfilService";
+import { criarNotificacao } from "@/app/services/notificacaoService";
+import type { UpdatePerfilRequest } from "@/app/types/perfil";
 
 import {
   AlertDialog,
@@ -150,6 +152,19 @@ export default function MeuPerfil() {
         }
 
         await updateMeuPerfil(payload);
+
+        if (payload.senha) {
+          try {
+            await criarNotificacao({
+              titulo: "Senha alterada",
+              mensagem: "Sua senha foi alterada com sucesso.",
+              tipo: "success",
+            });
+          } catch (error) {
+            console.error("Erro ao registrar notificação:", error);
+          }
+        }
+
         toast.success("Perfil atualizado com sucesso!");
         window.dispatchEvent(new Event("avatarUpdated"));
 
