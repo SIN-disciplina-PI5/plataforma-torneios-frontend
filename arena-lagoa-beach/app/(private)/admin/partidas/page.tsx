@@ -5,10 +5,6 @@ import type { ReactNode } from "react";
 import { CheckCircle2, Info, Pencil, X } from "lucide-react";
 import { AVATAR_PADRAO } from "@/app/utils/auth";
 
-/* ------------------------------------------------------------------ */
-/* CONFIG                                                            */
-/* ------------------------------------------------------------------ */
-
 const API =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://plataforma-torneios-backend-mocha.vercel.app";
@@ -46,10 +42,6 @@ type Partida = {
   resultado: string | null;
   equipes: Equipe[];
 };
-
-/* ------------------------------------------------------------------ */
-/* HELPERS                                                           */
-/* ------------------------------------------------------------------ */
 
 const getToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -204,9 +196,14 @@ export default function PartidasPage() {
   }, []);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => { void carregar(); }, 0);
+    const timeoutId = window.setTimeout(() => {
+      void carregar();
+    }, 0);
     const id = setInterval(carregar, 30_000);
-    return () => { window.clearTimeout(timeoutId); clearInterval(id); };
+    return () => {
+      window.clearTimeout(timeoutId);
+      clearInterval(id);
+    };
   }, [carregar]);
 
   const torneiosAtivos = useMemo(() => {
@@ -216,7 +213,9 @@ export default function PartidasPage() {
       const t = p.torneio;
       if (!t || seen.has(t)) continue;
       seen.add(t);
-      const temAtivas = partidas.some((x) => x.torneio === t && !isFinalizada(x));
+      const temAtivas = partidas.some(
+        (x) => x.torneio === t && !isFinalizada(x),
+      );
       if (temAtivas) lista.push(t);
     }
     return lista;
@@ -267,33 +266,40 @@ export default function PartidasPage() {
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8">
         <header className="mb-6 flex flex-wrap items-center gap-3">
           <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">⚽</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">
+              ⚽
+            </span>
             Olá, {nome}
           </h1>
         </header>
 
-        <nav className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
-          {abas.map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setAba(v)}
-              className={`relative whitespace-nowrap pb-3 text-sm transition ${
-                abaAtual === v ? "font-semibold text-black" : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              {label}
-              {abaAtual === v && (
-                <span className="absolute -bottom-px left-0 h-[3px] w-full rounded-full bg-[#25a51f]" />
-              )}
-            </button>
-          ))}
-        </nav>
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2">
+            {abas.map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setAba(v)}
+                className={`rounded-full px-4 py-2 text-[13px] sm:text-sm font-semibold transition-all cursor-pointer ${
+                  abaAtual === v
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {erro && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <span>{erro}</span>
-            <button type="button" onClick={carregar} className="shrink-0 font-semibold underline">
+            <button
+              type="button"
+              onClick={carregar}
+              className="shrink-0 font-semibold underline"
+            >
               Tentar novamente
             </button>
           </div>
@@ -303,12 +309,17 @@ export default function PartidasPage() {
           <EditarPartida
             id={editId}
             onClose={() => setEditId(null)}
-            onSalvo={() => { setEditId(null); carregar(); }}
+            onSalvo={() => {
+              setEditId(null);
+              carregar();
+            }}
           />
         )}
 
         {carregando ? (
-          <p className="py-16 text-center text-sm text-gray-500">Carregando partidas...</p>
+          <p className="py-16 text-center text-sm text-gray-500">
+            Carregando partidas...
+          </p>
         ) : grupos.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500">
             Nenhuma partida encontrada.
@@ -368,10 +379,18 @@ function Linha({
           {horaDe(partida.horario)}
         </span>
         <div className="flex shrink-0 items-center gap-0.5">
-          <BotaoIcone titulo="Detalhes" onClick={onInfo} cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600">
+          <BotaoIcone
+            titulo="Detalhes"
+            onClick={onInfo}
+            cor="text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+          >
             <Info size={17} />
           </BotaoIcone>
-          <BotaoIcone titulo="Editar" onClick={onEditar} cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700">
+          <BotaoIcone
+            titulo="Editar"
+            onClick={onEditar}
+            cor="text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+          >
             <Pencil size={16} />
           </BotaoIcone>
         </div>
@@ -399,8 +418,12 @@ function Time({
 
   const avatares = (
     <div className="flex shrink-0 items-center -space-x-2">
-      {membroA && <Avatar src={membroA.foto_perfil} nome={membroA.nome} size={36} />}
-      {membroB && <Avatar src={membroB.foto_perfil} nome={membroB.nome} size={36} />}
+      {membroA && (
+        <Avatar src={membroA.foto_perfil} nome={membroA.nome} size={36} />
+      )}
+      {membroB && (
+        <Avatar src={membroB.foto_perfil} nome={membroB.nome} size={36} />
+      )}
     </div>
   );
 

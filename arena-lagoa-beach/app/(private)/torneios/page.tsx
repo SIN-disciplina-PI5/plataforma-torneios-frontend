@@ -238,7 +238,6 @@ export default function TorneiosPage() {
           <h1 className="text-2xl sm:text-3xl font-semibold">⚽ Torneios</h1>
         </div>
 
-        {/* NAVEGAÇÃO DE ABAS - EM FORMATO DE "CHIPS" */}
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
             {TABS.map((tab) => (
@@ -311,7 +310,7 @@ export default function TorneiosPage() {
         )}
       </main>
 
-      {/* POPUPS MANTIDOS */}
+      {/* POPUPS */}
       {confirmacaoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
