@@ -361,6 +361,7 @@ export default function PartidasPage() {
             partida={partidaInfo}
             finalizando={finalizandoId === partidaInfo.id}
             onFinalizar={() => finalizarPartida(partidaInfo.id)}
+              
           />
         </Modal>
       )}
@@ -525,6 +526,7 @@ function DetalhesPartida({
   const equipeA = partida.equipes[0];
   const equipeB = partida.equipes[1];
   const partidaFinalizada = isFinalizada(partida);
+  const [confirmarFinalizacao, setConfirmarFinalizacao] = useState(false);
 
   return (
     <>
@@ -567,21 +569,52 @@ function DetalhesPartida({
           {partida.resultado}
         </p>
       )}
-      <div className="flex items-center justify-center"> 
+     
+        <div className="flex items-center justify-center">
         <button
-        type="button"
-        onClick={onFinalizar}
-        disabled={finalizando || partidaFinalizada}
-        className="mt-5 h-10 w-50  rounded-lg bg-red-600 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {finalizando ? "Finalizando..." : "Finalizar partida"}
-      </button>
+          type="button"
+          onClick={() => setConfirmarFinalizacao(true)}
+          disabled={finalizando || partidaFinalizada}
+          className="mt-5 h-10 w-50 rounded-lg bg-red-600 text-sm font-bold text-white"
+        >
+          {finalizando ? "Finalizando..." : "Finalizar partida"}
+        </button>
       </div>
-      
+
+      {confirmarFinalizacao && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-center text-lg font-bold">
+              Deseja finalizar a partida?
+            </h3>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmarFinalizacao(false);
+                  onFinalizar();
+                }}
+                className="flex-1 rounded-lg bg-red-600 py-2 text-white font-bold"
+              >
+                Sim
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfirmarFinalizacao(false)}
+                className="flex-1 rounded-lg bg-green-600 py-2 text-white font-bold"
+              >
+                Não
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
-
+  
 function ColunaDupla({ equipe }: { equipe: Equipe }) {
   return (
     <div className="flex-1 rounded-lg bg-gray-50 p-3">
