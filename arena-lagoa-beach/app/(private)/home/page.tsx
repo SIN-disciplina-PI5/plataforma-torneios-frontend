@@ -67,11 +67,21 @@ function AvatarUser({
   );
 }
 
-function TimeUser({ equipe }: { equipe: any }) {
+function TimeUser({
+  equipe,
+  rightAlign = false,
+}: {
+  equipe: any;
+  rightAlign?: boolean;
+}) {
   if (!equipe) {
     return (
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
-        <span className="text-xs text-gray-400">A definir</span>
+      <div
+        className={`flex items-center gap-2 w-full min-w-0 ${rightAlign ? "flex-row-reverse" : "flex-row"}`}
+      >
+        <span className="text-[11px] sm:text-xs text-gray-400 truncate w-full text-center sm:text-left">
+          A definir
+        </span>
       </div>
     );
   }
@@ -83,9 +93,15 @@ function TimeUser({ equipe }: { equipe: any }) {
     null;
 
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5">
-      <AvatarUser src={foto} nome={equipe.nome || "Time"} />
-      <span className="max-w-[150px] text-xs font-medium leading-tight text-gray-800 line-clamp-2">
+    <div
+      className={`flex items-center gap-1.5 sm:gap-2.5 w-full min-w-0 ${rightAlign ? "flex-row-reverse" : "flex-row"}`}
+    >
+      <div className="shrink-0 flex items-center justify-center">
+        <AvatarUser src={foto} nome={equipe.nome || "Time"} size={26} />
+      </div>
+      <span
+        className={`text-[11px] sm:text-[13px] font-semibold text-gray-800 truncate w-full ${rightAlign ? "text-right" : "text-left"}`}
+      >
         {equipe.nome || "Time"}
       </span>
     </div>
@@ -101,13 +117,13 @@ function PlacarUser({ partida }: { partida: any }) {
 
   if (!placarFinal || placarFinal.trim() === "" || placarFinal === "-") {
     return (
-      <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-400">
+      <span className="shrink-0 rounded-full bg-gray-100 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium text-gray-400 whitespace-nowrap">
         vs
       </span>
     );
   }
   return (
-    <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">
+    <span className="shrink-0 rounded-full bg-violet-100 px-2 sm:px-3 py-1 text-[11px] sm:text-sm font-bold text-violet-700 whitespace-nowrap">
       {placarFinal}
     </span>
   );
@@ -247,10 +263,10 @@ export default function ConteudoPartidas() {
   const gruposDePartidas = obterPartidasAgrupadas();
 
   return (
-    <div className="w-full bg-white font-sans p-8 min-h-screen">
+    <div className="w-full bg-white font-sans p-4 sm:p-8 min-h-screen">
       {/* Cabeçalho */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+        <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
           ⚽ Olá, {userName}
         </h1>
         <p className="text-[#a1a1aa] text-sm font-medium">
@@ -258,36 +274,42 @@ export default function ConteudoPartidas() {
         </p>
       </div>
 
-      {/* Navegação de Abas Dinâmica */}
-      <div className="flex gap-8 border-b border-gray-100 mb-6 text-sm font-medium text-[#a1a1aa] overflow-x-auto whitespace-nowrap">
-        {abas.map((aba) => (
-          <button
-            key={aba}
-            onClick={() => setAbaAtiva(aba)}
-            className={`pb-3 transition-colors cursor-pointer ${
-              abaAtiva === aba
-                ? "border-b-2 border-green-600 text-black font-semibold"
-                : "hover:text-gray-700"
-            }`}
-          >
-            {aba}
-          </button>
-        ))}
+      {/* NAVEGAÇÃO DE ABAS - EM FORMATO DE "CHIPS" (SEM ROLAGEM) */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2">
+          {abas.map((aba) => (
+            <button
+              key={aba}
+              onClick={() => setAbaAtiva(aba)}
+              className={`rounded-full px-4 py-2 text-[13px] sm:text-sm font-semibold transition-all ${
+                abaAtiva === aba
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {aba}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Lista de Partidas */}
       {loading ? (
-        <p className="text-gray-500 py-10">Carregando partidas...</p>
+        <p className="text-gray-500 py-10 text-center">
+          Carregando partidas...
+        </p>
       ) : gruposDePartidas.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500 mt-6">
+        <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500 mt-6 mx-2">
           Nenhuma partida encontrada para "{abaAtiva}".
         </p>
       ) : (
-        <div className="space-y-7">
+        <div className="space-y-6 sm:space-y-7">
           {gruposDePartidas.map((grupo) => (
             <section key={grupo.label}>
-              <h2 className="mb-3 text-sm text-gray-500">{grupo.label}</h2>
-              <ul className="space-y-2">
+              <h2 className="mb-3 text-sm text-gray-500 ml-1 font-medium">
+                {grupo.label}
+              </h2>
+              <ul className="space-y-3 sm:space-y-4">
                 {grupo.itens.map((partida: any) => {
                   const e1 =
                     partida.equipe1 ||
@@ -301,43 +323,50 @@ export default function ConteudoPartidas() {
                   return (
                     <li
                       key={partida.id_partida || partida.id}
-                      className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:px-4"
+                      className="flex flex-col rounded-xl border border-gray-100 bg-gray-50/70 p-3 sm:p-4 transition hover:bg-gray-50 shadow-sm"
                     >
-                      {/* Área da Partida (Times e Placar) */}
-                      <div className="flex min-w-[230px] flex-1 items-center justify-center gap-2 sm:gap-4">
-                        <TimeUser equipe={e1} />
-                        <PlacarUser partida={partida} />
-                        <TimeUser equipe={e2} />
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 w-full min-w-0">
+                        <div className="min-w-0 flex w-full">
+                          <TimeUser equipe={e1} rightAlign={true} />
+                        </div>
+
+                        <div className="shrink-0 flex justify-center px-1 sm:px-2">
+                          <PlacarUser partida={partida} />
+                        </div>
+
+                        <div className="min-w-0 flex w-full">
+                          <TimeUser equipe={e2} rightAlign={false} />
+                        </div>
                       </div>
 
-                      {/* Tag de Horário */}
-                      <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-                        {horaDe(partida.horario)}
-                      </span>
+                      <div className="flex w-full items-center justify-between pt-3 mt-3 border-t border-gray-200/60">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <button
+                            type="button"
+                            className="rounded-md p-1 sm:p-2 transition text-gray-400 hover:bg-gray-200 hover:text-gray-600 cursor-pointer"
+                            title="Detalhes"
+                          >
+                            <Info size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            className={`rounded-md p-1 sm:p-2 transition cursor-pointer ${
+                              partida.favorita
+                                ? "text-[#0f172a]"
+                                : "text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                            }`}
+                            title="Favoritar"
+                          >
+                            <Star
+                              size={17}
+                              className={partida.favorita ? "fill-current" : ""}
+                            />
+                          </button>
+                        </div>
 
-                      {/* Ações (Info e Favorito) */}
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <button
-                          type="button"
-                          className="rounded-md p-2 transition text-gray-400 hover:bg-gray-200 hover:text-gray-600 cursor-pointer"
-                          title="Detalhes"
-                        >
-                          <Info size={17} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`rounded-md p-2 transition cursor-pointer ${
-                            partida.favorita
-                              ? "text-[#0f172a]"
-                              : "text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-                          }`}
-                          title="Favoritar"
-                        >
-                          <Star
-                            size={17}
-                            className={partida.favorita ? "fill-current" : ""}
-                          />
-                        </button>
+                        <span className="shrink-0 rounded-md bg-green-50/80 px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-green-700">
+                          {horaDe(partida.horario)}
+                        </span>
                       </div>
                     </li>
                   );
