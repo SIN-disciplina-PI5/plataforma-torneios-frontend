@@ -42,7 +42,7 @@ export function EsqueceuSenhaForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4 relative">
+        <div className="relative mb-3 sm:mb-4">
           <label
             htmlFor="email"
             className="absolute -top-2 left-3 bg-white px-1 text-gray-700 text-sm font-poppins"
