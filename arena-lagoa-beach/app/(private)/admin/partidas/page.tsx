@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
-import { CheckCircle2, Info, Pencil, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { CheckCircle2, Info, Pencil, Trash2, X } from "lucide-react";
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 /* ------------------------------------------------------------------ */
-/*  CONFIG                                                             */
+/* CONFIG                                                            */
 /* ------------------------------------------------------------------ */
 
 const API =
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://plataforma-torneios-backend-mocha.vercel.app';
-const FINALIZADA = 'FINALIZADA';
+  "https://plataforma-torneios-backend-mocha.vercel.app";
+const FINALIZADA = "FINALIZADA";
 
 const fases: [string, string][] = [
-  ['OITAVAS_DE_FINAL', 'Oitavas de Finais'],
-  ['QUARTAS_DE_FINAL', 'Quartas de Finais'],
-  ['SEMI_FINAL', 'Semifinais'],
-  ['FINAL', 'Finais'],
+  ["OITAVAS_DE_FINAL", "Oitavas de Finais"],
+  ["QUARTAS_DE_FINAL", "Quartas de Finais"],
+  ["SEMI_FINAL", "Semifinais"],
+  ["FINAL", "Finais"],
 ];
 const labelFase = (v: string) => fases.find((f) => f[0] === v)?.[1] ?? v;
 
@@ -47,23 +48,23 @@ type Partida = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  HELPERS                                                            */
+/* HELPERS                                                           */
 /* ------------------------------------------------------------------ */
 
 const getToken = () =>
-  typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
 const auth = (json = false): HeadersInit => {
   const t = getToken();
   return {
     ...(t ? { Authorization: `Bearer ${t}` } : {}),
-    ...(json ? { 'Content-Type': 'application/json' } : {}),
+    ...(json ? { "Content-Type": "application/json" } : {}),
   };
 };
 
 function parsePlacar(p: unknown): [number | null, number | null] {
-  if (p == null || p === '') return [null, null];
-  if (typeof p === 'string') {
+  if (p == null || p === "") return [null, null];
+  if (typeof p === "string") {
     const parts = p.split(/[xX\-]/);
     const a = parts[0];
     const b = parts[1];
@@ -83,7 +84,7 @@ function toPartida(r: Record<string, unknown>): Partida {
     id: (r.id_partida ?? r.id) as string,
     torneio: (r.torneio as string) ?? null,
     fase: r.fase as string,
-    status: (r.status as string) ?? '',
+    status: (r.status as string) ?? "",
     horario: (r.horario as string) ?? null,
     placarA: a,
     placarB: b,
@@ -95,47 +96,46 @@ function toPartida(r: Record<string, unknown>): Partida {
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const isFinalizada = (p: Partida) =>
-  p.status.toUpperCase() === FINALIZADA;
+const isFinalizada = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
 
 function grupoDe(iso: string | null) {
-  if (!iso) return { ordem: Infinity, label: 'Sem data definida' };
+  if (!iso) return { ordem: Infinity, label: "Sem data definida" };
   const d = new Date(iso);
   if (Number.isNaN(d.getTime()))
-    return { ordem: Infinity, label: 'Sem data definida' };
+    return { ordem: Infinity, label: "Sem data definida" };
 
   const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const hoje = new Date();
   const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
   const diff = Math.round((+dia - +base) / 864e5);
-  const dm = dia.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
+  const dm = dia.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
   });
 
   const label =
     diff === 0
-      ? 'Hoje'
+      ? "Hoje"
       : diff === 1
-      ? `Amanhã, ${dm}`
-      : diff === -1
-      ? `Ontem, ${dm}`
-      : `${cap(dia.toLocaleDateString('pt-BR', { weekday: 'long' }))}, ${dm}`;
+        ? `Amanhã, ${dm}`
+        : diff === -1
+          ? `Ontem, ${dm}`
+          : `${cap(dia.toLocaleDateString("pt-BR", { weekday: "long" }))}, ${dm}`;
 
   return { ordem: +dia, label };
 }
 
 function horaDe(iso: string | null) {
-  if (!iso) return '--:--';
+  if (!iso) return "--:--";
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
-    ? '--:--'
-    : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    ? "--:--"
+    : d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
 function decodeJwt(t: string): Record<string, unknown> | null {
   try {
-    const b = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+    const b = atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"));
     const json = new TextDecoder().decode(
       Uint8Array.from(b, (c) => c.charCodeAt(0)),
     );
@@ -146,7 +146,7 @@ function decodeJwt(t: string): Record<string, unknown> | null {
 }
 
 function useAdminNome() {
-  const [nome, setNome] = useState('Administrador');
+  const [nome, setNome] = useState("Administrador");
 
   useEffect(() => {
     const t = getToken();
@@ -169,9 +169,7 @@ function useAdminNome() {
           const j = await r.json();
           const n = j?.data?.nome ?? j?.nome;
           if (n) return setNome(n);
-        } catch {
-          /* tenta a próxima */
-        }
+        } catch {}
       }
       const tokenNome = (p.nome || p.name) as string | undefined;
       if (tokenNome) setNome(tokenNome);
@@ -181,30 +179,26 @@ function useAdminNome() {
   return nome;
 }
 
-/* ================================================================== */
-/*  PÁGINA                                                            */
-/* ================================================================== */
-
 export default function PartidasPage() {
   const nome = useAdminNome();
   const [partidas, setPartidas] = useState<Partida[]>([]);
-  const [aba, setAba] = useState<string>('TODOS');
+  const [aba, setAba] = useState<string>("TODOS");
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState('');
+  const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [excluir, setExcluir] = useState<Partida | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    setErro('');
+    setErro("");
     try {
       const r = await fetch(`${API}/api/partidas`, { headers: auth() });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Erro ao buscar partidas');
+      if (!r.ok) throw new Error(j.error || "Erro ao buscar partidas");
       setPartidas((j.data || []).map(toPartida));
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro ao buscar partidas');
+      setErro(e instanceof Error ? e.message : "Erro ao buscar partidas");
     } finally {
       setCarregando(false);
     }
@@ -221,7 +215,6 @@ export default function PartidasPage() {
       clearInterval(id);
     };
   }, [carregar]);
-
 
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
@@ -240,26 +233,23 @@ export default function PartidasPage() {
 
   const abas: [string, string][] = useMemo(
     () => [
-      ['TODOS', 'Todos'],
+      ["TODOS", "Todos"],
       ...torneiosAtivos.map((t): [string, string] => [t, t]),
-      ['FINALIZADAS', 'Finalizadas'],
+      ["FINALIZADAS", "Finalizadas"],
     ],
     [torneiosAtivos],
   );
 
-
   const abaAtual = useMemo(
-    () => (abas.some(([v]) => v === aba) ? aba : 'TODOS'),
+    () => (abas.some(([v]) => v === aba) ? aba : "TODOS"),
     [abas, aba],
   );
 
   const grupos = useMemo(() => {
     const lista = partidas.filter((p) => {
-      // "Finalizadas" tab — apenas status FINALIZADA
-      if (abaAtual === 'FINALIZADAS') return isFinalizada(p);
-      // All other tabs — excluir FINALIZADA
+      if (abaAtual === "FINALIZADAS") return isFinalizada(p);
       if (isFinalizada(p)) return false;
-      return abaAtual === 'TODOS' || p.torneio === abaAtual;
+      return abaAtual === "TODOS" || p.torneio === abaAtual;
     });
 
     const mapa = new Map<string, { ordem: number; itens: Partida[] }>();
@@ -279,16 +269,14 @@ export default function PartidasPage() {
     const id = excluir.id;
     setExcluir(null);
     try {
-      // Correct endpoint: DELETE /api/partidas/:id
       const r = await fetch(`${API}/api/partidas/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: auth(),
       });
-      if (!r.ok)
-        throw new Error(`Falha ao excluir partida (HTTP ${r.status})`);
+      if (!r.ok) throw new Error(`Falha ao excluir partida (HTTP ${r.status})`);
       setPartidas((prev) => prev.filter((p) => p.id !== id));
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro ao excluir partida');
+      setErro(e instanceof Error ? e.message : "Erro ao excluir partida");
     }
   }
 
@@ -297,7 +285,6 @@ export default function PartidasPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8">
-        {/* Header — no "Criar Partida" button */}
         <header className="mb-6 flex flex-wrap items-center gap-3">
           <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-lg">
@@ -307,7 +294,6 @@ export default function PartidasPage() {
           </h1>
         </header>
 
-        {/* Tabs */}
         <nav className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
           {abas.map(([v, label]) => (
             <button
@@ -316,8 +302,8 @@ export default function PartidasPage() {
               onClick={() => setAba(v)}
               className={`relative whitespace-nowrap pb-3 text-sm transition ${
                 abaAtual === v
-                  ? 'font-semibold text-black'
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? "font-semibold text-black"
+                  : "text-gray-400 hover:text-gray-600"
               }`}
             >
               {label}
@@ -382,19 +368,17 @@ export default function PartidasPage() {
         )}
       </div>
 
-      {/* Details modal */}
       {partidaInfo && (
         <Modal titulo="Detalhes da Partida" onClose={() => setInfoId(null)}>
           <DetalhesPartida partida={partidaInfo} />
         </Modal>
       )}
 
-      {/* Delete confirmation modal */}
       {excluir && (
         <Modal titulo="Excluir partida" onClose={() => setExcluir(null)}>
           <p className="text-sm text-gray-600">
             Tem certeza que deseja excluir esta partida
-            {excluir.torneio ? ` de ${excluir.torneio}` : ''} (
+            {excluir.torneio ? ` de ${excluir.torneio}` : ""} (
             {labelFase(excluir.fase)})? Esta ação não pode ser desfeita.
           </p>
           <div className="mt-6 flex justify-end gap-3">
@@ -419,10 +403,6 @@ export default function PartidasPage() {
   );
 }
 
-/* ================================================================== */
-/*  COMPONENTES                                                        */
-/* ================================================================== */
-
 function Linha({
   partida,
   onInfo,
@@ -439,19 +419,16 @@ function Linha({
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-3 transition hover:bg-gray-50 sm:px-4">
-      {/* Match area */}
       <div className="flex min-w-[230px] flex-1 items-center justify-center gap-2 sm:gap-4">
         <Time equipe={equipeA} />
         <Placar a={partida.placarA} b={partida.placarB} />
         <Time equipe={equipeB} />
       </div>
 
-      {/* Time badge */}
       <span className="shrink-0 rounded-md bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
         {horaDe(partida.horario)}
       </span>
 
-      {/* Actions */}
       <div className="flex shrink-0 items-center gap-0.5">
         <BotaoIcone
           titulo="Detalhes"
@@ -478,7 +455,6 @@ function Linha({
     </li>
   );
 }
-
 
 function Time({ equipe }: { equipe: Equipe | undefined }) {
   if (!equipe) {
@@ -553,29 +529,18 @@ function Avatar({
   nome: string;
   size?: number;
 }) {
-  if (!src) {
-    const initials = nome
-      .split(' ')
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? '')
-      .join('');
-    return (
-      <span
-        role="img"
-        aria-label={nome}
-        className="shrink-0 flex items-center justify-center rounded-full bg-gray-300 text-[10px] font-bold text-gray-600"
-        style={{ width: size, height: size }}
-      >
-        {initials}
-      </span>
-    );
-  }
+  const finalSrc = src || AVATAR_PADRAO;
+
   return (
     <span
       role="img"
       aria-label={nome}
-      className="shrink-0 rounded-full bg-gray-200 bg-cover bg-center"
-      style={{ width: size, height: size, backgroundImage: `url(${src})` }}
+      className="shrink-0 rounded-full bg-gray-200 bg-cover bg-center border border-gray-100"
+      style={{
+        width: size,
+        height: size,
+        backgroundImage: `url("${finalSrc}")`,
+      }}
     />
   );
 }
@@ -587,7 +552,7 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
   return (
     <>
       <p className="mb-1 text-sm font-medium text-gray-700">
-        {partida.torneio || 'Torneio não informado'}
+        {partida.torneio || "Torneio não informado"}
       </p>
       <p className="mb-5 text-xs text-gray-400">
         {labelFase(partida.fase)} · {partida.status}
@@ -605,7 +570,7 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
           <span className="text-2xl font-bold text-gray-800">
             {partida.placarA != null
               ? `${partida.placarA} – ${partida.placarB}`
-              : '—'}
+              : "—"}
           </span>
           <span className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">
             Placar
@@ -657,9 +622,9 @@ function Modal({
   children: ReactNode;
 }) {
   useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    document.addEventListener('keydown', k);
-    return () => document.removeEventListener('keydown', k);
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", k);
+    return () => document.removeEventListener("keydown", k);
   }, [onClose]);
 
   return (
@@ -692,10 +657,6 @@ function Modal({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  CARD DE EDIÇÃO                                                     */
-/* ------------------------------------------------------------------ */
-
 function EditarPartida({
   id,
   onClose,
@@ -707,14 +668,14 @@ function EditarPartida({
 }) {
   const [partida, setPartida] = useState<Partida | null>(null);
   const [fase, setFase] = useState(fases[0][0]);
-  const [data, setData] = useState('');
-  const [hora, setHora] = useState('');
+  const [data, setData] = useState("");
+  const [hora, setHora] = useState("");
   const [a, setA] = useState(0);
   const [b, setB] = useState(0);
   const [vencedorId, setVencedorId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState('');
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     let ativo = true;
@@ -725,7 +686,7 @@ function EditarPartida({
         });
         const j = await r.json();
         if (!r.ok || !j.data)
-          throw new Error(j.error || 'Erro ao buscar partida');
+          throw new Error(j.error || "Erro ao buscar partida");
         if (!ativo) return;
 
         const p = toPartida(j.data);
@@ -736,7 +697,7 @@ function EditarPartida({
         setVencedorId(p.vencedorId);
         if (p.horario) {
           const d = new Date(p.horario);
-          const z = (n: number) => String(n).padStart(2, '0');
+          const z = (n: number) => String(n).padStart(2, "0");
           setData(
             `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`,
           );
@@ -744,7 +705,7 @@ function EditarPartida({
         }
       } catch (e) {
         if (ativo)
-          setErro(e instanceof Error ? e.message : 'Erro ao buscar partida');
+          setErro(e instanceof Error ? e.message : "Erro ao buscar partida");
       } finally {
         if (ativo) setCarregando(false);
       }
@@ -757,7 +718,7 @@ function EditarPartida({
   async function salvar() {
     if (!partida) return;
     setSalvando(true);
-    setErro('');
+    setErro("");
     try {
       const requestJson = async (url: string, init: RequestInit) => {
         const r = await fetch(url, init);
@@ -774,7 +735,7 @@ function EditarPartida({
       const placar = `${a}-${b}`;
 
       await requestJson(`${API}/api/partidas/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: auth(true),
         body: JSON.stringify({
           ...(fase === partida.fase ? { fase } : {}),
@@ -784,15 +745,15 @@ function EditarPartida({
       });
 
       if (vencedorId) {
-        if (partida.status !== 'EM_ANDAMENTO') {
+        if (partida.status !== "EM_ANDAMENTO") {
           await requestJson(`${API}/api/partidas/iniciar/${id}`, {
-            method: 'PATCH',
+            method: "PATCH",
             headers: auth(true),
           });
         }
 
         await requestJson(`${API}/api/partidas/finalizar/${id}`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: auth(true),
           body: JSON.stringify({
             placar,
@@ -806,7 +767,7 @@ function EditarPartida({
 
       onSalvo();
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro ao salvar partida');
+      setErro(e instanceof Error ? e.message : "Erro ao salvar partida");
     } finally {
       setSalvando(false);
     }
@@ -832,11 +793,10 @@ function EditarPartida({
         <p className="py-6 text-sm text-gray-500">Carregando partida...</p>
       ) : !partida ? (
         <p className="py-4 text-sm text-red-600">
-          {erro || 'Não foi possível carregar a partida.'}
+          {erro || "Não foi possível carregar a partida."}
         </p>
       ) : (
         <>
-          {/* Phase tabs */}
           <div className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200">
             {fases.map(([v, label]) => (
               <button
@@ -844,7 +804,7 @@ function EditarPartida({
                 type="button"
                 onClick={() => setFase(v)}
                 className={`relative whitespace-nowrap pb-3 text-xs transition ${
-                  fase === v ? 'font-semibold text-black' : 'text-gray-400'
+                  fase === v ? "font-semibold text-black" : "text-gray-400"
                 }`}
               >
                 {label}
@@ -861,7 +821,6 @@ function EditarPartida({
             </p>
           )}
 
-          {/* Date & time */}
           <div className="mb-6 grid gap-4 sm:max-w-md sm:grid-cols-2">
             <Campo label="Data da Partida">
               <input
@@ -881,25 +840,23 @@ function EditarPartida({
             </Campo>
           </div>
 
-          {/* Score */}
           <p className="mb-3 text-sm font-medium text-gray-700">
             Resultado Final da Partida
           </p>
           <div className="mb-6 flex items-end gap-4">
             <NumeroPlacar
-              label={partida.equipes[0]?.nome ?? 'Equipe A'}
+              label={partida.equipes[0]?.nome ?? "Equipe A"}
               valor={a}
               onChange={setA}
             />
             <span className="pb-3 text-lg font-semibold text-gray-400">-</span>
             <NumeroPlacar
-              label={partida.equipes[1]?.nome ?? 'Equipe B'}
+              label={partida.equipes[1]?.nome ?? "Equipe B"}
               valor={b}
               onChange={setB}
             />
           </div>
 
-          {/* Winner */}
           {partida.equipes.length > 0 && (
             <>
               <p className="mb-3 text-sm font-medium text-gray-700">
@@ -915,8 +872,8 @@ function EditarPartida({
                       onClick={() => setVencedorId(equipe.id_equipe)}
                       className={`flex w-full max-w-sm items-center justify-between rounded-md border px-3 py-2.5 transition ${
                         sel
-                          ? 'border-[#25a51f] bg-green-50'
-                          : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                          ? "border-[#25a51f] bg-green-50"
+                          : "border-transparent bg-gray-50 hover:bg-gray-100"
                       }`}
                     >
                       <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -938,8 +895,8 @@ function EditarPartida({
                       </span>
                       <CheckCircle2
                         size={16}
-                        className={sel ? 'text-[#25a51f]' : 'text-gray-300'}
-                        fill={sel ? '#25a51f' : 'transparent'}
+                        className={sel ? "text-[#25a51f]" : "text-gray-300"}
+                        fill={sel ? "#25a51f" : "transparent"}
                       />
                     </button>
                   );
@@ -954,7 +911,7 @@ function EditarPartida({
             disabled={salvando}
             className="h-11 w-full max-w-sm rounded-lg bg-[#25a51f] text-sm font-bold text-white transition hover:bg-[#208d1b] disabled:opacity-60"
           >
-            {salvando ? 'Salvando...' : 'Salvar'}
+            {salvando ? "Salvando..." : "Salvar"}
           </button>
         </>
       )}

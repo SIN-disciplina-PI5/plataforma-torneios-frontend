@@ -2,14 +2,12 @@
 
 import { Zap } from "lucide-react";
 import { Ranking } from "@/app/types/ranking";
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 interface RankingCardProps {
   ranking: Ranking;
   position: number;
 }
-
-const avatarPadrao =
-  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 function getPatenteColor(patente: string): {
   bg: string;
@@ -48,7 +46,7 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
   const isTopThree = position <= 3;
   const patenteInfo = getPatenteColor(ranking.usuario.patente);
 
-  const fotoPerfil = (ranking.usuario as any).foto_perfil || avatarPadrao;
+  const fotoPerfil = (ranking.usuario as any).foto_perfil || AVATAR_PADRAO;
 
   return (
     <>
@@ -79,7 +77,7 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
 
               <div
                 className="w-12 h-12 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${fotoPerfil})` }}
+                style={{ backgroundImage: `url("${fotoPerfil}")` }}
               />
 
               <div className="flex flex-col gap-2 min-w-0">
@@ -120,7 +118,7 @@ export function RankingCard({ ranking, position }: RankingCardProps) {
 
               <div
                 className="w-10 h-10 rounded-full border border-gray-200 flex-shrink-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${fotoPerfil})` }}
+                style={{ backgroundImage: `url("${fotoPerfil}")` }} // Aspas duplas adicionadas aqui!
               />
 
               <div className="flex flex-col gap-2 min-w-0">
