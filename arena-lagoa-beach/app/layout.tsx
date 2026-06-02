@@ -1,6 +1,7 @@
 import { Geist, Inter, Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClientProvider } from "@/components/ui/ClientProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 
@@ -33,15 +34,12 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={cn(
-        geist.variable,
-        inter.variable,
-        poppins.variable
-      )}
+      className={cn(geist.variable, inter.variable, poppins.variable)}
     >
       <body className="font-sans">
         <ClientProvider>
           {children}
+          <Toaster position="bottom-right" richColors />
         </ClientProvider>
       </body>
     </html>

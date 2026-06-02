@@ -1,9 +1,9 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function Login() {
   return (
-    
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 overflow-x-hidden bg-white px-4 py-8 sm:px-6 lg:flex-row lg:gap-10 lg:py-0">
       {/* FORM */}
       <div className="flex flex-col justify-center w-full max-w-md">
@@ -15,7 +15,9 @@ export default function Login() {
           Login para acessar sua conta
         </p>
 
-        <LoginForm />
+        <Suspense fallback={<div>Carregando...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
 
       {/* IMAGEM */}
