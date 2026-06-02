@@ -3,7 +3,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import React from "react"
-import { createPortal } from "react-dom"
 
 export default function LogoArena() {
   const pathname = usePathname()
@@ -20,7 +19,7 @@ export default function LogoArena() {
     router.push("/")
   }
 
-  const logo = (
+  return (
     <div
       className={`public-logo-arena ${
         isHome ? "public-logo-arena--home" : "public-logo-arena--auth"
@@ -38,8 +37,4 @@ export default function LogoArena() {
       </Link>
     </div>
   )
-
-  if (typeof document === "undefined") return null
-
-  return createPortal(logo, document.body)
 }
