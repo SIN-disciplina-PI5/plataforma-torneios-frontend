@@ -5,7 +5,6 @@ import { Ranking } from "@/app/types/ranking";
 import { getRankingGeral } from "@/app/services/rankingService";
 import { RankingCard } from "@/components/ranking/RankingCard";
 import { AlertCircle } from "lucide-react";
-import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 export default function RankingPage() {
   const [rankings, setRankings] = useState<Ranking[]>([]);
@@ -56,18 +55,16 @@ export default function RankingPage() {
   }
 
   return (
-    <div className="w-full bg-white font-sans p-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+    <div className="w-full max-w-[100vw] bg-white font-sans p-4 sm:p-8 min-h-screen overflow-x-hidden">
+      <div className="mb-6 w-full">
+        <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
           🏆 Ranking Geral
         </h1>
-        <p className="text-[#a1a1aa] text-sm font-medium">
+        <p className="text-[#a1a1aa] text-sm font-medium whitespace-normal break-words">
           Confira a posição dos melhores jogadores da plataforma
         </p>
       </div>
 
-      {/* Error State */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <AlertCircle className="text-red-600 flex-shrink-0" size={18} />
@@ -75,7 +72,6 @@ export default function RankingPage() {
         </div>
       )}
 
-      {/* Empty State */}
       {!loading && rankings.length === 0 && !error && (
         <div className="text-center py-12">
           <p className="text-[#a1a1aa] font-medium text-sm">
@@ -84,9 +80,8 @@ export default function RankingPage() {
         </div>
       )}
 
-      {/* Rankings List */}
       {rankings.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3 sm:space-y-2">
           {rankings.map((ranking, index) => (
             <RankingCard
               key={ranking.usuario.id}

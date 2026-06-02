@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./navbar.module.css";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Menu } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getMeuPerfil } from "@/app/services/perfilService";
@@ -25,22 +25,31 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Carrega a foto assim que a Navbar é montada na tela
     carregarFotoNavbar();
-
     window.addEventListener("avatarUpdated", carregarFotoNavbar);
-
     return () => {
       window.removeEventListener("avatarUpdated", carregarFotoNavbar);
     };
   }, [carregarFotoNavbar]);
 
+  const toggleMobileMenu = () => {
+    window.dispatchEvent(new Event("toggleMobileMenu"));
+  };
+
   return (
     <header className={styles.navbar}>
-      {/* Pesquisa */}
-      <div className={styles.searchContainer}>
-        <Search className={styles.searchIcon} size={18} />
+      {/* Lado Esquerdo: Sanduíche + Pesquisa */}
+      <div className={`${styles.searchContainer} flex items-center`}>
+        {/* BOTÃO SANDUÍCHE (SÓ APARECE NO MOBILE) */}
+        <button
+          onClick={toggleMobileMenu}
+          className="md:hidden mr-3 p-1.5 text-gray-600 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+          aria-label="Abrir menu"
+        >
+          <Menu size={24} />
+        </button>
 
+        <Search className={styles.searchIcon} size={18} />
         <input
           type="text"
           placeholder="Pesquisar"
@@ -50,11 +59,9 @@ export default function Navbar() {
 
       {/* Ações da direita */}
       <div className={styles.actions}>
-        {/* Notificação */}
         <Link href="/notificacoes" className={styles.iconButton}>
           <div className={styles.notificationWrapper}>
             <Bell size={20} className={styles.icon} />
-
             {hasNotification && (
               <span className={styles.notificationDot}></span>
             )}
@@ -62,7 +69,6 @@ export default function Navbar() {
         </Link>
 
         <Link href="/perfil" className={styles.iconButton}>
-          {/* Perfil */}
           <button className={styles.profileButton}>
             <span
               role="img"
