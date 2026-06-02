@@ -187,7 +187,10 @@ export default function PartidasPage() {
   const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+<<<<<<< HEAD
   const [finalizandoId, setFinalizandoId] = useState<string | null>(null);
+=======
+>>>>>>> b8f2af0c1aa0d28132468196d1fa8efff1a342a0
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -210,6 +213,7 @@ export default function PartidasPage() {
     return () => { window.clearTimeout(timeoutId); clearInterval(id); };
   }, [carregar]);
 
+<<<<<<< HEAD
   const finalizarPartida = useCallback(async (id: string) => {
     setFinalizandoId(id);
     setErro("");
@@ -230,6 +234,8 @@ export default function PartidasPage() {
     }
   }, [carregar]);
 
+=======
+>>>>>>> b8f2af0c1aa0d28132468196d1fa8efff1a342a0
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
     const lista: string[] = [];
@@ -357,11 +363,15 @@ export default function PartidasPage() {
 
       {partidaInfo && (
         <Modal titulo="Detalhes da Partida" onClose={() => setInfoId(null)}>
+<<<<<<< HEAD
           <DetalhesPartida
             partida={partidaInfo}
             finalizando={finalizandoId === partidaInfo.id}
             onFinalizar={() => finalizarPartida(partidaInfo.id)}
           />
+=======
+          <DetalhesPartida partida={partidaInfo} />
+>>>>>>> b8f2af0c1aa0d28132468196d1fa8efff1a342a0
         </Modal>
       )}
     </div>
