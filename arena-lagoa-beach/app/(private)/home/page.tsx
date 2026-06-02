@@ -115,6 +115,7 @@ function PlacarUser({ partida }: { partida: any }) {
 
 export default function ConteudoPartidas() {
   const [userName, setUserName] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [todasAsPartidas, setTodasAsPartidas] = useState<Partida[]>([]);
   const [abaAtiva, setAbaAtiva] = useState<string>("Todos");
   const [loading, setLoading] = useState(true);
@@ -134,6 +135,8 @@ export default function ConteudoPartidas() {
         setLoading(true);
         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
+
+        setCurrentUserId(userId);
 
         if (!token) {
           setUserName("Visitante");
@@ -181,7 +184,7 @@ export default function ConteudoPartidas() {
 
   const obterPartidasAgrupadas = () => {
     let partidasFiltradas = [...todasAsPartidas];
-    const userId = localStorage.getItem("userId");
+    const userId = currentUserId;
 
     if (abaAtiva === "Minhas Partidas") {
       partidasFiltradas = todasAsPartidas.filter((p: any) => {
