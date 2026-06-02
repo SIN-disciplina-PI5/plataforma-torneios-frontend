@@ -179,6 +179,7 @@ export default function PartidasPage() {
   const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [finalizandoId, setFinalizandoId] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -204,6 +205,26 @@ export default function PartidasPage() {
       window.clearTimeout(timeoutId);
       clearInterval(id);
     };
+  }, [carregar]);
+
+  const finalizarPartida = useCallback(async (id: string) => {
+    setFinalizandoId(id);
+    setErro("");
+    try {
+      const r = await fetch(`${API}/api/partidas/finalizar/${id}`, {
+        method: "PATCH",
+        headers: auth(),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Erro ao finalizar partida");
+
+      await carregar();
+      setInfoId(null);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao finalizar partida");
+    } finally {
+      setFinalizandoId(null);
+    }
   }, [carregar]);
 
   const torneiosAtivos = useMemo(() => {
@@ -347,7 +368,11 @@ export default function PartidasPage() {
 
       {partidaInfo && (
         <Modal titulo="Detalhes da Partida" onClose={() => setInfoId(null)}>
-          <DetalhesPartida partida={partidaInfo} />
+          <DetalhesPartida
+            partida={partidaInfo}
+            finalizando={finalizandoId === partidaInfo.id}
+            onFinalizar={() => finalizarPartida(partidaInfo.id)}
+          />
         </Modal>
       )}
     </div>
@@ -511,9 +536,18 @@ function Avatar({
   );
 }
 
-function DetalhesPartida({ partida }: { partida: Partida }) {
+function DetalhesPartida({
+  partida,
+  finalizando,
+  onFinalizar,
+}: {
+  partida: Partida;
+  finalizando: boolean;
+  onFinalizar: () => void;
+}) {
   const equipeA = partida.equipes[0];
   const equipeB = partida.equipes[1];
+  const partidaFinalizada = isFinalizada(partida);
 
   return (
     <>
@@ -538,7 +572,7 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
               ? `${partida.placarA} – ${partida.placarB}`
               : "—"}
           </span>
-          <span className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">
+          <span className="mt-1 text-[10px] uppercase tracking-wide text-green-400">
             Placar
           </span>
         </div>
@@ -556,6 +590,17 @@ function DetalhesPartida({ partida }: { partida: Partida }) {
           {partida.resultado}
         </p>
       )}
+      <div className="flex items-center justify-center"> 
+        <button
+        type="button"
+        onClick={onFinalizar}
+        disabled={finalizando || partidaFinalizada}
+        className="mt-5 h-10 w-50  rounded-lg bg-red-600 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {finalizando ? "Finalizando..." : "Finalizar partida"}
+      </button>
+      </div>
+      
     </>
   );
 }
