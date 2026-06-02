@@ -42,7 +42,7 @@ export function EsqueceuSenhaForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4 relative">
+        <div className="relative mb-3 sm:mb-4">
           <label
             htmlFor="email"
             className="absolute -top-2 left-3 bg-white px-1 text-gray-700 text-sm font-poppins"
@@ -68,7 +68,7 @@ focus:outline-none focus:border-[#C2E96A]"
           <button
             type="submit"
             disabled={loading}
-            className="bg-[#2FA026] hover:bg-[#25801E] text-white w-full py-2 px-4 rounded w-96 cursor-pointer
+            className="w-full cursor-pointer rounded bg-[#2FA026] px-4 py-2 text-white hover:bg-[#25801E] sm:w-96
 transition-all duration-300 ease-in-out
 hover:scale-105 hover:shadow-lg
 active:scale-95 active:bg-[#1f6b19] disabled:opacity-50 disabled:hover:scale-100"

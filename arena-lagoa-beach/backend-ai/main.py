@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routes.chat import router
+import uvicorn
+import os
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,42 +14,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(router, prefix="/api")
 
 @app.get("/")
-def root():
-    return {
-        "message": "Arena AI rodando"
-    }
+def health():
+    return {"message": "Api rodando"}
 
-
-@app.post("/chat")
-async def chat(request: Request):
-
-    body = await request.json()
-
-    messages = body.get("messages", [])
-
-    ultima_mensagem = messages[-1]
-
-    texto_usuario = ""
-
-    for part in ultima_mensagem.get("parts", []):
-        if part.get("type") == "text":
-            texto_usuario = part.get("text", "")
-
-    resposta = f"🏐 Você perguntou: {texto_usuario}"
-
-    return {
-        "messages": [
-            {
-                "id": "assistant-response",
-                "role": "assistant",
-                "parts": [
-                    {
-                        "type": "text",
-                        "text": resposta
-                    }
-                ]
-            }
-        ]
-    }
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,2 +1,22 @@
 fastapi
 uvicorn
+pydantic
+python-dotenv
+
+# LLM / Grafo
+langchain
+langchain-community
+langgraph
+openai
+groq
+
+# RAG
+sentence-transformers
+faiss-cpu
+numpy
+
+# Leitura de arquivos
+pypdf
+
+httpx          # chamadas HTTP assíncronas
+PyJWT          # decodificar o JWT no chat.py

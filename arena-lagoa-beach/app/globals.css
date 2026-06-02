@@ -161,3 +161,51 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 20px;
+}
+
+.public-logo-arena {
+  position: fixed !important;
+  top: 1rem;
+  z-index: 9999;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+}
+
+.public-logo-arena--home {
+  left: 1rem;
+  right: auto;
+}
+
+.public-logo-arena--auth {
+  left: auto;
+  right: 1rem;
+}
+
+.public-logo-arena__image {
+  display: block;
+  width: 76px;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (min-width: 640px) {
+  .public-logo-arena {
+    top: 1.5rem;
+    left: 3rem;
+    right: auto;
+  }
+
+  .public-logo-arena__image {
+    width: clamp(64px, 8vw, 160px);
+  }
+}

@@ -84,7 +84,7 @@ focus:outline-none focus:border-[#C2E96A]"
         </div>
 
         {/* Opção de reenviar código */}
-        <div className="mb-6 -mt-1">
+        <div className="-mt-1 mb-4 sm:mb-6">
           <span className="text-gray-600 text-sm font-poppins">
             Não recebeu o código?{" "}
           </span>

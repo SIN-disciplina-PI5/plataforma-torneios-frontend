@@ -4,12 +4,17 @@ export interface Tournament {
   categoria: string;
   vagas: number;
   status: boolean;
+  data_inicio?: string;
+  data_fim?: string;
+  turno: "MANHA" | "TARDE" | "NOITE";
 }
 
 export interface TournamentUI extends Tournament {
   favorite: boolean;
-}
 
+  jaInscrito?: boolean;
+  id_inscricao?: string | null;
+}
 
 export interface TournamentResponse {
   id_torneio: string;
@@ -17,6 +22,15 @@ export interface TournamentResponse {
   categoria: string;
   vagas: number;
   status: boolean;
+  turno: "MANHA" | "TARDE" | "NOITE";
+}
+
+export interface InscricaoResponse {
+  id_inscricao: string;
+  id_usuario: number;
+  id_torneio: string;
+  status: boolean;
+  data_inscricao: string;
 }
 
 export interface CreateInscricaoResponse {
@@ -39,4 +53,36 @@ export type AdminDialogState =
   | "errorDelete"
   | "edit"
   | "create"
-  | "registrations";
+  | "registrations"
+  | "generatingMatches"
+  | "generateMatches"
+  | "errorGenerateMatches";
+
+export type TorneioCriacaoErrorType =
+  | "duplicate-name"
+  | "invalid-token"
+  | "expired-token"
+  | "forbidden"
+  | "validation-error"
+  | "generic-error";
+
+export interface TorneioCriacaoError {
+  type: TorneioCriacaoErrorType;
+  mensagem: string;
+  statusCode?: number;
+}
+
+export interface TorneioCriacaoResponse {
+  sucesso: boolean;
+  erro?: TorneioCriacaoError;
+  dados?: Tournament;
+}
+
+export interface GerarChaveResponse {
+  sucesso: boolean;
+  mensagem?: string;
+  totalPartidas?: number;
+}
+
+export type UserInscriptionResponse =
+  InscricaoResponse;
