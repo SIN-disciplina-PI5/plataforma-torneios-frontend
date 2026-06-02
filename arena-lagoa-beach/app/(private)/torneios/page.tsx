@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Trophy, AlertCircle, X } from "lucide-react";
 import { clsx } from "clsx";
@@ -39,15 +39,13 @@ export default function TorneiosPage() {
   const [duplaModalOpen, setDuplaModalOpen] = useState(false);
   const [duplasTorneioId, setDuplasTorneioId] = useState<string>("");
 
-  // Popup: inscrição realizada com sucesso
   const [confirmacaoOpen, setConfirmacaoOpen] = useState(false);
-  // Popup: cancelamento realizado com sucesso
   const [cancelacaoOpen, setCancelacaoOpen] = useState(false);
-  // Popup: confirmação antes de cancelar (com botões Cancelar / Ok)
-  const [confirmarCancelamentoOpen, setConfirmarCancelamentoOpen] = useState(false);
-  const [tournamentParaCancelar, setTournamentParaCancelar] = useState<TournamentUI | null>(null);
+  const [confirmarCancelamentoOpen, setConfirmarCancelamentoOpen] =
+    useState(false);
+  const [tournamentParaCancelar, setTournamentParaCancelar] =
+    useState<TournamentUI | null>(null);
   const [cancelandoInscricao, setCancelandoInscricao] = useState(false);
-  // Popup: erro
   const [erroOpen, setErroOpen] = useState(false);
   const [erroMensagem, setErroMensagem] = useState("");
 
@@ -55,10 +53,7 @@ export default function TorneiosPage() {
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
   const { mostrarToast } = useNotificacao();
-  const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
-  const [indicatorStyle, setIndicatorStyle] = useState({});
 
-  // Token
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) return;
@@ -71,7 +66,6 @@ export default function TorneiosPage() {
     }
   }, []);
 
-  // Buscar torneios + status de inscrição
   useEffect(() => {
     const fetchTorneios = async () => {
       try {
@@ -88,14 +82,14 @@ export default function TorneiosPage() {
             data.map(async (torneio) => {
               const id_inscricao = await getInscricaoDoUsuario(
                 torneio.id_torneio,
-                usuarioId.toString()
+                usuarioId.toString(),
               );
               return {
                 ...torneio,
                 jaInscrito: !!id_inscricao,
                 id_inscricao,
               };
-            })
+            }),
           );
           setTournaments(torneiosAtualizados);
         } else {
@@ -112,23 +106,11 @@ export default function TorneiosPage() {
     if (usuarioId !== null) fetchTorneios();
   }, [usuarioId]);
 
-  // Indicador da tab
-  useEffect(() => {
-    const updateIndicator = () => {
-      const index = TABS.indexOf(activeTab);
-      const el = tabsRef.current[index];
-      if (el) {
-        setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
-      }
-    };
-    updateIndicator();
-    window.addEventListener("resize", updateIndicator);
-    return () => window.removeEventListener("resize", updateIndicator);
-  }, [activeTab]);
-
   function handleToggleFavorite(id: string) {
     setTournaments((prev) =>
-      prev.map((t) => (t.id_torneio === id ? { ...t, favorite: !t.favorite } : t))
+      prev.map((t) =>
+        t.id_torneio === id ? { ...t, favorite: !t.favorite } : t,
+      ),
     );
   }
 
@@ -137,7 +119,8 @@ export default function TorneiosPage() {
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "Acesso negado",
-        mensagem: "É necessário estar inscrito no torneio para visualizar ou participar de equipes.",
+        mensagem:
+          "É necessário estar inscrito no torneio para visualizar ou participar de equipes.",
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -157,30 +140,34 @@ export default function TorneiosPage() {
       return;
     }
     setSelected(tournament);
-    const response = await registerUserInTournament(tournament.id_torneio, usuarioId.toString());
+    const response = await registerUserInTournament(
+      tournament.id_torneio,
+      usuarioId.toString(),
+    );
     if (!response.sucesso) {
       setErroMensagem(response.mensagem || "Erro ao se inscrever no torneio.");
       setErroOpen(true);
       return;
     }
-    const id_inscricao = await getInscricaoDoUsuario(tournament.id_torneio, usuarioId.toString());
+    const id_inscricao = await getInscricaoDoUsuario(
+      tournament.id_torneio,
+      usuarioId.toString(),
+    );
     setTournaments((prev) =>
       prev.map((t) =>
         t.id_torneio === tournament.id_torneio
           ? { ...t, jaInscrito: true, id_inscricao }
-          : t
-      )
+          : t,
+      ),
     );
     setConfirmacaoOpen(true);
   }
 
-  // Abre popup de confirmação antes de cancelar
   function handleUnregisterClick(tournament: TournamentUI) {
     setTournamentParaCancelar(tournament);
     setConfirmarCancelamentoOpen(true);
   }
 
-  // Executado após usuário confirmar o cancelamento
   async function handleConfirmarCancelamento() {
     const tournament = tournamentParaCancelar;
     if (!tournament?.id_inscricao || !usuarioId) return;
@@ -201,13 +188,12 @@ export default function TorneiosPage() {
       prev.map((t) =>
         t.id_torneio === tournament.id_torneio
           ? { ...t, jaInscrito: false, id_inscricao: null }
-          : t
-      )
+          : t,
+      ),
     );
     setCancelacaoOpen(true);
   }
 
-  // Filtros das tabs
   const filtered = tournaments
     .filter((t) => {
       if (activeTab === "Favoritos") return t.favorite;
@@ -231,7 +217,7 @@ export default function TorneiosPage() {
     .filter(
       (t) =>
         t.nome?.toLowerCase().includes(search.toLowerCase()) ||
-        t.categoria?.toLowerCase().includes(search.toLowerCase())
+        t.categoria?.toLowerCase().includes(search.toLowerCase()),
     );
 
   if (loading) {
@@ -247,54 +233,59 @@ export default function TorneiosPage() {
 
   return (
     <>
-      <main className="min-h-screen px-8 py-6">
-        <div className="flex items-center gap-3 mb-8">
-          <h1 className="text-2xl font-semibold">⚽ Torneios</h1>
+      <main className="min-h-screen px-4 sm:px-8 py-6 sm:py-8">
+        <div className="flex items-center gap-3 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-semibold">⚽ Torneios</h1>
         </div>
 
-        {/* TABS */}
-        <div className="relative">
-          <div className="flex items-end gap-6 mb-8 relative" role="tablist">
-            {TABS.map((tab, i) => (
+        {/* NAVEGAÇÃO DE ABAS - EM FORMATO DE "CHIPS" */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2">
+            {TABS.map((tab) => (
               <button
                 key={tab}
-                ref={(el) => { tabsRef.current[i] = el; }}
                 onClick={() => setActiveTab(tab)}
-                className={clsx(
-                  "pb-3 text-lg font-medium transition-colors",
-                  activeTab === tab ? "text-black" : "text-gray-500"
-                )}
+                className={`rounded-full px-4 py-2 text-[13px] sm:text-sm font-semibold transition-all cursor-pointer ${
+                  activeTab === tab
+                    ? "bg-green-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 {tab}
               </button>
             ))}
-            <span className={styles.tabIndicator} style={indicatorStyle} />
           </div>
         </div>
 
-        {/* BANNER */}
-        <div className={clsx("rounded-2xl mb-10 h-28 flex items-center justify-center", styles.banner)}>
-          <div className="flex items-center gap-3">
-            <Image src="/cup.png" alt="Troféu" width={70} height={70} />
-            <p className="text-white text-3xl font-bold text-center">
-              {`${tournaments.length} Torneios`}
-              <br />
-              esperando por você!
-            </p>
+        <div
+          className={clsx(
+            "w-full rounded-2xl mb-8 sm:mb-10 p-5 sm:px-8 sm:h-28 flex items-center justify-start gap-4 sm:gap-6 overflow-hidden",
+            styles.banner,
+          )}
+        >
+          <div className="w-14 h-14 sm:w-[70px] sm:h-[70px] relative shrink-0">
+            <Image
+              src="/cup.png"
+              alt="Troféu"
+              fill
+              className="object-contain"
+            />
           </div>
+          <p className="text-white text-xl sm:text-3xl font-bold leading-tight">
+            {tournaments.length} Torneios
+            <br className="hidden sm:block" /> esperando por você!
+          </p>
         </div>
 
-        {/* ERRO DE CARREGAMENTO */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-            <AlertCircle className="text-red-600" size={20} />
+            <AlertCircle className="text-red-600 shrink-0" size={20} />
             <p className="text-red-700 font-medium text-sm">{error}</p>
           </div>
         )}
 
-        {/* LISTA */}
         {filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filtered.map((t) => (
               <TournamentCard
                 key={t.id_torneio}
@@ -309,9 +300,9 @@ export default function TorneiosPage() {
         )}
 
         {filtered.length === 0 && !error && (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-600">
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24 text-gray-600 px-4 text-center">
             <Trophy size={48} className="mb-4 opacity-30" />
-            <p className="text-lg font-medium">
+            <p className="text-base sm:text-lg font-medium">
               {activeTab === "Meus Torneios"
                 ? "Você ainda não está inscrito em nenhum torneio."
                 : "Nenhum torneio encontrado"}
@@ -320,12 +311,16 @@ export default function TorneiosPage() {
         )}
       </main>
 
-      {/* POPUP CONFIRMAÇÃO DE INSCRIÇÃO */}
+      {/* POPUPS MANTIDOS */}
       {confirmacaoOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
-            <h2 className="text-xl font-bold mb-4">Inscrição realizada</h2>
-            <p className="text-gray-600 mb-6">Você foi inscrito no torneio com sucesso.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
+              Inscrição realizada
+            </h2>
+            <p className="text-gray-600 mb-6 text-center sm:text-left">
+              Você foi inscrito no torneio com sucesso.
+            </p>
             <button
               onClick={() => {
                 setConfirmacaoOpen(false);
@@ -334,7 +329,7 @@ export default function TorneiosPage() {
                   setDuplaModalOpen(true);
                 }
               }}
-              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold cursor-pointer transition-colors"
             >
               OK
             </button>
@@ -342,45 +337,47 @@ export default function TorneiosPage() {
         </div>
       )}
 
-      {/* POPUP CONFIRMAÇÃO ANTES DE CANCELAR */}
       {confirmarCancelamentoOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                   <X size={18} className="text-red-600" />
                 </div>
-                <h2 className="text-lg font-bold">Cancelar inscrição no torneio?</h2>
+                <h2 className="text-base sm:text-lg font-bold">
+                  Cancelar inscrição?
+                </h2>
               </div>
               <button
                 onClick={() => {
                   setConfirmarCancelamentoOpen(false);
                   setTournamentParaCancelar(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 <X size={20} />
               </button>
             </div>
-            <p className="text-gray-500 text-sm mb-6">
-              Ao confirmar, sua inscrição será removida e você poderá perder sua vaga no torneio.
+            <p className="text-gray-500 text-sm mb-6 text-center sm:text-left">
+              Ao confirmar, sua inscrição será removida e você poderá perder sua
+              vaga no torneio.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => {
                   setConfirmarCancelamentoOpen(false);
                   setTournamentParaCancelar(null);
                 }}
                 disabled={cancelandoInscricao}
-                className="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl py-3 font-semibold transition-colors"
+                className="w-full sm:w-1/2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl py-3 font-semibold transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmarCancelamento}
                 disabled={cancelandoInscricao}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-60"
+                className="w-full sm:w-1/2 bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {cancelandoInscricao ? "Cancelando..." : "Ok"}
               </button>
@@ -389,15 +386,18 @@ export default function TorneiosPage() {
         </div>
       )}
 
-      {/* POPUP CANCELAMENTO REALIZADO COM SUCESSO */}
       {cancelacaoOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
-            <h2 className="text-xl font-bold mb-4">Inscrição cancelada</h2>
-            <p className="text-gray-600 mb-6">Inscrição cancelada com sucesso.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
+              Inscrição cancelada
+            </h2>
+            <p className="text-gray-600 mb-6 text-center sm:text-left">
+              Inscrição cancelada com sucesso.
+            </p>
             <button
               onClick={() => setCancelacaoOpen(false)}
-              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold"
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 font-semibold cursor-pointer transition-colors"
             >
               OK
             </button>
@@ -405,19 +405,20 @@ export default function TorneiosPage() {
         </div>
       )}
 
-      {/* POPUP ERRO */}
       {erroOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
             <div className="flex justify-center mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
                 <X size={24} className="text-red-600" />
               </div>
             </div>
-            <p className="text-center text-gray-800 font-medium mb-6">{erroMensagem}</p>
+            <p className="text-center text-gray-800 font-medium mb-6 text-sm sm:text-base">
+              {erroMensagem}
+            </p>
             <button
               onClick={() => setErroOpen(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold cursor-pointer transition-colors"
             >
               OK
             </button>
@@ -434,13 +435,16 @@ export default function TorneiosPage() {
         onSuccess={async () => {
           setDialogState("success");
           if (selected && usuarioId) {
-            const id_inscricao = await getInscricaoDoUsuario(selected.id_torneio, usuarioId.toString());
+            const id_inscricao = await getInscricaoDoUsuario(
+              selected.id_torneio,
+              usuarioId.toString(),
+            );
             setTournaments((prev) =>
               prev.map((t) =>
                 t.id_torneio === selected.id_torneio
                   ? { ...t, jaInscrito: !!id_inscricao, id_inscricao }
-                  : t
-              )
+                  : t,
+              ),
             );
           }
           setTimeout(() => setDialogState("idle"), 2000);
