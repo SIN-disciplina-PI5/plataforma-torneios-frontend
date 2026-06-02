@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 import { signup } from "@/app/services/authCadastro";
 import PopupModelo from "@/components/ui/PopupModelo";
@@ -11,6 +12,7 @@ import Recaptcha from "@/components/recaptcha/recaptcha";
 
 export function CadastroForm() {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -89,14 +91,16 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
-      setCaptchaToken(null); // eseta captcha
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
       setModalMessage(error.response?.data?.error || "Erro ao cadastrar");
       setModalType("error");
       setModalOpen(true);
 
-      setCaptchaToken(null); // reseta captcha em erro
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -252,7 +256,10 @@ export function CadastroForm() {
 
         {/*  RECAPTCHA */}
         <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
-          <Recaptcha onChange={setCaptchaToken} />
+          <Recaptcha
+            ref={recaptchaRef}
+            onChange={setCaptchaToken}
+          />
         </div>
 
         <div className="flex justify-center">
