@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import React from "react"
+import { createPortal } from "react-dom"
 
 export default function LogoArena() {
   const pathname = usePathname()
@@ -19,10 +20,10 @@ export default function LogoArena() {
     router.push("/")
   }
 
-  return (
+  const logo = (
     <div
-      className={`fixed top-4 z-[9999] pointer-events-auto sm:left-12 sm:right-auto sm:top-6 ${
-        isHome ? "left-4" : "right-4"
+      className={`public-logo-arena ${
+        isHome ? "public-logo-arena--home" : "public-logo-arena--auth"
       }`}
     >
       <Link href="/" onClick={handleClick} aria-label="Ir para página inicial">
@@ -31,10 +32,14 @@ export default function LogoArena() {
           alt="Logo Arena"
           width={120}
           height={38}
-          className="block h-auto w-[76px] object-contain sm:w-[clamp(64px,8vw,160px)]"
+          className="public-logo-arena__image"
           priority
         />
       </Link>
     </div>
   )
+
+  if (typeof document === "undefined") return null
+
+  return createPortal(logo, document.body)
 }
