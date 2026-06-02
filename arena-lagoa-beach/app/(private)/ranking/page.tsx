@@ -5,6 +5,7 @@ import { Ranking } from "@/app/types/ranking";
 import { getRankingGeral } from "@/app/services/rankingService";
 import { RankingCard } from "@/components/ranking/RankingCard";
 import { AlertCircle } from "lucide-react";
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 export default function RankingPage() {
   const [rankings, setRankings] = useState<Ranking[]>([]);
@@ -27,8 +28,7 @@ export default function RankingPage() {
 
         if (response.data) {
           setRankings(response.data);
-        } 
-        else {
+        } else {
           setError("Nenhum dado de ranking disponível");
           setRankings([]);
         }
@@ -78,20 +78,22 @@ export default function RankingPage() {
       {/* Empty State */}
       {!loading && rankings.length === 0 && !error && (
         <div className="text-center py-12">
-          <p className="text-[#a1a1aa] font-medium text-sm">Nenhum ranking disponível</p>
+          <p className="text-[#a1a1aa] font-medium text-sm">
+            Nenhum ranking disponível
+          </p>
         </div>
       )}
 
       {/* Rankings List */}
       {rankings.length > 0 && (
         <div className="space-y-2">
-{rankings.map((ranking, index) => (
-  <RankingCard
-    key={ranking.usuario.id}
-    ranking={ranking}
-    position={index + 1}
-  />
-))}
+          {rankings.map((ranking, index) => (
+            <RankingCard
+              key={ranking.usuario.id}
+              ranking={ranking}
+              position={index + 1}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera, ImagePlus, Eye, EyeOff } from "lucide-react";
+import { ImagePlus, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
@@ -26,6 +26,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import { AVATAR_PADRAO } from "@/app/utils/auth";
+
 type ApiError = {
   response?: {
     data?: {
@@ -35,15 +37,13 @@ type ApiError = {
   };
 };
 
-const avatarPadrao =
-  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
-
 export default function MeuPerfil() {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(avatarPadrao);
+
+  const [avatarPreview, setAvatarPreview] = useState(AVATAR_PADRAO);
 
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
@@ -67,7 +67,6 @@ export default function MeuPerfil() {
             ...prev,
             nome: dados.nome || "",
             email: dados.email || "",
-            username: dados.username || "",
             patente: dados.patente || "Não ranqueado",
           }));
 
@@ -119,6 +118,14 @@ export default function MeuPerfil() {
     }
   };
 
+  const handleRemoveImage = () => {
+    setAvatarPreview(AVATAR_PADRAO);
+    setFormData((prev) => ({
+      ...prev,
+      fotoBase64: "REMOVER",
+    }));
+  };
+
   const handleEditToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -138,7 +145,9 @@ export default function MeuPerfil() {
           payload.senha = formData.senha;
         }
 
-        if (formData.fotoBase64) {
+        if (formData.fotoBase64 === "REMOVER") {
+          payload.foto_perfil = null;
+        } else if (formData.fotoBase64) {
           payload.foto_perfil = formData.fotoBase64;
         }
 
@@ -157,6 +166,7 @@ export default function MeuPerfil() {
         }
 
         toast.success("Perfil atualizado com sucesso!");
+        window.dispatchEvent(new Event("avatarUpdated"));
 
         setFormData((prev) => ({
           ...prev,
@@ -169,7 +179,6 @@ export default function MeuPerfil() {
         setMostrarConfirmarSenha(false);
       } catch (error: unknown) {
         const apiError = error as ApiError;
-
         const mensagemErro =
           apiError.response?.data?.error || "Erro ao atualizar perfil.";
 
@@ -229,15 +238,16 @@ export default function MeuPerfil() {
 
         <div className="px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div className="flex items-center gap-5">
-            <div className="relative -mt-10">
+            <div className="relative -mt-10 flex items-end">
               <div
                 role="img"
                 aria-label="Foto de perfil"
-                style={{ backgroundImage: `url(${avatarPreview})` }}
+                style={{ backgroundImage: `url("${avatarPreview}")` }}
                 className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm relative"
               />
+
               {isEditing && (
-                <>
+                <div className="absolute -bottom-2 -right-4 flex flex-col gap-2">
                   <input
                     type="file"
                     id="avatar-upload"
@@ -247,16 +257,27 @@ export default function MeuPerfil() {
                   />
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 bg-[#316f27] text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
+                    className="bg-[#316f27] text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
                     title="Alterar foto"
                   >
-                    <ImagePlus size={16} strokeWidth={2.5} />
+                    <ImagePlus size={14} strokeWidth={2.5} />
                   </label>
-                </>
+
+                  {avatarPreview !== AVATAR_PADRAO && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="bg-red-500 text-white p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-md border-2 border-white flex items-center justify-center"
+                      title="Remover foto"
+                    >
+                      <Trash2 size={14} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
-            <div className="mt-2">
+            <div className="mt-2 ml-4">
               <h2 className="m-0 text-xl text-gray-800 font-semibold">
                 {formData.nome}
               </h2>

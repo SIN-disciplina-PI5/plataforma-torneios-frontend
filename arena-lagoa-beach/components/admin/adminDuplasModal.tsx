@@ -15,14 +15,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+// 1. IMPORTANDO A NOSSA FOTO PADRÃO CENTRALIZADA
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 interface AdminDuplasModalProps {
   onClose: () => void;
   tournament: any;
 }
-
-const avatarPadrao =
-  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export function AdminDuplasModal({
   onClose,
@@ -289,7 +288,8 @@ export function AdminDuplasModal({
                         <div
                           className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
                           style={{
-                            backgroundImage: `url(${jogador1.foto_perfil || avatarPadrao})`,
+                            // 2. USANDO A FOTO AQUI
+                            backgroundImage: `url("${jogador1.foto_perfil || AVATAR_PADRAO}")`,
                           }}
                         ></div>
 
@@ -350,7 +350,8 @@ export function AdminDuplasModal({
                         <div
                           className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
                           style={{
-                            backgroundImage: `url(${jogador2.foto_perfil || avatarPadrao})`,
+                            // 2. USANDO A FOTO AQUI TAMBÉM
+                            backgroundImage: `url("${jogador2.foto_perfil || AVATAR_PADRAO}")`,
                           }}
                         ></div>
 
