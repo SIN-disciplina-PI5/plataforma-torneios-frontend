@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react"; 
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 import { login } from "@/app/services/authLogin";
 import { getUserRole } from "@/app/utils/auth";
 import PopupModelo from "@/components/ui/PopupModelo";
 import Recaptcha from "@/components/recaptcha/recaptcha";
+import { useNotificacao } from "@/lib/NotificacaoContext";
 
 type LoginApiError = {
   response?: {
@@ -28,9 +29,7 @@ function getLoginErrorMessage(err: unknown) {
     error.response?.data?.error ||
     error.response?.data?.erro;
 
-  if (apiMessage) {
-    return apiMessage;
-  }
+  if (apiMessage) return apiMessage;
 
   switch (error.response?.status) {
     case 404:
@@ -45,21 +44,39 @@ function getLoginErrorMessage(err: unknown) {
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { mostrarToast } = useNotificacao();
+
+  const toastExibido = useRef(false);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [lembrar, setLembrar] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // 👇 controle da visualização da senha
   const [showPassword, setShowPassword] = useState(false);
-
-  // captcha
   const [recaptchaToken, setCaptchaToken] = useState<string | null>(null);
-
-  // popup
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+
+  useEffect(() => {
+    if (
+      searchParams.get("reset") === "success" &&
+      !toastExibido.current
+    ) {
+      toastExibido.current = true;
+
+      mostrarToast({
+        id_notificacao: Date.now().toString(),
+        titulo: "Senha redefinida",
+        mensagem: "Sua senha foi redefinida com sucesso. Faça login para continuar.",
+        tipo: "success",
+        lida: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      router.replace("/login");
+    }
+  }, [searchParams, mostrarToast, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,8 +105,7 @@ export function LoginForm() {
       localStorage.setItem("token", res.token);
 
       const role = getUserRole();
-      const redirectPath =
-        role === "ADMIN" ? "/admin/torneios" : "/torneios";
+      const redirectPath = role === "ADMIN" ? "/admin/torneios" : "/torneios";
 
       router.push(redirectPath);
     } catch (err: unknown) {
@@ -122,7 +138,6 @@ export function LoginForm() {
             Senha
           </label>
 
-          {/* 👇 container relativo */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -132,7 +147,6 @@ export function LoginForm() {
               placeholder="Digite sua senha"
             />
 
-            {/* 👇 botão do olho */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
