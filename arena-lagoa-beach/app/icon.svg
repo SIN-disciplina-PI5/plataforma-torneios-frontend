@@ -1,0 +1,47 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Máscara de corte para manter o desenho dentro da bola -->
+    <clipPath id="ball-clip">
+      <circle cx="256" cy="256" r="220"/>
+    </clipPath>
+    <!-- Gradiente radial para criar a ilusão de volume 3D da bola -->
+    <radialGradient id="sphere-shade" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="40%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+    </radialGradient>
+    <!-- Molde de um pentágono externo -->
+    <polygon id="outer-pentagon" points="-44.8,-137.9 44.8,-137.9 65,-210 0,-250 -65,-210" fill="#1D7A5C" stroke="#0F5C46" stroke-width="8" stroke-linejoin="round"/>
+    <!-- Molde das costuras/linhas que separam os hexágonos -->
+    <g id="seams">
+      <line x1="0" y1="-85" x2="0" y2="-135" stroke="#0F5C46" stroke-width="8" stroke-linecap="round"/>
+      <line x1="0" y1="-135" x2="44.8" y2="-137.9" stroke="#0F5C46" stroke-width="8" stroke-linecap="round"/>
+      <line x1="0" y1="-135" x2="-44.8" y2="-137.9" stroke="#0F5C46" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <!-- Fundo claro da bola -->
+  <circle cx="256" cy="256" r="220" fill="#F3EBD7"/>
+  <!-- Padrão geométrico da bola de futebol -->
+  <g clip-path="url(#ball-clip)">
+    <g transform="translate(256, 256)">
+      <!-- 5 pentágonos externos -->
+      <use href="#outer-pentagon" transform="rotate(36)" />
+      <use href="#outer-pentagon" transform="rotate(108)" />
+      <use href="#outer-pentagon" transform="rotate(180)" />
+      <use href="#outer-pentagon" transform="rotate(252)" />
+      <use href="#outer-pentagon" transform="rotate(324)" />
+      <!-- Costuras radiais formando os hexágonos -->
+      <use href="#seams" transform="rotate(0)" />
+      <use href="#seams" transform="rotate(72)" />
+      <use href="#seams" transform="rotate(144)" />
+      <use href="#seams" transform="rotate(216)" />
+      <use href="#seams" transform="rotate(288)" />
+      <!-- Pentágono central -->
+      <polygon points="0,-85 80.8,-26.3 50.0,68.8 -50.0,68.8 -80.8,-26.3" fill="#1D7A5C" stroke="#0F5C46" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <!-- Sombra 3D sobreposta -->
+  <circle cx="256" cy="256" r="220" fill="url(#sphere-shade)"/>
+  <!-- Borda externa escura -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#084C39" stroke-width="10"/>
+</svg>

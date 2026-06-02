@@ -1,10 +1,10 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function Login() {
   return (
-    
-    <div className="flex flex-col lg:flex-row items-center justify-center bg-white min-h-screen gap-10 px-4 py-10 lg:py-0">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 overflow-x-hidden bg-white px-4 py-8 sm:px-6 lg:flex-row lg:gap-10 lg:py-0">
       {/* FORM */}
       <div className="flex flex-col justify-center w-full max-w-md">
         <h1 className="text-3xl lg:text-4xl font-bold text-black mb-4">
@@ -15,11 +15,13 @@ export default function Login() {
           Login para acessar sua conta
         </p>
 
-        <LoginForm />
+        <Suspense fallback={<div>Carregando...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
 
       {/* IMAGEM */}
-      <div className="flex flex-col items-center justify-center bg-[#F9F9F9] w-full max-w-md p-6 lg:p-12 border border-[#AEC3CB] rounded-lg mb-10 lg:mb-0 min-h-[600px]">
+      <div className="flex w-full max-w-md flex-col items-center justify-center rounded-lg border border-[#AEC3CB] bg-[#F9F9F9] p-6 lg:mb-0 lg:min-h-[600px] lg:p-12">
         <Image
           src="/LoginImage.png"
           alt="Imagem da tela de login"

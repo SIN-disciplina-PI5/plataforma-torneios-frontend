@@ -1,15 +1,16 @@
 import Image from "next/image";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { CalendarPlus, Pencil, Trash2, Users } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { Tournament } from "@/app/types/torneios";
+import { formatDate } from "@/lib/utils";
 import styles from "./AdminTournamentCard.module.css";
 
 const LEVEL_IMAGES: Record<string, string> = {
-  Avançado: "/avancado.png",
-  Intermediário: "/intermediario.png",
-  Básico: "/basico.png",
-  Iniciante: "/basico.png",
+  Avançado: "/avancado3.png",
+  Intermediário: "/intermediario3.png",
+  Básico: "/iniciante3.png",
+  Iniciante: "/iniciante3.png",
   default: "/cup.png",
 };
 
@@ -20,11 +21,18 @@ const LEVEL_COLORS: Record<string, string> = {
   Básico: "text-sky-400",
 };
 
+const TURNO_LABELS: Record<string, string> = {
+  MANHA: "Manhã",
+  TARDE: "Tarde",
+  NOITE: "Noite",
+};
+
 interface AdminTournamentCardProps {
   tournament: Tournament;
   onEdit: (tournament: Tournament) => void;
   onDelete: (tournament: Tournament) => void;
   onViewRegistrations: (tournament: Tournament) => void;
+  onGenerateMatches: (tournament: Tournament) => void;
 }
 
 export function AdminTournamentCard({
@@ -32,6 +40,7 @@ export function AdminTournamentCard({
   onEdit,
   onDelete,
   onViewRegistrations,
+  onGenerateMatches,
 }: AdminTournamentCardProps) {
   const isEsgotado = !tournament.status || tournament.vagas <= 0;
 
@@ -43,7 +52,7 @@ export function AdminTournamentCard({
           src={LEVEL_IMAGES[tournament.categoria] || LEVEL_IMAGES.default}
           alt={`Torneio ${tournament.categoria}`}
           fill
-          className="object-contain"
+          className="object-cover object-bottom"
         />
       </div>
 
@@ -78,15 +87,33 @@ export function AdminTournamentCard({
             >
               <Users size={14} />
             </button>
+
+            <button
+              onClick={() => onGenerateMatches(tournament)}
+              className={styles.actionBtn}
+              aria-label="Gerar partidas"
+            >
+              <CalendarPlus size={14} />
+            </button>
           </div>
         </div>
 
         {/* Título */}
         <p className="font-bold text-gray-900 text-sm leading-tight">{tournament.nome}</p>
 
+        <p className="text-xs text-gray-500">
+          <span className="font-medium text-gray-700">Início:</span>{" "}
+          {formatDate(tournament.data_inicio) ?? "Não informado"}
+          <span className="mx-2 text-gray-200">|</span>
+          <span className="font-medium text-gray-700">Fim:</span>{" "}
+          {formatDate(tournament.data_fim) ?? "Não informado"}
+        </p>
+
         {/* Meta info */}
         <p className="text-xs text-gray-500 flex flex-wrap items-center gap-1">
           <span>{tournament.vagas} vagas</span>
+          <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
+          <span>{TURNO_LABELS[tournament.turno] || tournament.turno}</span>
           <span className="text-gray-200 mx-1" aria-hidden="true">|</span>
           <span className={clsx("font-medium", isEsgotado ? "text-red-500" : "text-green-600")}>
             {isEsgotado ? "Esgotado" : "Ativo"}

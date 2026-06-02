@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Trophy, AlertCircle, Plus, X, Pencil } from "lucide-react";
-import { clsx } from "clsx";
 
 import type { Tournament, AdminDialogState } from "@/app/types/torneios";
-import { getTorneios, deleteTorneio } from "@/app/services/torneioService";
+import {
+  getTorneios,
+  deleteTorneio,
+  gerarChaveTorneio,
+} from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
-
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
+import { AdminDuplasModal } from "@/components/admin/adminDuplasModal";
 
 export default function AdminTorneiosPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -18,6 +20,7 @@ export default function AdminTorneiosPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<AdminDialogState>("idle");
   const [selected, setSelected] = useState<Tournament | null>(null);
+  const [generateMatchesMessage, setGenerateMatchesMessage] = useState("");
 
   useEffect(() => {
     const fetchTorneios = async () => {
@@ -61,6 +64,30 @@ export default function AdminTorneiosPage() {
     setDialogState("registrations");
   }
 
+  async function handleGenerateMatches(tournament: Tournament) {
+    setSelected(tournament);
+    setGenerateMatchesMessage("");
+    setDialogState("generatingMatches");
+
+    const result = await gerarChaveTorneio(tournament.id_torneio);
+
+    if (!result.sucesso) {
+      setGenerateMatchesMessage(result.mensagem || "Erro ao gerar partidas.");
+      setDialogState("errorGenerateMatches");
+      return;
+    }
+
+    const totalText =
+      typeof result.totalPartidas === "number"
+        ? `${result.totalPartidas} partida(s) gerada(s). `
+        : "";
+
+    setGenerateMatchesMessage(
+      `${totalText}${result.mensagem || "Chave do torneio gerada."}`,
+    );
+    setDialogState("generateMatches");
+  }
+
   async function handleConfirmDelete() {
     if (!selected) return;
     setDialogState("loadingDelete");
@@ -81,6 +108,7 @@ export default function AdminTorneiosPage() {
   function handleClose() {
     setDialogState("idle");
     setSelected(null);
+    setGenerateMatchesMessage("");
   }
 
   if (loading) {
@@ -96,20 +124,16 @@ export default function AdminTorneiosPage() {
 
   return (
     <>
-      <main className="min-h-screen px-8 py-6">
-        <div className="flex items-center justify-between mb-8">
+      <main className="min-h-screen px-4 sm:px-8 py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <Image
-              src="/variante-de-bola-de-futebol.png"
-              alt="Bola"
-              width={40}
-              height={40}
-            />
-            <h1 className="text-4xl font-semibold">Gerenciar Torneios</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 text-black">
+              ⚽ Gerenciamento de Torneios
+            </h1>
           </div>
           <button
             onClick={() => setDialogState("create")}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center justify-center w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
           >
             <Plus size={16} />
             Novo torneio
@@ -139,6 +163,7 @@ export default function AdminTorneiosPage() {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
                 onViewRegistrations={handleViewRegistrations}
+                onGenerateMatches={handleGenerateMatches}
               />
             ))}
           </div>
@@ -146,16 +171,23 @@ export default function AdminTorneiosPage() {
       </main>
 
       <AdminTournamentDialogs
-        state={dialogState === "edit" ? "idle" : dialogState}
+        state={
+          dialogState === "edit" || dialogState === "registrations"
+            ? "idle"
+            : dialogState
+        }
         tournament={selected}
         onClose={handleClose}
         onConfirmDelete={handleConfirmDelete}
+        generateMatchesMessage={generateMatchesMessage}
+        onTournamentCreated={(newTournament) => {
+          setTournaments((prev) => [...prev, newTournament]);
+        }}
       />
 
       {dialogState === "edit" && selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 m-4 relative animate-in fade-in zoom-in duration-200">
-            {/* Header do Modal */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 relative animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-50 p-2 rounded-full text-blue-500">
@@ -165,7 +197,7 @@ export default function AdminTorneiosPage() {
               </div>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
+                className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -183,6 +215,10 @@ export default function AdminTorneiosPage() {
             <EditTournamentForm tournament={selected} onClose={handleClose} />
           </div>
         </div>
+      )}
+
+      {dialogState === "registrations" && selected && (
+        <AdminDuplasModal onClose={handleClose} tournament={selected} />
       )}
     </>
   );

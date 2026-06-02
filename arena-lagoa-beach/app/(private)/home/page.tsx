@@ -3,23 +3,135 @@
 import React, { useState, useEffect } from "react";
 import { Info, Star } from "lucide-react";
 import { api } from "@/app/services/api";
-import { Partida, GrupoDePartidas } from "@/app/types/partida";
+import { Partida } from "@/app/types/partida";
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
-const formatarHorario = (dataIso: string) => {
-  if (!dataIso) return "-";
-  try {
-    const data = new Date(dataIso);
-    return data.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch (e) {
-    return dataIso;
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function grupoDe(iso: string | null | undefined) {
+  if (!iso) return { ordem: Infinity, label: "Sem data definida" };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime()))
+    return { ordem: Infinity, label: "Sem data definida" };
+
+  const dia = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const hoje = new Date();
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const diff = Math.round((+dia - +base) / 864e5);
+  const dm = dia.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+
+  const label =
+    diff === 0
+      ? "Hoje"
+      : diff === 1
+        ? `Amanhã, ${dm}`
+        : diff === -1
+          ? `Ontem, ${dm}`
+          : `${cap(dia.toLocaleDateString("pt-BR", { weekday: "long" }))}, ${dm}`;
+
+  return { ordem: +dia, label };
+}
+
+function horaDe(iso: string | null | undefined) {
+  if (!iso) return "--:--";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? "--:--"
+    : d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function AvatarUser({
+  src,
+  nome,
+  size = 32,
+}: {
+  src?: string | null;
+  nome: string;
+  size?: number;
+}) {
+  const finalSrc = src || AVATAR_PADRAO;
+  return (
+    <span
+      role="img"
+      aria-label={nome}
+      className="shrink-0 rounded-full bg-gray-200 bg-cover bg-center border border-gray-100"
+      style={{
+        width: size,
+        height: size,
+        backgroundImage: `url("${finalSrc}")`,
+      }}
+    />
+  );
+}
+
+function TimeUser({
+  equipe,
+  rightAlign = false,
+}: {
+  equipe: any;
+  rightAlign?: boolean;
+}) {
+  if (!equipe) {
+    return (
+      <div
+        className={`flex items-center gap-2 w-full min-w-0 ${rightAlign ? "flex-row-reverse" : "flex-row"}`}
+      >
+        <span className="text-[11px] sm:text-xs text-gray-400 truncate w-full text-center sm:text-left">
+          A definir
+        </span>
+      </div>
+    );
   }
-};
+
+  const foto =
+    equipe.foto_perfil ||
+    (equipe.membros && equipe.membros[0]?.foto_perfil) ||
+    (equipe.usuarios && equipe.usuarios[0]?.foto_perfil) ||
+    null;
+
+  return (
+    <div
+      className={`flex items-center gap-1.5 sm:gap-2.5 w-full min-w-0 ${rightAlign ? "flex-row-reverse" : "flex-row"}`}
+    >
+      <div className="shrink-0 flex items-center justify-center">
+        <AvatarUser src={foto} nome={equipe.nome || "Time"} size={26} />
+      </div>
+      <span
+        className={`text-[11px] sm:text-[13px] font-semibold text-gray-800 truncate w-full ${rightAlign ? "text-right" : "text-left"}`}
+      >
+        {equipe.nome || "Time"}
+      </span>
+    </div>
+  );
+}
+
+function PlacarUser({ partida }: { partida: any }) {
+  const placarFinal =
+    partida.placar ||
+    (partida.placarA != null && partida.placarB != null
+      ? `${partida.placarA} - ${partida.placarB}`
+      : null);
+
+  if (!placarFinal || placarFinal.trim() === "" || placarFinal === "-") {
+    return (
+      <span className="shrink-0 rounded-full bg-gray-100 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium text-gray-400 whitespace-nowrap">
+        vs
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 rounded-full bg-violet-100 px-2 sm:px-3 py-1 text-[11px] sm:text-sm font-bold text-violet-700 whitespace-nowrap">
+      {placarFinal}
+    </span>
+  );
+}
 
 export default function ConteudoPartidas() {
   const [userName, setUserName] = useState<string>("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [todasAsPartidas, setTodasAsPartidas] = useState<Partida[]>([]);
   const [abaAtiva, setAbaAtiva] = useState<string>("Todos");
   const [loading, setLoading] = useState(true);
@@ -39,6 +151,8 @@ export default function ConteudoPartidas() {
         setLoading(true);
         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
+
+        setCurrentUserId(userId);
 
         if (!token) {
           setUserName("Visitante");
@@ -84,41 +198,75 @@ export default function ConteudoPartidas() {
     buscarDadosDoBackEnd();
   }, []);
 
-  // LÓGICA DE FILTRAGEM: Filtra as partidas dinamicamente com base na aba clicada
-  const obterPartidasFiltradas = (): GrupoDePartidas[] => {
+  const obterPartidasAgrupadas = () => {
     let partidasFiltradas = [...todasAsPartidas];
+    const userId = currentUserId;
 
     if (abaAtiva === "Minhas Partidas") {
-      const userId = localStorage.getItem("userId");
-      // Filtra as partidas onde o usuário logado está jogando (seja na equipe 1 ou na equipe 2)
-      partidasFiltradas = todasAsPartidas.filter(
-        (p) =>
-          p.equipe1?.id_usuario === userId || p.equipe2?.id_usuario === userId,
-      );
+      partidasFiltradas = todasAsPartidas.filter((p: any) => {
+        const e1 = p.equipe1 || (p.equipes && p.equipes[0]) || null;
+        const e2 = p.equipe2 || (p.equipes && p.equipes[1]) || null;
+
+        const verificaEquipe = (equipe: any) => {
+          if (!equipe) return false;
+
+          if (
+            String(equipe.id_usuario) === String(userId) ||
+            String(equipe.id) === String(userId)
+          )
+            return true;
+
+          const membros = equipe.membros || equipe.usuarios || [];
+          if (Array.isArray(membros)) {
+            return membros.some(
+              (m: any) =>
+                String(m.id_usuario) === String(userId) ||
+                String(m.id) === String(userId),
+            );
+          }
+          return false;
+        };
+
+        return verificaEquipe(e1) || verificaEquipe(e2);
+      });
     } else if (abaAtiva !== "Todos") {
-      // Filtra pelo campo 'fase' que veio da sua model do banco de dados (ex: "Oitavas de Finais", "Semifinais")
-      // O map abaixo garante a comparação sem problemas de espaços ou maiúsculas
-      partidasFiltradas = todasAsPartidas.filter(
-        (p) => p.fase?.trim().toLowerCase() === abaAtiva.trim().toLowerCase(),
-      );
+      const fasesMap: Record<string, string> = {
+        OITAVAS_DE_FINAL: "Oitavas de Finais",
+        QUARTAS_DE_FINAL: "Quartas de Finais",
+        SEMI_FINAL: "Semifinais",
+        FINAL: "Finais",
+      };
+
+      partidasFiltradas = todasAsPartidas.filter((p: any) => {
+        const faseDoBanco = p.fase ? String(p.fase).toUpperCase() : "";
+        const faseTraduzida = fasesMap[faseDoBanco] || p.fase || "";
+
+        return (
+          faseTraduzida.trim().toLowerCase() === abaAtiva.trim().toLowerCase()
+        );
+      });
     }
 
-    // Retorna empacotado na estrutura que o HTML espera para renderizar
-    return [
-      {
-        dataLabel: abaAtiva,
-        partidas: partidasFiltradas,
-      },
-    ];
+    const mapa = new Map<string, { ordem: number; itens: Partida[] }>();
+    for (const p of partidasFiltradas) {
+      const g = grupoDe(p.horario);
+      const atual = mapa.get(g.label) ?? { ordem: g.ordem, itens: [] };
+      atual.itens.push(p);
+      mapa.set(g.label, atual);
+    }
+
+    return [...mapa.entries()]
+      .sort((a, b) => a[1].ordem - b[1].ordem)
+      .map(([label, v]) => ({ label, itens: v.itens }));
   };
 
-  const gruposPartidasFiltradas = obterPartidasFiltradas();
+  const gruposDePartidas = obterPartidasAgrupadas();
 
   return (
-    <div className="w-full bg-white font-sans p-8">
+    <div className="w-full bg-white font-sans p-4 sm:p-8 min-h-screen">
       {/* Cabeçalho */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+        <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
           ⚽ Olá, {userName}
         </h1>
         <p className="text-[#a1a1aa] text-sm font-medium">
@@ -126,96 +274,105 @@ export default function ConteudoPartidas() {
         </p>
       </div>
 
-      {/* Navegação de Abas Dinâmica */}
-      <div className="flex gap-8 border-b border-gray-100 mb-6 text-sm font-medium text-[#a1a1aa] overflow-x-auto whitespace-nowrap">
-        {abas.map((aba) => (
-          <button
-            key={aba}
-            onClick={() => setAbaAtiva(aba)}
-            className={`pb-3 transition-colors ${
-              abaAtiva === aba
-                ? "border-b-2 border-green-600 text-black font-semibold"
-                : "hover:text-gray-700"
-            }`}
-          >
-            {aba}
-          </button>
-        ))}
+      {/* NAVEGAÇÃO DE ABAS - EM FORMATO DE "CHIPS" (SEM ROLAGEM) */}
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-2">
+          {abas.map((aba) => (
+            <button
+              key={aba}
+              onClick={() => setAbaAtiva(aba)}
+              className={`rounded-full px-4 py-2 text-[13px] sm:text-sm font-semibold transition-all ${
+                abaAtiva === aba
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {aba}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Lista de Partidas */}
       {loading ? (
-        <p className="text-gray-500">Carregando partidas...</p>
-      ) : gruposPartidasFiltradas[0].partidas.length === 0 ? (
-        <p className="text-gray-500">
-          Nenhuma partida encontrada para a categoria "{abaAtiva}".
+        <p className="text-gray-500 py-10 text-center">
+          Carregando partidas...
+        </p>
+      ) : gruposDePartidas.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-gray-200 py-16 text-center text-sm text-gray-500 mt-6 mx-2">
+          Nenhuma partida encontrada para "{abaAtiva}".
         </p>
       ) : (
-        <div className="space-y-8">
-          {gruposPartidasFiltradas.map((grupo, indexGrupo) => (
-            <div key={indexGrupo}>
-              <h3 className="font-semibold text-sm text-black mb-3">
-                {grupo.dataLabel}
-              </h3>
-              <div className="space-y-2">
-                {grupo.partidas.map((partida) => (
-                  <div
-                    key={partida.id_partida}
-                    className="flex items-center justify-between bg-[#fafafa] rounded-lg px-6 py-3"
-                  >
-                    {/* Equipe 1 */}
-                    <div className="flex items-center justify-end gap-3 w-[30%]">
-                      <span className="text-xl leading-none">
-                        {partida.equipe1?.bandeira}
-                      </span>
-                      <span className="font-medium text-sm text-black w-20 truncate">
-                        {partida.equipe1?.nome || "Time 1"}
-                      </span>
-                    </div>
+        <div className="space-y-6 sm:space-y-7">
+          {gruposDePartidas.map((grupo) => (
+            <section key={grupo.label}>
+              <h2 className="mb-3 text-sm text-gray-500 ml-1 font-medium">
+                {grupo.label}
+              </h2>
+              <ul className="space-y-3 sm:space-y-4">
+                {grupo.itens.map((partida: any) => {
+                  const e1 =
+                    partida.equipe1 ||
+                    (partida.equipes && partida.equipes[0]) ||
+                    null;
+                  const e2 =
+                    partida.equipe2 ||
+                    (partida.equipes && partida.equipes[1]) ||
+                    null;
 
-                    {/* Placar */}
-                    <div className="bg-[#f3e8ff] text-[#7e22ce] font-semibold px-4 py-1.5 rounded-full text-xs min-w-[60px] text-center">
-                      {partida.placar || "-"}
-                    </div>
+                  return (
+                    <li
+                      key={partida.id_partida || partida.id}
+                      className="flex flex-col rounded-xl border border-gray-100 bg-gray-50/70 p-3 sm:p-4 transition hover:bg-gray-50 shadow-sm"
+                    >
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 w-full min-w-0">
+                        <div className="min-w-0 flex w-full">
+                          <TimeUser equipe={e1} rightAlign={true} />
+                        </div>
 
-                    {/* Equipe 2 */}
-                    <div className="flex items-center justify-start gap-3 w-[30%]">
-                      <span className="font-medium text-sm text-black w-20 text-right truncate">
-                        {partida.equipe2?.nome || "Time 2"}
-                      </span>
-                      <span className="text-xl leading-none">
-                        {partida.equipe2?.bandeira}
-                      </span>
-                    </div>
+                        <div className="shrink-0 flex justify-center px-1 sm:px-2">
+                          <PlacarUser partida={partida} />
+                        </div>
 
-                    {/* Horário */}
-                    <div className="flex items-center justify-end gap-6 w-[20%]">
-                      <div className="bg-[#dcfce7] text-[#166534] font-semibold px-4 py-1.5 rounded-full text-xs min-w-[70px] text-center">
-                        {formatarHorario(partida.horario)}
+                        <div className="min-w-0 flex w-full">
+                          <TimeUser equipe={e2} rightAlign={false} />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-[#a1a1aa]">
-                        <button className="hover:text-gray-600 transition-colors">
-                          <Info size={18} strokeWidth={2} />
-                        </button>
-                        <button
-                          className={`transition-colors ${
-                            partida.favorita
-                              ? "text-[#0f172a]"
-                              : "hover:text-gray-600"
-                          }`}
-                        >
-                          <Star
-                            size={18}
-                            strokeWidth={2}
-                            className={partida.favorita ? "fill-current" : ""}
-                          />
-                        </button>
+
+                      <div className="flex w-full items-center justify-between pt-3 mt-3 border-t border-gray-200/60">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <button
+                            type="button"
+                            className="rounded-md p-1 sm:p-2 transition text-gray-400 hover:bg-gray-200 hover:text-gray-600 cursor-pointer"
+                            title="Detalhes"
+                          >
+                            <Info size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            className={`rounded-md p-1 sm:p-2 transition cursor-pointer ${
+                              partida.favorita
+                                ? "text-[#0f172a]"
+                                : "text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                            }`}
+                            title="Favoritar"
+                          >
+                            <Star
+                              size={17}
+                              className={partida.favorita ? "fill-current" : ""}
+                            />
+                          </button>
+                        </div>
+
+                        <span className="shrink-0 rounded-md bg-green-50/80 px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-green-700">
+                          {horaDe(partida.horario)}
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           ))}
         </div>
       )}
