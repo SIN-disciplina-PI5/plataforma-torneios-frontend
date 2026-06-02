@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -48,6 +49,7 @@ export function LoginForm() {
   const { mostrarToast } = useNotificacao();
 
   const toastExibido = useRef(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -107,12 +109,15 @@ export function LoginForm() {
       const role = getUserRole();
       const redirectPath = role === "ADMIN" ? "/admin/torneios" : "/torneios";
 
+      
       router.push(redirectPath);
     } catch (err: unknown) {
       setModalMessage(getLoginErrorMessage(err));
       setModalOpen(true);
     } finally {
       setLoading(false);
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     }
   };
 
@@ -180,7 +185,10 @@ export function LoginForm() {
         </div>
 
         <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
-          <Recaptcha onChange={setCaptchaToken} />
+          <Recaptcha
+            ref={recaptchaRef}
+            onChange={setCaptchaToken}
+          />
         </div>
 
         <div className="flex justify-center">
