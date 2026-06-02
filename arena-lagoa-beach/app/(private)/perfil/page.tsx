@@ -218,36 +218,36 @@ export default function MeuPerfil() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 min-h-screen p-8 flex items-center justify-center">
+      <div className="flex-1 min-h-screen p-4 sm:p-8 flex items-center justify-center">
         Carregando perfil...
       </div>
     );
   }
 
   return (
-    <main className="w-full flex-1 min-h-screen p-8 box-border bg-[#f6f6f4]">
+    <main className="w-full flex-1 min-h-screen p-4 sm:p-8 box-border bg-[#f6f6f4]">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 m-0">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 flex items-center gap-2 m-0">
           ⚽ Meu Perfil
         </h1>
-        <p className="text-sm text-gray-500 mt-1 ml-8">{formData.email}</p>
+        <p className="text-sm text-gray-500 mt-1 sm:ml-8">{formData.email}</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden pb-6">
         <div className="h-28 bg-gradient-to-r from-[#90e0ef] via-[#d4f29a] to-[#fff700]"></div>
 
-        <div className="px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="flex items-center gap-5">
-            <div className="relative -mt-10 flex items-end">
+        <div className="px-5 sm:px-10 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div className="flex items-center gap-4 sm:gap-5 w-full md:w-auto">
+            <div className="relative -mt-8 sm:-mt-10 flex items-end">
               <div
                 role="img"
                 aria-label="Foto de perfil"
                 style={{ backgroundImage: `url("${avatarPreview}")` }}
-                className="w-24 h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm relative"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white bg-white bg-cover bg-center shadow-sm relative"
               />
 
               {isEditing && (
-                <div className="absolute -bottom-2 -right-4 flex flex-col gap-2">
+                <div className="absolute -bottom-2 -right-2 sm:-right-4 flex flex-col gap-2">
                   <input
                     type="file"
                     id="avatar-upload"
@@ -277,13 +277,13 @@ export default function MeuPerfil() {
               )}
             </div>
 
-            <div className="mt-2 ml-4">
-              <h2 className="m-0 text-xl text-gray-800 font-semibold">
+            <div className="mt-2 ml-2 sm:ml-4 flex-1">
+              <h2 className="m-0 text-lg sm:text-xl text-gray-800 font-semibold truncate">
                 {formData.nome}
               </h2>
               <a
                 href={`mailto:${formData.email}`}
-                className="text-sm text-gray-500 hover:underline"
+                className="text-xs sm:text-sm text-gray-500 hover:underline truncate block"
               >
                 {formData.email}
               </a>
@@ -292,7 +292,7 @@ export default function MeuPerfil() {
 
           <button
             onClick={handleEditToggle}
-            className={`mt-4 md:mt-2 text-white border-none px-6 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
+            className={`mt-6 md:mt-2 text-white border-none w-full md:w-auto px-6 py-2.5 rounded-md text-sm font-medium cursor-pointer transition-colors ${
               isEditing
                 ? "bg-green-600 hover:bg-green-800"
                 : "bg-[#316f27] hover:bg-green-800"
@@ -302,7 +302,7 @@ export default function MeuPerfil() {
           </button>
         </div>
 
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-10 pt-6">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-5 sm:px-10 pt-6">
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
               Nome Completo
@@ -356,7 +356,7 @@ export default function MeuPerfil() {
                 <button
                   type="button"
                   onClick={() => setMostrarSenha(!mostrarSenha)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 >
                   {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -384,7 +384,7 @@ export default function MeuPerfil() {
                   onClick={() =>
                     setMostrarConfirmarSenha(!mostrarConfirmarSenha)
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 >
                   {mostrarConfirmarSenha ? (
                     <EyeOff size={18} />
@@ -397,12 +397,12 @@ export default function MeuPerfil() {
           </div>
         </form>
 
-        <div className="px-10 mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-4 justify-end">
+        <div className="px-5 sm:px-10 mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-4 justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                className="bg-[#de3f53] hover:bg-[#c43648] text-white px-8 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                className="w-full sm:w-auto bg-[#de3f53] hover:bg-[#c43648] text-white px-8 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
               >
                 Sair
               </button>
@@ -416,10 +416,12 @@ export default function MeuPerfil() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel className="cursor-pointer">
+                  Cancelar
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleLogout}
-                  className="bg-[#316f27] hover:bg-green-800"
+                  className="bg-[#316f27] hover:bg-green-800 cursor-pointer"
                 >
                   Sim, sair
                 </AlertDialogAction>
@@ -431,7 +433,7 @@ export default function MeuPerfil() {
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                className="bg-[#de3f53] hover:bg-[#c43648] text-white px-8 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                className="w-full sm:w-auto bg-[#de3f53] hover:bg-[#c43648] text-white px-8 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
               >
                 Deletar conta
               </button>
@@ -446,10 +448,12 @@ export default function MeuPerfil() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel className="cursor-pointer">
+                  Cancelar
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteAccount}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 cursor-pointer"
                 >
                   Sim, deletar conta
                 </AlertDialogAction>
