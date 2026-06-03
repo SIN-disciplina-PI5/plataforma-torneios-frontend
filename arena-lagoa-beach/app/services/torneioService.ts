@@ -86,7 +86,7 @@ export const createTorneio = async (
 const mapearErroParaTorneioCriacao = (error: unknown): TorneioCriacaoError => {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
-    const mensagemAPI = error.response?.data?.message;
+    const mensagemAPI = error.response?.data?.message || error.response?.data?.error;
 
     switch (status) {
       case 409:
