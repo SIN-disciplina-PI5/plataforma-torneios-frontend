@@ -190,7 +190,7 @@ export default function EditarPartida() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+       body: JSON.stringify({
           fase: faseAtiva,
           horario,
           placar: `${placar.a}x${placar.b}`,
@@ -199,7 +199,6 @@ export default function EditarPartida() {
           status: vencedor ? 'FINALIZADA' : partida.status,
         }),
       });
-
       const json = (await res.json()) as ApiPartidaResponse & ApiErrorResponse;
 
       if (!res.ok) {
@@ -347,7 +346,10 @@ export default function EditarPartida() {
                   </button>
                 </div>
               ))}
+              
             </div>
+            
+            
           </div>
 
           <button
