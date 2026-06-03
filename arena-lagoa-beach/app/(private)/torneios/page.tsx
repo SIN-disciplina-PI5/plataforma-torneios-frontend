@@ -22,10 +22,10 @@ import { DuplasModal } from "@/components/ui/DuplasModal";
 
 import styles from "./_styles/tournaments.module.css";
 
-type Tab = "Todos" | "Essa semana" | "Meus Torneios" | "Favoritos";
+type Tab = "Todos" | "Essa semana" | "Meus Torneios" | "Favoritos" | "Finalizados";
 type DialogState = "idle" | "confirm" | "loading" | "success" | "error";
 
-const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos"];
+const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos", "Finalizados"];
 
 export default function TorneiosPage() {
   const [activeTab, setActiveTab] = useState<Tab>("Essa semana");
@@ -123,16 +123,12 @@ export default function TorneiosPage() {
       return;
     }
 
-    // Torneio já iniciou → abre o modal em modo somente leitura (sem permitir edição)
-    // O bloqueio visual já está no botão do TournamentCard; aqui abrimos normalmente
-    // pois o usuário pode querer *ver* a dupla mesmo sem poder editar.
     setSelected(tournament);
     setDuplasTorneioId(tournament.id_torneio);
     setDuplaModalOpen(true);
   }
 
   async function handleRegisterClick(tournament: TournamentUI) {
-    // Guard: não deixa chegar aqui se bloqueado, mas protege por segurança
     if (edicaoBloqueada(tournament) || torneioJaIniciou(tournament)) {
       setErroMensagem(
         torneioJaIniciou(tournament)
@@ -174,7 +170,6 @@ export default function TorneiosPage() {
   }
 
   function handleUnregisterClick(tournament: TournamentUI) {
-    // Guard: bloqueia cancelamento se edição já encerrou
     if (edicaoBloqueada(tournament) || torneioJaIniciou(tournament)) {
       setErroMensagem(
         torneioJaIniciou(tournament)
@@ -217,6 +212,10 @@ export default function TorneiosPage() {
   const filtered = tournaments
     .filter((t) => {
       if (activeTab === "Favoritos") return t.favorite;
+      if (activeTab === "Finalizados") {
+        if (!t.data_fim) return false;
+        return new Date(t.data_fim) < new Date();
+      }
       if (activeTab === "Essa semana") {
         if (!t.data_inicio) return false;
         const hoje = new Date();
@@ -317,6 +316,8 @@ export default function TorneiosPage() {
             <p className="text-base sm:text-lg font-medium">
               {activeTab === "Meus Torneios"
                 ? "Você ainda não está inscrito em nenhum torneio."
+                : activeTab === "Finalizados"
+                ? "Nenhum torneio finalizado encontrado."
                 : "Nenhum torneio encontrado"}
             </p>
           </div>
