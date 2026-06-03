@@ -36,7 +36,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={cn(geist.variable, inter.variable, poppins.variable)}
     >
-      <body className="font-sans md:ml-64">
+      <body className="font-sans">
         <ClientProvider>
           {children}
           <Toaster position="bottom-right" richColors />
