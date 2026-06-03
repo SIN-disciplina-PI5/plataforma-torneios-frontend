@@ -98,9 +98,8 @@ function toPartida(r: Record<string, unknown>): Partida {
     fase: r.fase as string,
     status: (r.status as string) ?? "",
     horario: (r.horario as string) ?? null,
-    // corrigir
-    placarA: b,
-    placarB: a,
+    placarA: a,
+    placarB: b,
     vencedorId: (r.vencedor_id as string) ?? null,
     resultado: (r.resultado as string) ?? null,
     equipes: (r.equipes as Equipe[]) ?? [],
