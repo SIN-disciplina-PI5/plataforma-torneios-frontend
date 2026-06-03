@@ -3,6 +3,11 @@ import { Star, Users } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { TournamentUI } from "@/app/types/torneios";
+import {
+  torneioJaIniciou,
+  edicaoBloqueada,
+  exibirAvisoFechamentoProximo,
+} from "@/app/types/torneios";
 import { formatDate } from "@/lib/utils";
 import styles from "@/app/(private)/torneios/_styles/tournaments.module.css";
 
@@ -35,6 +40,52 @@ interface TournamentCardProps {
   onVerDuplas: (tournament: TournamentUI) => void;
 }
 
+/** Retorna a flag de status que substitui "Disponível" na linha de meta-info */
+function StatusFlag({ tournament }: { tournament: TournamentUI }) {
+  const jaIniciou       = torneioJaIniciou(tournament);
+  const bloqueado       = edicaoBloqueada(tournament);
+  const avisoFechamento = exibirAvisoFechamentoProximo(tournament);
+  const isEsgotado      = !tournament.status || tournament.vagas <= 0;
+
+  if (jaIniciou) {
+    return (
+      <span className="font-medium text-blue-600 whitespace-nowrap">
+         Em andamento
+      </span>
+    );
+  }
+
+  if (avisoFechamento) {
+    return (
+      <span className="font-medium text-amber-500 whitespace-nowrap">
+         Fecha em 2 dias
+      </span>
+    );
+  }
+
+  if (bloqueado) {
+    return (
+      <span className="font-medium text-orange-500 whitespace-nowrap">
+         Inscrições encerradas
+      </span>
+    );
+  }
+
+  if (isEsgotado) {
+    return (
+      <span className="font-medium text-red-500 whitespace-nowrap">
+        Esgotado
+      </span>
+    );
+  }
+
+  return (
+    <span className="font-medium text-green-600 whitespace-nowrap">
+      Disponível
+    </span>
+  );
+}
+
 export function TournamentCard({
   tournament,
   onToggleFavorite,
@@ -42,7 +93,11 @@ export function TournamentCard({
   onUnregister,
   onVerDuplas,
 }: TournamentCardProps) {
-  const isEsgotado = !tournament.status || tournament.vagas <= 0;
+  const isEsgotado      = !tournament.status || tournament.vagas <= 0;
+  const jaIniciou       = torneioJaIniciou(tournament);
+  const bloqueado       = edicaoBloqueada(tournament);
+  const podeInscrever   = !isEsgotado && !jaIniciou && !bloqueado && !tournament.jaInscrito;
+  const podeCancelar    = tournament.jaInscrito && !jaIniciou && !bloqueado;
 
   return (
     <article
@@ -51,6 +106,7 @@ export function TournamentCard({
         styles.card,
       )}
     >
+      {/* ── Imagem de capa (sem banner no topo) ─────────────────────────── */}
       <div className="relative h-32 sm:h-36 w-full bg-neutral-200">
         <Image
           src={LEVEL_IMAGES[tournament.categoria] || LEVEL_IMAGES.default}
@@ -60,6 +116,7 @@ export function TournamentCard({
         />
       </div>
 
+      {/* ── Corpo do card ────────────────────────────────────────────────── */}
       <div className="p-4 flex flex-col gap-2 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span
@@ -108,6 +165,7 @@ export function TournamentCard({
           {tournament.nome}
         </h3>
 
+        {/* Meta info — flag de status substitui "Disponível" */}
         <div className="flex flex-col gap-1 w-full min-w-0 mt-1">
           <p className="text-xs text-gray-500 truncate w-full">
             <span className="font-medium text-gray-700">Início:</span>{" "}
@@ -122,38 +180,60 @@ export function TournamentCard({
             <span className="mx-1.5 text-gray-200">|</span>
             {TURNO_LABELS[tournament.turno] || tournament.turno}
             <span className="mx-1.5 text-gray-200">|</span>
-            <span
-              className={clsx(
-                "font-medium",
-                isEsgotado ? "text-red-500" : "text-green-600",
-              )}
-            >
-              {isEsgotado ? "Esgotado" : "Disponível"}
-            </span>
+            <StatusFlag tournament={tournament} />
           </p>
         </div>
 
-        <div className="mt-auto pt-3">
-          {isEsgotado ? (
+        {/* ── Botões de ação ─────────────────────────────────────────────── */}
+        <div className="mt-auto pt-3 flex flex-col gap-2">
+
+          {/* Esgotado e não iniciado */}
+          {isEsgotado && !jaIniciou && (
             <button
               disabled
               className="rounded-lg bg-red-500 w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white cursor-not-allowed opacity-90"
             >
               Esgotado
             </button>
-          ) : tournament.jaInscrito ? (
+          )}
+
+          {/* Não inscrito */}
+          {!isEsgotado && !tournament.jaInscrito && (
             <button
-              onClick={() => onUnregister(tournament)}
-              className="rounded-lg bg-red-500 w-full sm:w-auto hover:bg-red-600 active:bg-red-700 px-4 py-2 text-xs font-semibold text-white transition-colors"
+              onClick={() => podeInscrever && onRegister(tournament)}
+              disabled={!podeInscrever}
+              className={clsx(
+                "rounded-lg w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white transition-colors",
+                podeInscrever
+                  ? "bg-green-600 hover:bg-green-700 active:bg-green-800 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed",
+              )}
             >
-              Desinscrever
+              {jaIniciou
+                ? "Torneio iniciado"
+                : bloqueado
+                ? "Inscrições encerradas"
+                : "Se inscrever"}
             </button>
-          ) : (
+          )}
+
+          {/* Inscrito: desinscrever */}
+          {tournament.jaInscrito && (
             <button
-              onClick={() => onRegister(tournament)}
-              className="rounded-lg bg-green-600 w-full sm:w-auto hover:bg-green-700 active:bg-green-800 px-4 py-2 text-xs font-semibold text-white transition-colors"
+              onClick={() => podeCancelar && onUnregister(tournament)}
+              disabled={!podeCancelar}
+              className={clsx(
+                "rounded-lg w-full sm:w-auto px-4 py-2 text-xs font-semibold text-white transition-colors",
+                podeCancelar
+                  ? "bg-red-500 hover:bg-red-600 active:bg-red-700 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed",
+              )}
             >
-              Se inscrever
+              {jaIniciou
+                ? "Cancelamento indisponível"
+                : bloqueado
+                ? "Cancelamento encerrado"
+                : "Desinscrever"}
             </button>
           )}
         </div>
