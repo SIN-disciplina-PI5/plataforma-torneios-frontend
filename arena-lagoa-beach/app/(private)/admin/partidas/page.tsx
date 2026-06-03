@@ -17,6 +17,14 @@ const fases: [string, string][] = [
   ["FINAL", "Finais"],
 ];
 const labelFase = (v: string) => fases.find((f) => f[0] === v)?.[1] ?? v;
+  const labelStatus = (status: string) => {
+  const map: Record<string, string> = {
+    PENDENTE: "Pendente",
+    EM_ANDAMENTO: "Em andamento",
+    FINALIZADA: "Finalizada",
+  };
+  return map[status?.toUpperCase()] ?? status;
+};
 
 type Membro = {
   id_usuario: string;
@@ -41,6 +49,12 @@ type Partida = {
   vencedorId: string | null;
   resultado: string | null;
   equipes: Equipe[];
+};
+
+type TorneioMeta = {
+  id_torneio: string;
+  nome: string;
+  fase_atual: string | null;
 };
 
 const getToken = () =>
@@ -72,14 +86,21 @@ function parsePlacar(p: unknown): [number | null, number | null] {
 
 function toPartida(r: Record<string, unknown>): Partida {
   const [a, b] = parsePlacar(r.placar);
+  const torneioRaw = r.torneio;
+  const torneioNome =
+    typeof torneioRaw === "object" && torneioRaw !== null
+      ? ((torneioRaw as { nome?: string }).nome ?? null)
+      : ((torneioRaw as string) ?? null);
+
   return {
     id: (r.id_partida ?? r.id) as string,
-    torneio: (r.torneio as string) ?? null,
+    torneio: torneioNome,
     fase: r.fase as string,
     status: (r.status as string) ?? "",
     horario: (r.horario as string) ?? null,
-    placarA: a,
-    placarB: b,
+    // corrigir
+    placarA: b,
+    placarB: a,
     vencedorId: (r.vencedor_id as string) ?? null,
     resultado: (r.resultado as string) ?? null,
     equipes: (r.equipes as Equipe[]) ?? [],
@@ -89,6 +110,24 @@ function toPartida(r: Record<string, unknown>): Partida {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const isFinalizada = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
+
+function todasPartidasDoTorneioFinalizadas(
+  nomeTorneio: string,
+  partidas: Partida[],
+) {
+  const doTorneio = partidas.filter((p) => p.torneio === nomeTorneio);
+  return doTorneio.length > 0 && doTorneio.every(isFinalizada);
+}
+
+function podeAvancarChave(meta: TorneioMeta, partidas: Partida[]) {
+  if (!meta.fase_atual || meta.fase_atual === "FINAL") return false;
+  if (!todasPartidasDoTorneioFinalizadas(meta.nome, partidas)) return false;
+
+  const daFaseAtual = partidas.filter(
+    (p) => p.torneio === meta.nome && p.fase === meta.fase_atual,
+  );
+  return daFaseAtual.length > 0 && daFaseAtual.every(isFinalizada);
+}
 
 function grupoDe(iso: string | null) {
   if (!iso) return { ordem: Infinity, label: "Sem data definida" };
@@ -174,21 +213,48 @@ function useAdminNome() {
 export default function PartidasPage() {
   const nome = useAdminNome();
   const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [torneiosMeta, setTorneiosMeta] = useState<TorneioMeta[]>([]);
   const [aba, setAba] = useState<string>("TODOS");
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [finalizandoId, setFinalizandoId] = useState<string | null>(null);
+  const [avancandoTorneioId, setAvancandoTorneioId] = useState<string | null>(
+    null,
+  );
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro("");
     try {
-      const r = await fetch(`${API}/api/partidas`, { headers: auth() });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Erro ao buscar partidas");
-      setPartidas((j.data || []).map(toPartida));
+      const [rPartidas, rTorneios] = await Promise.all([
+        fetch(`${API}/api/partidas`, { headers: auth() }),
+        fetch(`${API}/api/torneio`, { headers: auth() }),
+      ]);
+
+      const jPartidas = await rPartidas.json();
+      const jTorneios = await rTorneios.json();
+
+      if (!rPartidas.ok)
+        throw new Error(jPartidas.error || "Erro ao buscar partidas");
+      if (!rTorneios.ok)
+        throw new Error(jTorneios.error || "Erro ao buscar torneios");
+
+      setPartidas((jPartidas.data || []).map(toPartida));
+      setTorneiosMeta(
+        (jTorneios.data || []).map(
+          (t: {
+            id_torneio: string;
+            nome: string;
+            fase_atual?: string | null;
+          }) => ({
+            id_torneio: t.id_torneio,
+            nome: t.nome,
+            fase_atual: t.fase_atual ?? null,
+          }),
+        ),
+      );
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao buscar partidas");
     } finally {
@@ -207,25 +273,56 @@ export default function PartidasPage() {
     };
   }, [carregar]);
 
-  const finalizarPartida = useCallback(async (id: string) => {
-    setFinalizandoId(id);
-    setErro("");
-    try {
-      const r = await fetch(`${API}/api/partidas/finalizar/${id}`, {
-        method: "PATCH",
-        headers: auth(),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Erro ao finalizar partida");
+  const finalizarPartida = useCallback(
+    async (id: string) => {
+      setFinalizandoId(id);
+      setErro("");
+      try {
+        const r = await fetch(`${API}/api/partidas/finalizar/${id}`, {
+          method: "PATCH",
+          headers: auth(),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "Erro ao finalizar partida");
 
-      await carregar();
-      setInfoId(null);
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao finalizar partida");
-    } finally {
-      setFinalizandoId(null);
-    }
-  }, [carregar]);
+        await carregar();
+        setInfoId(null);
+      } catch (e) {
+        setErro(
+          e instanceof Error ? e.message : "Erro ao finalizar partida",
+        );
+      } finally {
+        setFinalizandoId(null);
+      }
+    },
+    [carregar],
+  );
+
+  const avancarChave = useCallback(
+    async (idTorneio: string) => {
+      setAvancandoTorneioId(idTorneio);
+      setErro("");
+      try {
+        const r = await fetch(
+          `${API}/api/torneio/${idTorneio}/avancar-fase`,
+          {
+            method: "POST",
+            headers: auth(true),
+            body: JSON.stringify({}),
+          },
+        );
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "Erro ao avançar chave");
+
+        await carregar();
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : "Erro ao avançar chave");
+      } finally {
+        setAvancandoTorneioId(null);
+      }
+    },
+    [carregar],
+  );
 
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
@@ -279,6 +376,30 @@ export default function PartidasPage() {
       )
       .map(([label, v]) => ({ label, itens: v.itens }));
   }, [partidas, abaAtual]);
+
+  const torneiosParaAvancar = useMemo(() => {
+    if (abaAtual !== "FINALIZADAS") return [];
+
+    const nomesNaAba = new Set<string>();
+    for (const p of partidas) {
+      if (p.torneio && isFinalizada(p)) nomesNaAba.add(p.torneio);
+    }
+
+    return [...nomesNaAba]
+      .map((nomeTorneio) => {
+        const meta = torneiosMeta.find((t) => t.nome === nomeTorneio);
+        if (!meta) return null;
+        return {
+          id: meta.id_torneio,
+          nome: meta.nome,
+          pode: podeAvancarChave(meta, partidas),
+        };
+      })
+      .filter(
+        (item): item is { id: string; nome: string; pode: boolean } =>
+          item !== null,
+      );
+  }, [abaAtual, partidas, torneiosMeta]);
 
   const partidaInfo = partidas.find((p) => p.id === infoId) || null;
 
@@ -346,23 +467,52 @@ export default function PartidasPage() {
             Nenhuma partida encontrada.
           </p>
         ) : (
-          <div className="space-y-7">
-            {grupos.map((g) => (
-              <section key={g.label}>
-                <h2 className="mb-2 text-sm text-gray-500">{g.label}</h2>
-                <ul className="space-y-2">
-                  {g.itens.map((p) => (
-                    <Linha
-                      key={p.id}
-                      partida={p}
-                      onInfo={() => setInfoId(p.id)}
-                      onEditar={() => setEditId(p.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <>
+            <div className="space-y-7">
+              {grupos.map((g) => (
+                <section key={g.label}>
+                  <h2 className="mb-2 text-sm text-gray-500">{g.label}</h2>
+                  <ul className="space-y-2">
+                    {g.itens.map((p) => (
+                      <Linha
+                        key={p.id}
+                        partida={p}
+                        onInfo={() => setInfoId(p.id)}
+                        onEditar={() => setEditId(p.id)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+
+            {abaAtual === "FINALIZADAS" && torneiosParaAvancar.length > 0 && (
+              <div className="mt-10 space-y-4">
+                {torneiosParaAvancar.map(({ id, nome: nomeTorneio, pode }) => {
+                  const avancando = avancandoTorneioId === id;
+                  return (
+                    <div key={id} className="flex flex-col items-center gap-1">
+                      {torneiosParaAvancar.length > 1 && (
+                        <p className="text-xs text-gray-500">{nomeTorneio}</p>
+                      )}
+                      <button
+                        type="button"
+                        disabled={!pode || avancando}
+                        onClick={() => avancarChave(id)}
+                        className={`min-w-[200px] rounded-lg px-8 py-3 text-sm font-bold transition ${
+                          pode
+                            ? "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+                            : "bg-white text-black border border-gray-300 cursor-not-allowed"
+                        } disabled:opacity-60`}
+                      >
+                        {avancando ? "Avançando..." : "Avançar chave"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -372,7 +522,6 @@ export default function PartidasPage() {
             partida={partidaInfo}
             finalizando={finalizandoId === partidaInfo.id}
             onFinalizar={() => finalizarPartida(partidaInfo.id)}
-              
           />
         </Modal>
       )}
@@ -557,7 +706,7 @@ function DetalhesPartida({
         {partida.torneio || "Torneio não informado"}
       </p>
       <p className="mb-5 text-xs text-gray-400">
-        {labelFase(partida.fase)} · {partida.status}
+        {labelFase(partida.fase)} · {labelStatus(partida.status)}
       </p>
 
       <div className="flex items-stretch gap-3">
@@ -592,8 +741,8 @@ function DetalhesPartida({
           {partida.resultado}
         </p>
       )}
-     
-        <div className="flex items-center justify-center">
+
+      <div className="flex items-center justify-center">
         <button
           type="button"
           onClick={() => setConfirmarFinalizacao(true)}
@@ -637,7 +786,7 @@ function DetalhesPartida({
     </>
   );
 }
-  
+
 function ColunaDupla({ equipe }: { equipe: Equipe }) {
   return (
     <div className="flex-1 rounded-lg bg-gray-50 p-3">
