@@ -69,6 +69,10 @@ export function AdminTournamentDialogs({
     state !== "idle" &&
     state !== "edit";
 
+  const erroApiDataInicio =
+    apiError?.type === "validation-error" &&
+    apiError.mensagem.toLowerCase().includes("data de início");
+
   const handleClose = () => {
     setNome("");
     setCategoria("");
@@ -352,7 +356,7 @@ export function AdminTournamentDialogs({
 
             <div className="space-y-4 py-4">
               {/* ERRO DA API */}
-              {apiError && (
+              {apiError && !erroApiDataInicio && (
                 <div
                   className={`rounded-lg border px-4 py-3 flex items-start gap-3 ${
                     apiError.type === "duplicate-name"
@@ -528,13 +532,17 @@ export function AdminTournamentDialogs({
                         dataInicio: "",
                       });
                     }
+
+                    if (erroApiDataInicio) {
+                      setApiError(null);
+                    }
                   }}
                   className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 transition-all"
                 />
 
-                {errors.dataInicio && (
+                {(errors.dataInicio || erroApiDataInicio) && (
                   <p className="mt-1 text-xs text-red-600">
-                    {errors.dataInicio}
+                    {errors.dataInicio || apiError?.mensagem}
                   </p>
                 )}
               </div>
