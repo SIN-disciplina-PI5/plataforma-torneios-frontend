@@ -11,6 +11,9 @@
 !.yarn/versions
 /dist 
 ./dist
+dist
+!dist/.gitkeep
+!dist/**/.gitkeep
 
 # testing
 /coverage
