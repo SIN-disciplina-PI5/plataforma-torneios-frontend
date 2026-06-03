@@ -297,31 +297,26 @@ export default function PartidasPage() {
     [carregar],
   );
 
-  const avancarChave = useCallback(
-    async (idTorneio: string) => {
-      setAvancandoTorneioId(idTorneio);
-      setErro("");
-      try {
-        const r = await fetch(
-          `${API}/api/torneio/${idTorneio}/avancar-fase`,
-          {
-            method: "POST",
-            headers: auth(true),
-            body: JSON.stringify({}),
-          },
-        );
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.error || "Erro ao avançar chave");
+ const avancarChave = useCallback(
+  async (idTorneio: string) => {
+    console.log("ID TORNEIO:", idTorneio);
 
-        await carregar();
-      } catch (e) {
-        setErro(e instanceof Error ? e.message : "Erro ao avançar chave");
-      } finally {
-        setAvancandoTorneioId(null);
+    const r = await fetch(
+      `${API}/api/torneio/${idTorneio}/avancar-fase`,
+      {
+        method: "POST",
+        headers: auth(true),
+        body: JSON.stringify({}),
       }
-    },
-    [carregar],
-  );
+    );
+
+    const j = await r.json().catch(() => ({}));
+
+    console.log("STATUS:", r.status);
+    console.log("BODY:", j);
+  },
+  [carregar] 
+);
 
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
@@ -485,32 +480,17 @@ export default function PartidasPage() {
               ))}
             </div>
 
-            {abaAtual === "FINALIZADAS" && torneiosParaAvancar.length > 0 && (
-              <div className="mt-10 space-y-4">
-                {torneiosParaAvancar.map(({ id, nome: nomeTorneio, pode }) => {
-                  const avancando = avancandoTorneioId === id;
-                  return (
-                    <div key={id} className="flex flex-col items-center gap-1">
-                      {torneiosParaAvancar.length > 1 && (
-                        <p className="text-xs text-gray-500">{nomeTorneio}</p>
-                      )}
-                      <button
-                        type="button"
-                        disabled={!pode || avancando}
-                        onClick={() => avancarChave(id)}
-                        className={`min-w-[200px] rounded-lg px-8 py-3 text-sm font-bold transition ${
-                          pode
-                            ? "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
-                            : "bg-white text-black border border-gray-300 cursor-not-allowed"
-                        } disabled:opacity-60`}
-                      >
-                        {avancando ? "Avançando..." : "Avançar chave"}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+           {abaAtual === "FINALIZADAS" && (
+  <div className="mt-10 flex justify-center">
+    <button
+      type="button"
+      onClick={() => avancarChave(torneiosMeta[0].id_torneio)}
+      className="rounded-lg bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
+    >
+      Avançar chave
+    </button>
+  </div>
+)}
           </>
         )}
       </div>
