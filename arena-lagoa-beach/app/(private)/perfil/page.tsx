@@ -225,7 +225,7 @@ export default function MeuPerfil() {
   }
 
   return (
-    <main className="w-full flex-1 min-h-screen p-4 sm:p-8 box-border bg-[#f6f6f4]">
+    <main className="w-full flex-1 min-h-screen p-4 sm:p-8 box-border ">
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 flex items-center gap-2 m-0">
           ⚽ Meu Perfil
