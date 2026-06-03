@@ -122,7 +122,7 @@ export function AdminTournamentDialogs({
       const inicio = new Date(dataInicio);
 
       if (inicio < hoje) {
-        novoErros.dataInicio = "Data de início não pode ser anterior a hoje";
+          novoErros.dataInicio = "Data de início não pode ser anterior ou igual a hoje";
       }
     }
 
