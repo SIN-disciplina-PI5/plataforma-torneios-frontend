@@ -110,17 +110,8 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const isFinalizada = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
 
-function todasPartidasDoTorneioFinalizadas(
-  nomeTorneio: string,
-  partidas: Partida[],
-) {
-  const doTorneio = partidas.filter((p) => p.torneio === nomeTorneio);
-  return doTorneio.length > 0 && doTorneio.every(isFinalizada);
-}
-
-function podeAvancarChave(meta: TorneioMeta, partidas: Partida[]) {
+function podeAvancarFase(meta: TorneioMeta, partidas: Partida[]) {
   if (!meta.fase_atual || meta.fase_atual === "FINAL") return false;
-  if (!todasPartidasDoTorneioFinalizadas(meta.nome, partidas)) return false;
 
   const daFaseAtual = partidas.filter(
     (p) => p.torneio === meta.nome && p.fase === meta.fase_atual,
@@ -297,7 +288,7 @@ export default function PartidasPage() {
     [carregar],
   );
 
-  const avancarChave = useCallback(
+  const avancarFase = useCallback(
     async (idTorneio: string) => {
       setAvancandoTorneioId(idTorneio);
       setErro("");
@@ -405,9 +396,9 @@ export default function PartidasPage() {
         setErro(
           e instanceof Error
             ? e.message
-            : "Erro ao avançar chave. Tente novamente.",
+            : "Erro ao avançar fase. Tente novamente.",
         );
-        console.error("Erro em avancarChave:", e);
+        console.error("Erro em avancarFase:", e);
       } finally {
         setAvancandoTorneioId(null);
       }
@@ -469,28 +460,12 @@ export default function PartidasPage() {
   }, [partidas, abaAtual]);
 
   const torneiosParaAvancar = useMemo(() => {
-    if (abaAtual !== "FINALIZADAS") return [];
-
-    const nomesNaAba = new Set<string>();
-    for (const p of partidas) {
-      if (p.torneio && isFinalizada(p)) nomesNaAba.add(p.torneio);
-    }
-
-    return [...nomesNaAba]
-      .map((nomeTorneio) => {
-        const meta = torneiosMeta.find((t) => t.nome === nomeTorneio);
-        if (!meta) return null;
-        return {
-          id: meta.id_torneio,
-          nome: meta.nome,
-          pode: podeAvancarChave(meta, partidas),
-        };
-      })
-      .filter(
-        (item): item is { id: string; nome: string; pode: boolean } =>
-          item !== null,
-      );
-  }, [abaAtual, partidas, torneiosMeta]);
+    return torneiosMeta.map((meta) => ({
+      id: meta.id_torneio,
+      nome: meta.nome,
+      pode: podeAvancarFase(meta, partidas),
+    }));
+  }, [partidas, torneiosMeta]);
 
   const partidaInfo = partidas.find((p) => p.id === infoId) || null;
 
@@ -523,20 +498,43 @@ export default function PartidasPage() {
               </button>
             ))}
           </div>
-        </div>
 
-        {erro && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span>{erro}</span>
-            <button
-              type="button"
-              onClick={carregar}
-              className="shrink-0 font-semibold underline"
-            >
-              Tentar novamente
-            </button>
+            {torneiosParaAvancar.some((t) => t.pode) && (
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-green-900 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="font-semibold">Fase pronta para avançar:</span>{" "}
+                  {torneiosParaAvancar
+                    .filter((t) => t.pode)
+                    .map((t) => t.nome)
+                    .join(", ")}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const torneioParaAvancar = torneiosParaAvancar.find(
+                      (t) => t.pode,
+                    );
+                    if (torneioParaAvancar) {
+                      avancarFase(torneioParaAvancar.id);
+                    }
+                  }}
+                  disabled={
+                    avancandoTorneioId !== null ||
+                    !torneiosParaAvancar.some((t) => t.pode)
+                  }
+                  className="rounded-lg bg-green-600 px-6 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {avancandoTorneioId ? "Avançando fase..." : "Avançar fase"}
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {erro && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {erro}
+            </div>
+          )}
 
         {editId && (
           <EditarPartida
@@ -577,23 +575,6 @@ export default function PartidasPage() {
               ))}
             </div>
 
-           {abaAtual === "FINALIZADAS" && torneiosParaAvancar.length > 0 && (
-  <div className="mt-10 flex justify-center">
-    <button
-      type="button"
-      onClick={() => {
-        const torneioParaAvancar = torneiosParaAvancar.find((t) => t.pode);
-        if (torneioParaAvancar) {
-          avancarChave(torneioParaAvancar.id);
-        }
-      }}
-      disabled={avancandoTorneioId !== null || torneiosParaAvancar.every((t) => !t.pode)}
-      className="rounded-lg bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-    >
-      {avancandoTorneioId ? "Avançando chave..." : "Avançar chave"}
-    </button>
-  </div>
-)}
           </>
         )}
       </div>
