@@ -297,26 +297,123 @@ export default function PartidasPage() {
     [carregar],
   );
 
- const avancarChave = useCallback(
-  async (idTorneio: string) => {
-    console.log("ID TORNEIO:", idTorneio);
+  const avancarChave = useCallback(
+    async (idTorneio: string) => {
+      setAvancandoTorneioId(idTorneio);
+      setErro("");
 
-    const r = await fetch(
-      `${API}/api/torneio/${idTorneio}/avancar-fase`,
-      {
-        method: "POST",
-        headers: auth(true),
-        body: JSON.stringify({}),
+      try {
+        // 1. Buscar o torneio para saber a fase atual
+        const rTorneio = await fetch(`${API}/api/torneio/${idTorneio}`, {
+          headers: auth(),
+        });
+        const jTorneio = await rTorneio.json().catch(() => ({}));
+        if (!rTorneio.ok)
+          throw new Error(jTorneio.error || "Erro ao buscar torneio");
+
+        const torneioAtual = jTorneio.data;
+        const faseAtual = torneioAtual.fase_atual;
+
+        if (!faseAtual) {
+          throw new Error("Torneio não possui fase atual definida");
+        }
+
+        // 2. Buscar todas as partidas finalizadas da fase atual
+        const rPartidas = await fetch(`${API}/api/partidas`, {
+          headers: auth(),
+        });
+        const jPartidas = await rPartidas.json().catch(() => ({}));
+        if (!rPartidas.ok)
+          throw new Error(jPartidas.error || "Erro ao buscar partidas");
+
+        const partidasFinalizadas = (jPartidas.data || [])
+          .map(toPartida)
+          .filter(
+            (p: Partida) =>
+              p.torneio === torneioAtual.nome &&
+              p.fase === faseAtual &&
+              p.status === "FINALIZADA",
+          );
+
+        // 3. Distribuir pontos para cada partida finalizada
+        // Mapa de fases para tipo de evento de pontuação
+        const mapa_fase_evento: Record<string, string> = {
+          OITAVAS_DE_FINAL: "AVANCO_FASE",
+          QUARTAS_DE_FINAL: "AVANCO_FASE",
+          SEMI_FINAL: "FINALISTA",
+          FINAL: "CAMPEAO",
+        };
+
+        const tipoEvento = (mapa_fase_evento[faseAtual] as string | null) || null;
+
+        if (tipoEvento) {
+          for (const partida of partidasFinalizadas) {
+            // Buscar a equipe vencedora com seus membros
+            if (partida.vencedorId && partida.equipes.length > 0) {
+              const equipeVencedora = partida.equipes.find(
+                (e: Equipe) => e.id_equipe === partida.vencedorId,
+              );
+
+              if (equipeVencedora && equipeVencedora.membros.length > 0) {
+                // Distribuir pontos para cada membro da equipe vencedora
+                for (const membro of equipeVencedora.membros) {
+                  try {
+                    await fetch(
+                      `${API}/api/ranking/atualizar`,
+                      {
+                        method: "POST",
+                        headers: auth(true),
+                        body: JSON.stringify({
+                          id_usuario: membro.id_usuario,
+                          tipo_evento: tipoEvento,
+                        }),
+                      }
+                    );
+                  } catch (e) {
+                    console.error(
+                      `Erro ao atualizar pontuação do jogador ${membro.id_usuario}:`,
+                      e,
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // 4. Chamar a API para avançar a fase
+        const rAvanco = await fetch(
+          `${API}/api/torneio/${idTorneio}/avancar-fase`,
+          {
+            method: "POST",
+            headers: auth(true),
+            body: JSON.stringify({}),
+          },
+        );
+        const jAvanco = await rAvanco.json().catch(() => ({}));
+        if (!rAvanco.ok)
+          throw new Error(jAvanco.error || "Erro ao avançar fase");
+
+        // 5. Recarregar dados e sair da aba FINALIZADAS
+        await carregar();
+        setAba("TODOS");
+
+        console.log(
+          `✓ Fase avançada com sucesso. ${partidasFinalizadas.length} partida(s) processada(s).`,
+        );
+      } catch (e) {
+        setErro(
+          e instanceof Error
+            ? e.message
+            : "Erro ao avançar chave. Tente novamente.",
+        );
+        console.error("Erro em avancarChave:", e);
+      } finally {
+        setAvancandoTorneioId(null);
       }
-    );
-
-    const j = await r.json().catch(() => ({}));
-
-    console.log("STATUS:", r.status);
-    console.log("BODY:", j);
-  },
-  [carregar] 
-);
+    },
+    [carregar],
+  );
 
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
@@ -480,14 +577,20 @@ export default function PartidasPage() {
               ))}
             </div>
 
-           {abaAtual === "FINALIZADAS" && (
+           {abaAtual === "FINALIZADAS" && torneiosParaAvancar.length > 0 && (
   <div className="mt-10 flex justify-center">
     <button
       type="button"
-      onClick={() => avancarChave(torneiosMeta[0].id_torneio)}
-      className="rounded-lg bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700"
+      onClick={() => {
+        const torneioParaAvancar = torneiosParaAvancar.find((t) => t.pode);
+        if (torneioParaAvancar) {
+          avancarChave(torneioParaAvancar.id);
+        }
+      }}
+      disabled={avancandoTorneioId !== null || torneiosParaAvancar.every((t) => !t.pode)}
+      className="rounded-lg bg-green-600 px-8 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
     >
-      Avançar chave
+      {avancandoTorneioId ? "Avançando chave..." : "Avançar chave"}
     </button>
   </div>
 )}
@@ -902,10 +1005,14 @@ function EditarPartida({
       const equipeVencedora = partida.equipes.find(
         (e) => e.id_equipe === vencedorId,
       );
+      // const equipePerdedora = partida.equipes.find(
+      //   (e) => e.id_equipe !== vencedorId,
+      // );
       const horario =
         data && hora ? new Date(`${data}T${hora}`).toISOString() : null;
-      const placar = `${a}-${b}`;
 
+      const placar = `${a}-${b}`;
+ 
       await requestJson(`${API}/api/partidas/${id}`, {
         method: "PATCH",
         headers: auth(true),
@@ -924,17 +1031,17 @@ function EditarPartida({
           });
         }
 
-        await requestJson(`${API}/api/partidas/finalizar/${id}`, {
-          method: "PATCH",
-          headers: auth(true),
-          body: JSON.stringify({
-            placar,
-            vencedor_id: vencedorId,
-            resultado: equipeVencedora
-              ? `${equipeVencedora.nome} vencedora`
-              : partida.resultado,
-          }),
-        });
+     await requestJson(`${API}/api/partidas/finalizar/${id}`, {
+  method: "PATCH",
+  headers: auth(true),
+  body: JSON.stringify({
+    placar,
+    vencedor_id: vencedorId,
+    resultado: equipeVencedora
+      ? `${equipeVencedora.nome} vencedora`
+      : partida.resultado,
+  }),
+});
       }
 
       onSalvo();
