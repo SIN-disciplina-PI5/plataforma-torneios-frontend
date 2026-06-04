@@ -5,13 +5,14 @@ import { Search, Bell, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getMeuPerfil } from "@/app/services/perfilService";
+import { useNotificacao } from "@/lib/NotificacaoContext";
 
 const avatarPadrao =
   "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
-  const [hasNotification] = useState(true);
+  const { unreadCount } = useNotificacao();
 
   const [avatarUrl, setAvatarUrl] = useState(avatarPadrao);
 
@@ -50,7 +51,7 @@ export default function Navbar() {
           <div className={styles.notificationWrapper}>
             <Bell size={20} className={styles.icon} />
 
-            {hasNotification && (
+            {unreadCount > 0 && (
               <span className={styles.notificationDot}></span>
             )}
           </div>

@@ -204,6 +204,14 @@ export default function TorneiosPage() {
           : t
       )
     );
+    mostrarToast({
+      id_notificacao: Date.now().toString(),
+      titulo: "Saiu da equipe",
+      mensagem: "Você saiu da equipe e sua inscrição foi cancelada com sucesso.",
+      tipo: "info",
+      lida: false,
+      createdAt: new Date().toISOString(),
+    });
     setCancelacaoOpen(true);
   }
 
