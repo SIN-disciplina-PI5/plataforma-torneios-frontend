@@ -36,7 +36,7 @@ export function ListaNotificacoes() {
   const [carregando, setCarregando] =
     useState(true);
 
-  const { mostrarToast } = useNotificacao();
+  const { mostrarToast, setUnreadCount } = useNotificacao();
 
   useEffect(() => {
     buscarNotificacoes();
@@ -48,7 +48,13 @@ export function ListaNotificacoes() {
         "/notifications"
       );
 
-      setNotificacoes(response.data);
+      const notificacoes = response.data;
+      setNotificacoes(notificacoes);
+      setUnreadCount(
+        notificacoes.filter(
+          (n: { lida: boolean }) => !n.lida
+        ).length
+      );
 
     } catch (error) {
       console.error(
@@ -84,6 +90,8 @@ export function ListaNotificacoes() {
             : n
         )
       );
+
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
 
       mostrarToast({
         id_notificacao: crypto.randomUUID(),
