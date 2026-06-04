@@ -10,13 +10,13 @@ export default function PrivateLayout({
 }) {
   return (
     <ProtecaoRota>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full overflow-x-hidden">
         <Sidebar />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex flex-1 flex-col min-w-0 md:pl-[255px]">
           <Navbar />
 
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 min-w-0 p-0 sm:p-6">{children}</main>
 
           <ChatWidget />
         </div>

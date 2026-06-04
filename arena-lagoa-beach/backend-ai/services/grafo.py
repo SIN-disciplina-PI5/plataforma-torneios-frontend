@@ -13,8 +13,11 @@ from services.database_service import (
     get_inscricoes_do_usuario,
     get_todos_torneios,
     get_dupla_usuario,
-    get_duplas_com_torneios,       # ← novo
-    get_minhas_duplas_resumido,    # ← novo
+    get_duplas_com_torneios,
+    get_minhas_duplas_resumido,
+    get_ranking_geral,
+    get_ranking_usuario,
+    get_ranking_por_posicao,
 )
 
 load_dotenv()
@@ -79,15 +82,12 @@ async def buscar_banco(estado: EstadoChatbot) -> dict:
 
     # ── Duplas ──────────────────────────────────────────────────────────────
     elif consulta == "dupla":
-        # Resposta descritiva completa (ex: "qual é minha dupla?")
         dados = await get_dupla_usuario(token, id_usuario)
 
     elif consulta == "duplas_resumo":
-        # Listagem rápida de todas as duplas (ex: "me mostre todas minhas duplas")
         dados = await get_minhas_duplas_resumido(token, id_usuario)
 
     elif consulta == "duplas_detalhes":
-        # Dados estruturados — útil quando a IA precisa raciocinar sobre as duplas
         duplas = await get_duplas_com_torneios(token, id_usuario)
         if not duplas:
             dados = "Você não está em nenhuma equipe no momento."
@@ -100,6 +100,25 @@ async def buscar_banco(estado: EstadoChatbot) -> dict:
                     f"Torneio: {d['torneio']} ({d['categoria']})"
                 )
             dados = "Suas duplas e torneios:\n" + "\n".join(linhas)
+    # ────────────────────────────────────────────────────────────────────────
+
+    # ── Ranking ─────────────────────────────────────────────────────────────
+    elif consulta == "ranking_usuario":
+        dados = await get_ranking_usuario(token, id_usuario)
+
+    elif consulta == "ranking_posicao":
+        # Tenta extrair o número da posição da pergunta (ex: "quem está em 3º?")
+        import re
+        match = re.search(r"\b(\d+)\b", pergunta)
+        posicao = int(match.group(1)) if match else 1
+        dados = await get_ranking_por_posicao(token, posicao)
+
+    elif consulta == "ranking_geral":
+        # Tenta extrair limite da pergunta (ex: "top 5", "top 20")
+        import re
+        match = re.search(r"\b(?:top\s*)?(\d+)\b", pergunta.lower())
+        limite = int(match.group(1)) if match and int(match.group(1)) <= 100 else 10
+        dados = await get_ranking_geral(token, limite)
     # ────────────────────────────────────────────────────────────────────────
 
     else:

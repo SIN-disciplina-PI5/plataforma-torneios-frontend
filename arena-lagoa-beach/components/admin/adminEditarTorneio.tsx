@@ -200,7 +200,7 @@ export function EditTournamentForm({
         className={`w-full font-semibold py-3 rounded-lg mt-4 transition-colors ${
           loading
             ? "bg-gray-400 text-white cursor-not-allowed"
-            : "bg-[#34a853] hover:bg-green-700 text-white"
+            : "bg-[#34a853] hover:bg-green-700 text-white cursor-pointer"
         }`}
       >
         {loading ? "Salvando..." : "Salvar"}

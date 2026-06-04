@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNotificacao } from "@/lib/NotificacaoContext";
+import { AlertCircle } from "lucide-react";
 
 type Jogador = {
   id_usuario: number;
@@ -370,6 +371,16 @@ export function DuplasModal({
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+          <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
+            <p className="text-sm leading-relaxed text-red-700">
+              <strong className="font-semibold text-red-900">Atenção:</strong>{" "}
+              As inscrições são encerradas 3 dias antes do início do torneio para a realização do
+              chaveamento das partidas. Durante esse prazo, não será possível realizar inscrições
+              nem alterar a dupla cadastrada.
+            </p>
+          </div>
+
           {!usuarioTemEquipe && (
             <>
               {modoCriacao ? (

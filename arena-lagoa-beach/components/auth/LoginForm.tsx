@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -48,6 +49,7 @@ export function LoginForm() {
   const { mostrarToast } = useNotificacao();
 
   const toastExibido = useRef(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -107,19 +109,22 @@ export function LoginForm() {
       const role = getUserRole();
       const redirectPath = role === "ADMIN" ? "/admin/torneios" : "/torneios";
 
+      
       router.push(redirectPath);
     } catch (err: unknown) {
       setModalMessage(getLoginErrorMessage(err));
       setModalOpen(true);
     } finally {
       setLoading(false);
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     }
   };
 
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
@@ -133,7 +138,7 @@ export function LoginForm() {
           />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Senha
           </label>
@@ -157,7 +162,7 @@ export function LoginForm() {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -179,8 +184,11 @@ export function LoginForm() {
           </Link>
         </div>
 
-        <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
-          <Recaptcha onChange={setCaptchaToken} />
+        <div className="mb-3 flex max-w-full justify-center overflow-x-auto sm:mb-4">
+          <Recaptcha
+            ref={recaptchaRef}
+            onChange={setCaptchaToken}
+          />
         </div>
 
         <div className="flex justify-center">

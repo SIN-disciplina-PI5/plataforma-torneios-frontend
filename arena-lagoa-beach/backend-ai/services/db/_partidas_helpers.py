@@ -29,8 +29,12 @@ async def get_equipes_do_usuario(token: str, id_usuario: str) -> list[str]:
             membros = equipe.get("membros", [])
             for membro in membros:
                 uid = membro.get("id_usuario") or membro.get("id")
-                if uid == id_usuario:
-                    ids_equipe.append(equipe["id_equipe"])
+                # FIX 1: comparar como string para evitar falha int vs str
+                if str(uid) == str(id_usuario):
+                    # FIX 2: fallback para "id" quando "id_equipe" não existir
+                    id_eq = equipe.get("id_equipe") or equipe.get("id")
+                    if id_eq:
+                        ids_equipe.append(id_eq)
                     break
 
     return ids_equipe

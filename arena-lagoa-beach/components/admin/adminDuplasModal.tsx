@@ -15,14 +15,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AVATAR_PADRAO } from "@/app/utils/auth";
 
 interface AdminDuplasModalProps {
   onClose: () => void;
   tournament: any;
 }
-
-const avatarPadrao =
-  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export function AdminDuplasModal({
   onClose,
@@ -208,7 +206,7 @@ export function AdminDuplasModal({
           <h2 className="text-[18px] font-bold text-gray-900">Duplas</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
           >
             <X size={20} strokeWidth={2.5} />
           </button>
@@ -255,7 +253,7 @@ export function AdminDuplasModal({
           <button
             onClick={handleCriarDupla}
             disabled={loading || !jogadorSelecionado}
-            className="bg-[#22c55e] hover:bg-green-600 text-white font-semibold text-[14px] px-5 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#22c55e] hover:bg-green-600 text-white font-semibold text-[14px] px-5 py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Criar Dupla
           </button>
@@ -289,7 +287,7 @@ export function AdminDuplasModal({
                         <div
                           className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
                           style={{
-                            backgroundImage: `url(${jogador1.foto_perfil || avatarPadrao})`,
+                            backgroundImage: `url("${jogador1.foto_perfil || AVATAR_PADRAO}")`,
                           }}
                         ></div>
 
@@ -301,7 +299,7 @@ export function AdminDuplasModal({
                           <AlertDialogTrigger asChild>
                             <button
                               onClick={(e) => e.stopPropagation()}
-                              className="text-red-400 hover:text-red-600 transition-colors ml-auto"
+                              className="text-red-400 hover:text-red-600 transition-colors ml-auto cursor-pointer"
                             >
                               <Trash2 size={16} strokeWidth={2} />
                             </button>
@@ -319,7 +317,9 @@ export function AdminDuplasModal({
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogCancel className="cursor-pointer">
+                                Cancelar
+                              </AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() =>
                                   executarRemocaoJogador(
@@ -327,7 +327,7 @@ export function AdminDuplasModal({
                                     jogador1.id_usuario || jogador1.id,
                                   )
                                 }
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-red-600 hover:bg-red-700 cursor-pointer"
                               >
                                 Sim, remover
                               </AlertDialogAction>
@@ -350,7 +350,7 @@ export function AdminDuplasModal({
                         <div
                           className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 bg-cover bg-center"
                           style={{
-                            backgroundImage: `url(${jogador2.foto_perfil || avatarPadrao})`,
+                            backgroundImage: `url("${jogador2.foto_perfil || AVATAR_PADRAO}")`,
                           }}
                         ></div>
 
@@ -362,7 +362,7 @@ export function AdminDuplasModal({
                           <AlertDialogTrigger asChild>
                             <button
                               onClick={(e) => e.stopPropagation()}
-                              className="text-red-400 hover:text-red-600 transition-colors ml-auto"
+                              className="text-red-400 hover:text-red-600 transition-colors ml-auto cursor-pointer"
                             >
                               <Trash2 size={16} strokeWidth={2} />
                             </button>
@@ -380,7 +380,9 @@ export function AdminDuplasModal({
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogCancel className="cursor-pointer">
+                                Cancelar
+                              </AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() =>
                                   executarRemocaoJogador(
@@ -388,7 +390,7 @@ export function AdminDuplasModal({
                                     jogador2.id_usuario || jogador2.id,
                                   )
                                 }
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-red-600 hover:bg-red-700 cursor-pointer"
                               >
                                 Sim, remover
                               </AlertDialogAction>
@@ -403,7 +405,7 @@ export function AdminDuplasModal({
                             e.stopPropagation();
                             handleAdicionarNaDuplaExistente(idEquipe);
                           }}
-                          className="text-black hover:text-gray-600 transition-colors"
+                          className="text-black hover:text-gray-600 transition-colors cursor-pointer"
                           title="Selecione um jogador na busca e clique aqui para adicioná-lo"
                         >
                           <Plus size={24} strokeWidth={2.5} />
@@ -424,7 +426,7 @@ export function AdminDuplasModal({
               className={`w-full font-semibold text-[15px] py-3 rounded-lg transition-colors ${
                 !duplaSelecionadaId
                   ? "bg-red-300 text-white cursor-not-allowed"
-                  : "bg-[#ef4444] hover:bg-red-600 text-white"
+                  : "bg-[#ef4444] hover:bg-red-600 text-white cursor-pointer"
               }`}
             >
               {loading ? "Processando..." : "Excluir dupla"}
@@ -439,10 +441,12 @@ export function AdminDuplasModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel className="cursor-pointer">
+                Cancelar
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={executarExclusaoDupla}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 cursor-pointer"
               >
                 Sim, excluir dupla
               </AlertDialogAction>

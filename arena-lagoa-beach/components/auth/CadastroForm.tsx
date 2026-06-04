@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 import { signup } from "@/app/services/authCadastro";
 import PopupModelo from "@/components/ui/PopupModelo";
@@ -11,6 +12,7 @@ import Recaptcha from "@/components/recaptcha/recaptcha";
 
 export function CadastroForm() {
   const router = useRouter();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -89,14 +91,16 @@ export function CadastroForm() {
       setSenha("");
       setConfirmarSenha("");
       setTermosAceitos(false);
-      setCaptchaToken(null); // eseta captcha
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
       setModalMessage(error.response?.data?.error || "Erro ao cadastrar");
       setModalType("error");
       setModalOpen(true);
 
-      setCaptchaToken(null); // reseta captcha em erro
+      setCaptchaToken(null);
+      recaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -124,7 +128,7 @@ export function CadastroForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Nome de usuário
           </label>
@@ -138,7 +142,7 @@ export function CadastroForm() {
           />
         </div>
 
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
@@ -175,7 +179,7 @@ export function CadastroForm() {
             </button>
           </div>
 
-          <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
             <span
               className={
                 senhaTem8Caracteres ? "text-green-600" : "text-red-500"
@@ -210,7 +214,7 @@ export function CadastroForm() {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Confirme sua senha
           </label>
@@ -234,7 +238,7 @@ export function CadastroForm() {
           </div>
         </div>
 
-        <div className="mb-4 flex items-start gap-2 sm:items-center">
+        <div className="mb-3 flex items-start gap-2 sm:mb-4 sm:items-center">
           <input
             type="checkbox"
             checked={termosAceitos}
@@ -251,8 +255,11 @@ export function CadastroForm() {
         </div>
 
         {/*  RECAPTCHA */}
-        <div className="mb-4 flex max-w-full justify-center overflow-x-auto">
-          <Recaptcha onChange={setCaptchaToken} />
+        <div className="mb-3 flex max-w-full justify-center overflow-x-auto sm:mb-4">
+          <Recaptcha
+            ref={recaptchaRef}
+            onChange={setCaptchaToken}
+          />
         </div>
 
         <div className="flex justify-center">

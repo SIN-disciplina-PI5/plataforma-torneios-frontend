@@ -19,7 +19,7 @@
   --sidebar-font-size: 20px;
   --sidebar-title-size: 20px;
 
-  --sidebar-width: 230px;
+  --sidebar-width: 255px;
   --sidebar-padding-x: 15px;
   --sidebar-padding-y: 48px;
   --sidebar-item-gap: 34px;
@@ -33,6 +33,7 @@
    SIDEBAR CONTAINER
 ========================= */
 .sidebar {
+  position:fixed;
   width: var(--sidebar-width);
   min-height: 100vh;
   background: var(--sidebar-bg);

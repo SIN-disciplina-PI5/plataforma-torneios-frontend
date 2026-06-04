@@ -4,13 +4,21 @@ import { useState, useEffect } from "react";
 import { Trophy, AlertCircle, Plus, X, Pencil } from "lucide-react";
 
 import type { Tournament, AdminDialogState } from "@/app/types/torneios";
-import { getTorneios, deleteTorneio, gerarChaveTorneio } from "@/app/services/torneioService";
+import {
+  getTorneios,
+  deleteTorneio,
+  gerarChaveTorneio,
+} from "@/app/services/torneioService";
 import { AdminTournamentCard } from "@/components/admin/AdminTournamentCard";
 import { AdminTournamentDialogs } from "@/components/admin/AdminTournamentDialogs";
 import { EditTournamentForm } from "@/components/admin/adminEditarTorneio";
 import { AdminDuplasModal } from "@/components/admin/adminDuplasModal";
 
+type AdminTab = "Todos" | "Finalizados";
+const TABS: AdminTab[] = ["Todos", "Finalizados"];
+
 export default function AdminTorneiosPage() {
+  const [activeTab, setActiveTab] = useState<AdminTab>("Todos");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +86,9 @@ export default function AdminTorneiosPage() {
         ? `${result.totalPartidas} partida(s) gerada(s). `
         : "";
 
-    setGenerateMatchesMessage(`${totalText}${result.mensagem || "Chave do torneio gerada."}`);
+    setGenerateMatchesMessage(
+      `${totalText}${result.mensagem || "Chave do torneio gerada."}`,
+    );
     setDialogState("generateMatches");
   }
 
@@ -105,6 +115,14 @@ export default function AdminTorneiosPage() {
     setGenerateMatchesMessage("");
   }
 
+  const filtered = tournaments.filter((t) => {
+    if (activeTab === "Finalizados") {
+      if (!t.data_fim) return false;
+      return new Date(t.data_fim) < new Date();
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -118,21 +136,37 @@ export default function AdminTorneiosPage() {
 
   return (
     <>
-      <main className="min-h-screen px-8 py-6">
-        <div className="flex items-center justify-between mb-8">
+      <main className="min-h-screen px-4 sm:px-8 py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-        
-            <h1 className="text-2xl font-semibold flex items-center gap-2 mb-1 text-black">
+            <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 text-black">
               ⚽ Gerenciamento de Torneios
             </h1>
           </div>
           <button
             onClick={() => setDialogState("create")}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center justify-center w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
           >
             <Plus size={16} />
             Novo torneio
           </button>
+        </div>
+
+        {/* ── Abas ── */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-full px-4 py-2 text-[13px] sm:text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === tab
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {error && (
@@ -142,16 +176,20 @@ export default function AdminTorneiosPage() {
           </div>
         )}
 
-        {tournaments.length === 0 && !error && (
+        {filtered.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-24 text-gray-600">
             <Trophy size={48} className="mb-4 opacity-30" />
-            <p className="text-lg font-medium">Nenhum torneio cadastrado</p>
+            <p className="text-lg font-medium">
+              {activeTab === "Finalizados"
+                ? "Nenhum torneio finalizado encontrado."
+                : "Nenhum torneio cadastrado"}
+            </p>
           </div>
         )}
 
-        {tournaments.length > 0 && (
+        {filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tournaments.map((t) => (
+            {filtered.map((t) => (
               <AdminTournamentCard
                 key={t.id_torneio}
                 tournament={t}
@@ -181,8 +219,8 @@ export default function AdminTorneiosPage() {
       />
 
       {dialogState === "edit" && selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 m-4 relative animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[480px] p-6 relative animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-50 p-2 rounded-full text-blue-500">
@@ -192,7 +230,7 @@ export default function AdminTorneiosPage() {
               </div>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
+                className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
               >
                 <X size={20} />
               </button>

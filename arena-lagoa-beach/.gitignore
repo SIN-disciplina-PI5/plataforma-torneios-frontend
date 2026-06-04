@@ -9,6 +9,11 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+/dist 
+./dist
+dist
+!dist/.gitkeep
+!dist/**/.gitkeep
 
 # testing
 /coverage
