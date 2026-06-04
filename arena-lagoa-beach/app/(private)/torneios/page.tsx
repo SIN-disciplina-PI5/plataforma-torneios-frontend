@@ -28,7 +28,7 @@ type DialogState = "idle" | "confirm" | "loading" | "success" | "error";
 const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos", "Finalizados"];
 
 export default function TorneiosPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("Essa semana");
+  const [activeTab, setActiveTab] = useState<Tab>("Todos");
   const [search, setSearch] = useState("");
 
   const [tournaments, setTournaments] = useState<TournamentUI[]>([]);
@@ -206,6 +206,14 @@ export default function TorneiosPage() {
           : t,
       ),
     );
+    mostrarToast({
+      id_notificacao: Date.now().toString(),
+      titulo: "Saiu da equipe",
+      mensagem: "Você saiu da equipe e sua inscrição foi cancelada com sucesso.",
+      tipo: "info",
+      lida: false,
+      createdAt: new Date().toISOString(),
+    });
     setCancelacaoOpen(true);
   }
 

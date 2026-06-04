@@ -5,11 +5,16 @@ import { Search, Bell, Menu } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getMeuPerfil } from "@/app/services/perfilService";
-import { AVATAR_PADRAO } from "@/app/utils/auth";
+import { useNotificacao } from "@/lib/NotificacaoContext";
+
+const avatarPadrao =
+  "https://wallpapers.com/images/hd/albert-einstein-pictures-1920-x-1080-66yf319tqmodnrvt.jpg";
 
 export default function Navbar() {
-  const [hasNotification] = useState(true);
-  const [avatarUrl, setAvatarUrl] = useState(AVATAR_PADRAO);
+  const [darkMode, setDarkMode] = useState(false);
+  const { unreadCount } = useNotificacao();
+
+  const [avatarUrl, setAvatarUrl] = useState(avatarPadrao);
 
   const carregarFotoNavbar = useCallback(async () => {
     try {
@@ -17,7 +22,7 @@ export default function Navbar() {
       if (perfil && perfil.foto_perfil) {
         setAvatarUrl(perfil.foto_perfil);
       } else {
-        setAvatarUrl(AVATAR_PADRAO);
+        setAvatarUrl(avatarPadrao);
       }
     } catch (error) {
       console.error("Erro ao buscar foto para a Navbar:", error);
@@ -62,7 +67,7 @@ export default function Navbar() {
         <Link href="/notificacoes" className={styles.iconButton}>
           <div className={styles.notificationWrapper}>
             <Bell size={20} className={styles.icon} />
-            {hasNotification && (
+            {unreadCount > 0 && (
               <span className={styles.notificationDot}></span>
             )}
           </div>
