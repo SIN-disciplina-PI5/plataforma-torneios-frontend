@@ -16,6 +16,7 @@ R = {
     "inscricao":       "/api/inscricoes",
     "equipe":          "/api/equipe",
     "equipe_usuario":  "/api/equipe-usuarios",
+    "ranking": "/api/ranking",
 }
 
 async def get(endpoint: str, token: str) -> dict | list | None:
