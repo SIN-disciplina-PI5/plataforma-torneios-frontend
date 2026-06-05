@@ -17,6 +17,14 @@ const fases: [string, string][] = [
   ["FINAL", "Finais"],
 ];
 const labelFase = (v: string) => fases.find((f) => f[0] === v)?.[1] ?? v;
+  const labelStatus = (status: string) => {
+  const map: Record<string, string> = {
+    PENDENTE: "Pendente",
+    EM_ANDAMENTO: "Em andamento",
+    FINALIZADA: "Finalizada",
+  };
+  return map[status?.toUpperCase()] ?? status;
+};
 
 type Membro = {
   id_usuario: string;
@@ -41,6 +49,12 @@ type Partida = {
   vencedorId: string | null;
   resultado: string | null;
   equipes: Equipe[];
+};
+
+type TorneioMeta = {
+  id_torneio: string;
+  nome: string;
+  fase_atual: string | null;
 };
 
 const getToken = () =>
@@ -72,9 +86,15 @@ function parsePlacar(p: unknown): [number | null, number | null] {
 
 function toPartida(r: Record<string, unknown>): Partida {
   const [a, b] = parsePlacar(r.placar);
+  const torneioRaw = r.torneio;
+  const torneioNome =
+    typeof torneioRaw === "object" && torneioRaw !== null
+      ? ((torneioRaw as { nome?: string }).nome ?? null)
+      : ((torneioRaw as string) ?? null);
+
   return {
     id: (r.id_partida ?? r.id) as string,
-    torneio: (r.torneio as string) ?? null,
+    torneio: torneioNome,
     fase: r.fase as string,
     status: (r.status as string) ?? "",
     horario: (r.horario as string) ?? null,
@@ -89,6 +109,15 @@ function toPartida(r: Record<string, unknown>): Partida {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const isFinalizada = (p: Partida) => p.status.toUpperCase() === FINALIZADA;
+
+function podeAvancarFase(meta: TorneioMeta, partidas: Partida[]) {
+  if (!meta.fase_atual || meta.fase_atual === "FINAL") return false;
+
+  const daFaseAtual = partidas.filter(
+    (p) => p.torneio === meta.nome && p.fase === meta.fase_atual,
+  );
+  return daFaseAtual.length > 0 && daFaseAtual.every(isFinalizada);
+}
 
 function grupoDe(iso: string | null) {
   if (!iso) return { ordem: Infinity, label: "Sem data definida" };
@@ -174,21 +203,48 @@ function useAdminNome() {
 export default function PartidasPage() {
   const nome = useAdminNome();
   const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [torneiosMeta, setTorneiosMeta] = useState<TorneioMeta[]>([]);
   const [aba, setAba] = useState<string>("TODOS");
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [finalizandoId, setFinalizandoId] = useState<string | null>(null);
+  const [avancandoTorneioId, setAvancandoTorneioId] = useState<string | null>(
+    null,
+  );
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro("");
     try {
-      const r = await fetch(`${API}/api/partidas`, { headers: auth() });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || "Erro ao buscar partidas");
-      setPartidas((j.data || []).map(toPartida));
+      const [rPartidas, rTorneios] = await Promise.all([
+        fetch(`${API}/api/partidas`, { headers: auth() }),
+        fetch(`${API}/api/torneio`, { headers: auth() }),
+      ]);
+
+      const jPartidas = await rPartidas.json();
+      const jTorneios = await rTorneios.json();
+
+      if (!rPartidas.ok)
+        throw new Error(jPartidas.error || "Erro ao buscar partidas");
+      if (!rTorneios.ok)
+        throw new Error(jTorneios.error || "Erro ao buscar torneios");
+
+      setPartidas((jPartidas.data || []).map(toPartida));
+      setTorneiosMeta(
+        (jTorneios.data || []).map(
+          (t: {
+            id_torneio: string;
+            nome: string;
+            fase_atual?: string | null;
+          }) => ({
+            id_torneio: t.id_torneio,
+            nome: t.nome,
+            fase_atual: t.fase_atual ?? null,
+          }),
+        ),
+      );
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao buscar partidas");
     } finally {
@@ -207,25 +263,148 @@ export default function PartidasPage() {
     };
   }, [carregar]);
 
-  const finalizarPartida = useCallback(async (id: string) => {
-    setFinalizandoId(id);
-    setErro("");
-    try {
-      const r = await fetch(`${API}/api/partidas/finalizar/${id}`, {
-        method: "PATCH",
-        headers: auth(),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Erro ao finalizar partida");
+  const finalizarPartida = useCallback(
+    async (id: string) => {
+      setFinalizandoId(id);
+      setErro("");
+      try {
+        const r = await fetch(`${API}/api/partidas/finalizar/${id}`, {
+          method: "PATCH",
+          headers: auth(),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "Erro ao finalizar partida");
 
-      await carregar();
-      setInfoId(null);
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao finalizar partida");
-    } finally {
-      setFinalizandoId(null);
-    }
-  }, [carregar]);
+        await carregar();
+        setInfoId(null);
+      } catch (e) {
+        setErro(
+          e instanceof Error ? e.message : "Erro ao finalizar partida",
+        );
+      } finally {
+        setFinalizandoId(null);
+      }
+    },
+    [carregar],
+  );
+
+  const avancarFase = useCallback(
+    async (idTorneio: string) => {
+      setAvancandoTorneioId(idTorneio);
+      setErro("");
+
+      try {
+        // 1. Buscar o torneio para saber a fase atual
+        const rTorneio = await fetch(`${API}/api/torneio/${idTorneio}`, {
+          headers: auth(),
+        });
+        const jTorneio = await rTorneio.json().catch(() => ({}));
+        if (!rTorneio.ok)
+          throw new Error(jTorneio.error || "Erro ao buscar torneio");
+
+        const torneioAtual = jTorneio.data;
+        const faseAtual = torneioAtual.fase_atual;
+
+        if (!faseAtual) {
+          throw new Error("Torneio não possui fase atual definida");
+        }
+
+        // 2. Buscar todas as partidas finalizadas da fase atual
+        const rPartidas = await fetch(`${API}/api/partidas`, {
+          headers: auth(),
+        });
+        const jPartidas = await rPartidas.json().catch(() => ({}));
+        if (!rPartidas.ok)
+          throw new Error(jPartidas.error || "Erro ao buscar partidas");
+
+        const partidasFinalizadas = (jPartidas.data || [])
+          .map(toPartida)
+          .filter(
+            (p: Partida) =>
+              p.torneio === torneioAtual.nome &&
+              p.fase === faseAtual &&
+              p.status === "FINALIZADA",
+          );
+
+        // 3. Distribuir pontos para cada partida finalizada
+        // Mapa de fases para tipo de evento de pontuação
+        const mapa_fase_evento: Record<string, string> = {
+          OITAVAS_DE_FINAL: "AVANCO_FASE",
+          QUARTAS_DE_FINAL: "AVANCO_FASE",
+          SEMI_FINAL: "FINALISTA",
+          FINAL: "CAMPEAO",
+        };
+
+        const tipoEvento = (mapa_fase_evento[faseAtual] as string | null) || null;
+
+        if (tipoEvento) {
+          for (const partida of partidasFinalizadas) {
+            // Buscar a equipe vencedora com seus membros
+            if (partida.vencedorId && partida.equipes.length > 0) {
+              const equipeVencedora = partida.equipes.find(
+                (e: Equipe) => e.id_equipe === partida.vencedorId,
+              );
+
+              if (equipeVencedora && equipeVencedora.membros.length > 0) {
+                // Distribuir pontos para cada membro da equipe vencedora
+                for (const membro of equipeVencedora.membros) {
+                  try {
+                    await fetch(
+                      `${API}/api/ranking/atualizar`,
+                      {
+                        method: "POST",
+                        headers: auth(true),
+                        body: JSON.stringify({
+                          id_usuario: membro.id_usuario,
+                          tipo_evento: tipoEvento,
+                        }),
+                      }
+                    );
+                  } catch (e) {
+                    console.error(
+                      `Erro ao atualizar pontuação do jogador ${membro.id_usuario}:`,
+                      e,
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // 4. Chamar a API para avançar a fase
+        const rAvanco = await fetch(
+          `${API}/api/torneio/${idTorneio}/avancar-fase`,
+          {
+            method: "POST",
+            headers: auth(true),
+            body: JSON.stringify({}),
+          },
+        );
+        const jAvanco = await rAvanco.json().catch(() => ({}));
+        if (!rAvanco.ok)
+          throw new Error(jAvanco.error || "Erro ao avançar fase");
+
+        // 5. Recarregar dados e sair da aba FINALIZADAS
+        await carregar();
+        setAba("TODOS");
+
+        console.log(
+          `✓ Fase avançada com sucesso. ${partidasFinalizadas.length} partida(s) processada(s).`,
+        );
+      } catch (e) {
+        setErro(
+          e instanceof Error
+            ? e.message
+            : "Erro ao avançar fase. Tente novamente.",
+        );
+        console.error("Erro em avancarFase:", e);
+      } finally {
+        setAvancandoTorneioId(null);
+      }
+    },
+    [carregar],
+  );
 
   const torneiosAtivos = useMemo(() => {
     const seen = new Set<string>();
@@ -280,6 +459,14 @@ export default function PartidasPage() {
       .map(([label, v]) => ({ label, itens: v.itens }));
   }, [partidas, abaAtual]);
 
+  const torneiosParaAvancar = useMemo(() => {
+    return torneiosMeta.map((meta) => ({
+      id: meta.id_torneio,
+      nome: meta.nome,
+      pode: podeAvancarFase(meta, partidas),
+    }));
+  }, [partidas, torneiosMeta]);
+
   const partidaInfo = partidas.find((p) => p.id === infoId) || null;
 
   return (
@@ -311,20 +498,43 @@ export default function PartidasPage() {
               </button>
             ))}
           </div>
-        </div>
 
-        {erro && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span>{erro}</span>
-            <button
-              type="button"
-              onClick={carregar}
-              className="shrink-0 font-semibold underline"
-            >
-              Tentar novamente
-            </button>
+            {torneiosParaAvancar.some((t) => t.pode) && (
+              <div className="mt-4 flex flex-col gap-3 rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-green-900 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="font-semibold">Fase pronta para avançar:</span>{" "}
+                  {torneiosParaAvancar
+                    .filter((t) => t.pode)
+                    .map((t) => t.nome)
+                    .join(", ")}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const torneioParaAvancar = torneiosParaAvancar.find(
+                      (t) => t.pode,
+                    );
+                    if (torneioParaAvancar) {
+                      avancarFase(torneioParaAvancar.id);
+                    }
+                  }}
+                  disabled={
+                    avancandoTorneioId !== null ||
+                    !torneiosParaAvancar.some((t) => t.pode)
+                  }
+                  className="rounded-lg bg-green-600 px-6 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {avancandoTorneioId ? "Avançando fase..." : "Avançar fase"}
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {erro && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {erro}
+            </div>
+          )}
 
         {editId && (
           <EditarPartida
@@ -346,23 +556,26 @@ export default function PartidasPage() {
             Nenhuma partida encontrada.
           </p>
         ) : (
-          <div className="space-y-7">
-            {grupos.map((g) => (
-              <section key={g.label}>
-                <h2 className="mb-2 text-sm text-gray-500">{g.label}</h2>
-                <ul className="space-y-2">
-                  {g.itens.map((p) => (
-                    <Linha
-                      key={p.id}
-                      partida={p}
-                      onInfo={() => setInfoId(p.id)}
-                      onEditar={() => setEditId(p.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <>
+            <div className="space-y-7">
+              {grupos.map((g) => (
+                <section key={g.label}>
+                  <h2 className="mb-2 text-sm text-gray-500">{g.label}</h2>
+                  <ul className="space-y-2">
+                    {g.itens.map((p) => (
+                      <Linha
+                        key={p.id}
+                        partida={p}
+                        onInfo={() => setInfoId(p.id)}
+                        onEditar={() => setEditId(p.id)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+
+          </>
         )}
       </div>
 
@@ -372,7 +585,6 @@ export default function PartidasPage() {
             partida={partidaInfo}
             finalizando={finalizandoId === partidaInfo.id}
             onFinalizar={() => finalizarPartida(partidaInfo.id)}
-              
           />
         </Modal>
       )}
@@ -557,7 +769,7 @@ function DetalhesPartida({
         {partida.torneio || "Torneio não informado"}
       </p>
       <p className="mb-5 text-xs text-gray-400">
-        {labelFase(partida.fase)} · {partida.status}
+        {labelFase(partida.fase)} · {labelStatus(partida.status)}
       </p>
 
       <div className="flex items-stretch gap-3">
@@ -592,8 +804,8 @@ function DetalhesPartida({
           {partida.resultado}
         </p>
       )}
-     
-        <div className="flex items-center justify-center">
+
+      <div className="flex items-center justify-center">
         <button
           type="button"
           onClick={() => setConfirmarFinalizacao(true)}
@@ -637,7 +849,7 @@ function DetalhesPartida({
     </>
   );
 }
-  
+
 function ColunaDupla({ equipe }: { equipe: Equipe }) {
   return (
     <div className="flex-1 rounded-lg bg-gray-50 p-3">
@@ -774,10 +986,14 @@ function EditarPartida({
       const equipeVencedora = partida.equipes.find(
         (e) => e.id_equipe === vencedorId,
       );
+      // const equipePerdedora = partida.equipes.find(
+      //   (e) => e.id_equipe !== vencedorId,
+      // );
       const horario =
         data && hora ? new Date(`${data}T${hora}`).toISOString() : null;
-      const placar = `${a}-${b}`;
 
+      const placar = `${a}-${b}`;
+ 
       await requestJson(`${API}/api/partidas/${id}`, {
         method: "PATCH",
         headers: auth(true),
@@ -796,17 +1012,17 @@ function EditarPartida({
           });
         }
 
-        await requestJson(`${API}/api/partidas/finalizar/${id}`, {
-          method: "PATCH",
-          headers: auth(true),
-          body: JSON.stringify({
-            placar,
-            vencedor_id: vencedorId,
-            resultado: equipeVencedora
-              ? `${equipeVencedora.nome} vencedora`
-              : partida.resultado,
-          }),
-        });
+     await requestJson(`${API}/api/partidas/finalizar/${id}`, {
+  method: "PATCH",
+  headers: auth(true),
+  body: JSON.stringify({
+    placar,
+    vencedor_id: vencedorId,
+    resultado: equipeVencedora
+      ? `${equipeVencedora.nome} vencedora`
+      : partida.resultado,
+  }),
+});
       }
 
       onSalvo();

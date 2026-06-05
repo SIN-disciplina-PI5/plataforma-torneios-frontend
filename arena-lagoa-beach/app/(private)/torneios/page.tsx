@@ -6,6 +6,7 @@ import { Trophy, AlertCircle, X } from "lucide-react";
 import { clsx } from "clsx";
 
 import type { TournamentUI } from "@/app/types/torneios";
+import { torneioJaIniciou, edicaoBloqueada } from "@/app/types/torneios";
 
 import {
   getTorneios,
@@ -21,13 +22,13 @@ import { DuplasModal } from "@/components/ui/DuplasModal";
 
 import styles from "./_styles/tournaments.module.css";
 
-type Tab = "Todos" | "Essa semana" | "Meus Torneios" | "Favoritos";
+type Tab = "Todos" | "Essa semana" | "Meus Torneios" | "Favoritos" | "Finalizados";
 type DialogState = "idle" | "confirm" | "loading" | "success" | "error";
 
-const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos"];
+const TABS: Tab[] = ["Todos", "Essa semana", "Meus Torneios", "Favoritos", "Finalizados"];
 
 export default function TorneiosPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("Essa semana");
+  const [activeTab, setActiveTab] = useState<Tab>("Todos");
   const [search, setSearch] = useState("");
 
   const [tournaments, setTournaments] = useState<TournamentUI[]>([]);
@@ -41,30 +42,30 @@ export default function TorneiosPage() {
 
   const [confirmacaoOpen, setConfirmacaoOpen] = useState(false);
   const [cancelacaoOpen, setCancelacaoOpen] = useState(false);
-  const [confirmarCancelamentoOpen, setConfirmarCancelamentoOpen] =
-    useState(false);
-  const [tournamentParaCancelar, setTournamentParaCancelar] =
-    useState<TournamentUI | null>(null);
+  const [confirmarCancelamentoOpen, setConfirmarCancelamentoOpen] = useState(false);
+  const [tournamentParaCancelar, setTournamentParaCancelar] = useState<TournamentUI | null>(null);
   const [cancelandoInscricao, setCancelandoInscricao] = useState(false);
   const [erroOpen, setErroOpen] = useState(false);
   const [erroMensagem, setErroMensagem] = useState("");
 
-  const [token, setToken] = useState<string | null>(null);
-  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [token] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token");
+  });
+
+  const [usuarioId] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const t = localStorage.getItem("token");
+      if (!t) return null;
+      const payload = JSON.parse(atob(t.split(".")[1]));
+      return payload.id ?? null;
+    } catch {
+      return null;
+    }
+  });
 
   const { mostrarToast } = useNotificacao();
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (!storedToken) return;
-    setToken(storedToken);
-    try {
-      const payload = JSON.parse(atob(storedToken.split(".")[1]));
-      setUsuarioId(payload.id);
-    } catch (err) {
-      console.error("Erro ao decodificar token", err);
-    }
-  }, []);
 
   useEffect(() => {
     const fetchTorneios = async () => {
@@ -84,11 +85,7 @@ export default function TorneiosPage() {
                 torneio.id_torneio,
                 usuarioId.toString(),
               );
-              return {
-                ...torneio,
-                jaInscrito: !!id_inscricao,
-                id_inscricao,
-              };
+              return { ...torneio, jaInscrito: !!id_inscricao, id_inscricao };
             }),
           );
           setTournaments(torneiosAtualizados);
@@ -103,14 +100,13 @@ export default function TorneiosPage() {
         setLoading(false);
       }
     };
-    if (usuarioId !== null) fetchTorneios();
-  }, [usuarioId]);
+    fetchTorneios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleToggleFavorite(id: string) {
     setTournaments((prev) =>
-      prev.map((t) =>
-        t.id_torneio === id ? { ...t, favorite: !t.favorite } : t,
-      ),
+      prev.map((t) => (t.id_torneio === id ? { ...t, favorite: !t.favorite } : t)),
     );
   }
 
@@ -119,8 +115,7 @@ export default function TorneiosPage() {
       mostrarToast({
         id_notificacao: Date.now().toString(),
         titulo: "Acesso negado",
-        mensagem:
-          "É necessário estar inscrito no torneio para visualizar ou participar de equipes.",
+        mensagem: "É necessário estar inscrito no torneio para visualizar ou participar de equipes.",
         tipo: "error",
         lida: false,
         createdAt: new Date().toISOString(),
@@ -134,11 +129,22 @@ export default function TorneiosPage() {
   }
 
   async function handleRegisterClick(tournament: TournamentUI) {
+    if (edicaoBloqueada(tournament) || torneioJaIniciou(tournament)) {
+      setErroMensagem(
+        torneioJaIniciou(tournament)
+          ? "Este torneio já foi iniciado. Não é possível se inscrever."
+          : "As inscrições para este torneio foram encerradas 2 dias antes do início.",
+      );
+      setErroOpen(true);
+      return;
+    }
+
     if (!usuarioId) {
       setErroMensagem("Usuário não autenticado. Faça login novamente.");
       setErroOpen(true);
       return;
     }
+
     setSelected(tournament);
     const response = await registerUserInTournament(
       tournament.id_torneio,
@@ -164,6 +170,15 @@ export default function TorneiosPage() {
   }
 
   function handleUnregisterClick(tournament: TournamentUI) {
+    if (edicaoBloqueada(tournament) || torneioJaIniciou(tournament)) {
+      setErroMensagem(
+        torneioJaIniciou(tournament)
+          ? "Este torneio já foi iniciado. Não é possível cancelar a inscrição."
+          : "O prazo para cancelamento de inscrição já encerrou (2 dias antes do início).",
+      );
+      setErroOpen(true);
+      return;
+    }
     setTournamentParaCancelar(tournament);
     setConfirmarCancelamentoOpen(true);
   }
@@ -191,12 +206,24 @@ export default function TorneiosPage() {
           : t,
       ),
     );
+    mostrarToast({
+      id_notificacao: Date.now().toString(),
+      titulo: "Saiu da equipe",
+      mensagem: "Você saiu da equipe e sua inscrição foi cancelada com sucesso.",
+      tipo: "info",
+      lida: false,
+      createdAt: new Date().toISOString(),
+    });
     setCancelacaoOpen(true);
   }
 
   const filtered = tournaments
     .filter((t) => {
       if (activeTab === "Favoritos") return t.favorite;
+      if (activeTab === "Finalizados") {
+        if (!t.data_fim) return false;
+        return new Date(t.data_fim) < new Date();
+      }
       if (activeTab === "Essa semana") {
         if (!t.data_inicio) return false;
         const hoje = new Date();
@@ -209,9 +236,7 @@ export default function TorneiosPage() {
         const dataInicio = new Date(t.data_inicio);
         return dataInicio >= inicioSemana && dataInicio <= fimSemana;
       }
-      if (activeTab === "Meus Torneios") {
-        return !!t.jaInscrito;
-      }
+      if (activeTab === "Meus Torneios") return !!t.jaInscrito;
       return true;
     })
     .filter(
@@ -263,12 +288,7 @@ export default function TorneiosPage() {
           )}
         >
           <div className="w-14 h-14 sm:w-[70px] sm:h-[70px] relative shrink-0">
-            <Image
-              src="/cup.png"
-              alt="Troféu"
-              fill
-              className="object-contain"
-            />
+            <Image src="/cup.png" alt="Troféu" fill className="object-contain" />
           </div>
           <p className="text-white text-xl sm:text-3xl font-bold leading-tight">
             {tournaments.length} Torneios
@@ -304,13 +324,15 @@ export default function TorneiosPage() {
             <p className="text-base sm:text-lg font-medium">
               {activeTab === "Meus Torneios"
                 ? "Você ainda não está inscrito em nenhum torneio."
+                : activeTab === "Finalizados"
+                ? "Nenhum torneio finalizado encontrado."
                 : "Nenhum torneio encontrado"}
             </p>
           </div>
         )}
       </main>
 
-      {/* POPUPS */}
+      {/* ── Popup: inscrição confirmada ── */}
       {confirmacaoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
@@ -336,6 +358,7 @@ export default function TorneiosPage() {
         </div>
       )}
 
+      {/* ── Popup: confirmar cancelamento ── */}
       {confirmarCancelamentoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
@@ -344,9 +367,7 @@ export default function TorneiosPage() {
                 <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                   <X size={18} className="text-red-600" />
                 </div>
-                <h2 className="text-base sm:text-lg font-bold">
-                  Cancelar inscrição?
-                </h2>
+                <h2 className="text-base sm:text-lg font-bold">Cancelar inscrição?</h2>
               </div>
               <button
                 onClick={() => {
@@ -359,8 +380,7 @@ export default function TorneiosPage() {
               </button>
             </div>
             <p className="text-gray-500 text-sm mb-6 text-center sm:text-left">
-              Ao confirmar, sua inscrição será removida e você poderá perder sua
-              vaga no torneio.
+              Ao confirmar, sua inscrição será removida e você poderá perder sua vaga no torneio.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -385,6 +405,7 @@ export default function TorneiosPage() {
         </div>
       )}
 
+      {/* ── Popup: cancelamento confirmado ── */}
       {cancelacaoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">
@@ -404,6 +425,7 @@ export default function TorneiosPage() {
         </div>
       )}
 
+      {/* ── Popup: erro ── */}
       {erroOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[400px] shadow-xl">

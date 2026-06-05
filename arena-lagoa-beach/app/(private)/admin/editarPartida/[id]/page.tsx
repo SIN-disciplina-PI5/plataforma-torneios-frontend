@@ -21,6 +21,15 @@ type Partida = {
   placar: string | Placar | null;
   vencedor_id: string | null;
   resultado: string | null;
+  equipes?: {
+    id_equipe: string;
+    nome: string;
+    membros: {
+      id_usuario: string;
+      nome: string;
+      foto_perfil: string | null;
+    }[];
+  }[];
 };
 
 type ApiPartidaResponse = {
@@ -54,24 +63,6 @@ function normalizeFase(fase: string | null | undefined) {
   return fases[0].value;
 }
 
-const duplas = [
-  {
-    id: 1,
-    titulo: 'Dupla 1',
-    jogadores: [
-      { nome: 'Karen Den', avatar: 'https://i.pravatar.cc/100?img=12' },
-      { nome: 'Julia Silva', avatar: 'https://i.pravatar.cc/100?img=32' },
-    ],
-  },
-  {
-    id: 2,
-    titulo: 'Dupla 2',
-    jogadores: [
-      { nome: 'Marcio lima', avatar: 'https://i.pravatar.cc/100?img=47' },
-      { nome: 'Homer Cidio', avatar: 'https://i.pravatar.cc/100?img=20' },
-    ],
-  },
-];
 
 const apiUrlPadrao = 'https://plataforma-torneios-backend-mocha.vercel.app';
 
@@ -122,7 +113,7 @@ export default function EditarPartida() {
   const [data, setData] = useState('');
   const [hora, setHora] = useState('');
   const [placar, setPlacar] = useState<Placar>({ a: 0, b: 0 });
-  const [vencedor, setVencedor] = useState<number | null>(null);
+  const [vencedor, setVencedor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -157,7 +148,7 @@ export default function EditarPartida() {
         setData(horario.data);
         setHora(horario.hora);
         setPlacar(parsePlacar(dadosPartida.placar));
-        setVencedor(null);
+        setVencedor(dadosPartida.vencedor_id);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao buscar partida';
         setError(message);
@@ -184,7 +175,9 @@ export default function EditarPartida() {
       }
 
       const horario = data && hora ? `${data}T${hora}:00` : null;
-      const res = await fetch(`${apiUrl}/api/partidas/${partidaId}`, {
+      const placarString = `${placar.a}-${placar.b}`;
+
+      const updateRes = await fetch(`${apiUrl}/api/partidas/${partidaId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -193,17 +186,50 @@ export default function EditarPartida() {
         body: JSON.stringify({
           fase: faseAtiva,
           horario,
-          placar: `${placar.a}x${placar.b}`,
-          vencedor_id: partida.vencedor_id,
-          resultado: vencedor ? `${duplas.find((dupla) => dupla.id === vencedor)?.titulo} vencedora` : partida.resultado,
-          status: vencedor ? 'FINALIZADA' : partida.status,
+          placar: placarString,
         }),
       });
+      const updateJson = (await updateRes.json()) as ApiPartidaResponse & ApiErrorResponse;
 
-      const json = (await res.json()) as ApiPartidaResponse & ApiErrorResponse;
+      if (!updateRes.ok) {
+        throw new Error(updateJson.error || 'Erro ao salvar partida');
+      }
 
-      if (!res.ok) {
-        throw new Error(json.error || 'Erro ao salvar partida');
+      if (vencedor && partida.status !== 'FINALIZADA') {
+        if (partida.status !== 'EM_ANDAMENTO') {
+          const iniciarRes = await fetch(`${apiUrl}/api/partidas/iniciar/${partidaId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const iniciarJson = (await iniciarRes.json()) as ApiPartidaResponse & ApiErrorResponse;
+          if (!iniciarRes.ok) {
+            throw new Error(iniciarJson.error || 'Erro ao iniciar partida');
+          }
+        }
+
+        const resultado = vencedor
+          ? `${partida.equipes?.find((equipe) => equipe.id_equipe === vencedor)?.nome || 'Equipe vencedora'} vencedora`
+          : partida.resultado;
+
+        const finalizarRes = await fetch(`${apiUrl}/api/partidas/finalizar/${partidaId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            placar: placarString,
+            vencedor_id: vencedor,
+            resultado,
+          }),
+        });
+        const finalizarJson = (await finalizarRes.json()) as ApiPartidaResponse & ApiErrorResponse;
+        if (!finalizarRes.ok) {
+          throw new Error(finalizarJson.error || 'Erro ao finalizar partida');
+        }
       }
 
       router.push('/admin/partidas');
@@ -292,8 +318,8 @@ export default function EditarPartida() {
             </p>
 
             <div className="mb-2 grid w-[120px] grid-cols-2 gap-5 text-[11px]">
-              <span>Dupla 1</span>
-              <span>Dupla 2</span>
+              <span>{partida?.equipes?.[0]?.nome ?? 'Equipe 1'}</span>
+              <span>{partida?.equipes?.[1]?.nome ?? 'Equipe 2'}</span>
             </div>
 
             <div className="flex items-center gap-5">
@@ -314,35 +340,35 @@ export default function EditarPartida() {
           </div>
 
           <div>
-            <p className="mb-4 text-[12px] font-medium">Dupla Vencedora</p>
+            <p className="mb-4 text-[12px] font-medium">Equipe Vencedora</p>
 
             <div className="space-y-2">
-              {duplas.map((dupla) => (
-                <div key={dupla.id}>
-                    <p className="mb-2 text-[11px]">{dupla.titulo}</p>
+              {partida?.equipes?.map((equipe) => (
+                <div key={equipe.id_equipe}>
+                  <p className="mb-2 text-[11px]">{equipe.nome}</p>
 
                   <button
                     type="button"
-                    onClick={() => setVencedor(dupla.id)}
+                    onClick={() => setVencedor(equipe.id_equipe)}
                     className="flex h-8 w-[236px] items-center justify-between rounded-md bg-[#f8f8f8] px-3 text-left"
                   >
                     <span className="flex items-center gap-4">
-                      {dupla.jogadores.map((jogador) => (
-                        <span key={jogador.nome} className="flex items-center gap-2">
+                      {equipe.membros.map((membro) => (
+                        <span key={membro.id_usuario} className="flex items-center gap-2">
                           <span
                             className="h-6 w-6 rounded-full bg-cover bg-center"
-                            style={{ backgroundImage: `url(${jogador.avatar})` }}
+                            style={{ backgroundImage: `url(${membro.foto_perfil ?? ''})` }}
                             aria-hidden="true"
                           />
-                          <span className="text-[8px] font-bold">{jogador.nome}</span>
+                          <span className="text-[8px] font-bold">{membro.nome}</span>
                         </span>
                       ))}
                     </span>
 
                     <CheckCircle2
                       size={11}
-                      className={vencedor === dupla.id ? 'text-[#25a51f]' : 'text-transparent'}
-                      fill={vencedor === dupla.id ? '#25a51f' : 'transparent'}
+                      className={vencedor === equipe.id_equipe ? 'text-[#25a51f]' : 'text-transparent'}
+                      fill={vencedor === equipe.id_equipe ? '#25a51f' : 'transparent'}
                     />
                   </button>
                 </div>

@@ -11,7 +11,6 @@ export interface Tournament {
 
 export interface TournamentUI extends Tournament {
   favorite: boolean;
-
   jaInscrito?: boolean;
   id_inscricao?: string | null;
 }
@@ -84,5 +83,47 @@ export interface GerarChaveResponse {
   totalPartidas?: number;
 }
 
-export type UserInscriptionResponse =
-  InscricaoResponse;
+export type UserInscriptionResponse = InscricaoResponse;
+
+// ─── helpers de status do torneio ────────────────────────────────────────────
+
+/**
+ * Quantos dias faltam até data_inicio (negativo = já passou).
+ * Retorna null se data_inicio não estiver definida.
+ */
+export function diasParaInicio(torneio: Tournament): number | null {
+  if (!torneio.data_inicio) return null;
+  const agora = new Date();
+  const inicio = new Date(torneio.data_inicio);
+  const diff = inicio.getTime() - agora.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * O torneio já começou (data_inicio no passado).
+ */
+export function torneioJaIniciou(torneio: Tournament): boolean {
+  const dias = diasParaInicio(torneio);
+  if (dias === null) return false;
+  return dias < 0;
+}
+
+/**
+ * Edição está bloqueada: faltam 2 dias ou menos para o início.
+ * (inscrição e troca de dupla ficam desabilitadas)
+ */
+export function edicaoBloqueada(torneio: Tournament): boolean {
+  const dias = diasParaInicio(torneio);
+  if (dias === null) return false;
+  return dias <= 2;
+}
+
+/**
+ * Aviso de "faltam 3 dias": exibir banner de alerta de encerramento de edição.
+ * Intervalo: entre 2 e 3 dias restantes (inclusive).
+ */
+export function exibirAvisoFechamentoProximo(torneio: Tournament): boolean {
+  const dias = diasParaInicio(torneio);
+  if (dias === null) return false;
+  return dias === 3;
+}

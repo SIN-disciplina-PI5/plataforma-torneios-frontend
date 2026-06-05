@@ -12,6 +12,11 @@ from services.db.partidas   import (
     get_partidas_semana,
     get_partidas_por_torneio,
 )
+from services.db.ranking    import (
+    get_ranking_geral,
+    get_ranking_usuario,
+    get_ranking_por_posicao,
+)
 
 __all__ = [
     "get_todos_torneios",
@@ -25,4 +30,7 @@ __all__ = [
     "get_partidas_hoje",
     "get_partidas_semana",
     "get_partidas_por_torneio",
+    "get_ranking_geral",
+    "get_ranking_usuario",
+    "get_ranking_por_posicao",
 ]
